@@ -49,17 +49,16 @@ npm.cmd run android
 npm.cmd start
 ```
 
-Windows cannot run Xcode or an iOS Simulator. For a physical iPhone, configure an EAS cloud development build with an Expo account and Apple signing credentials, usually a paid Apple Developer membership. Choose permanent app identifiers during configuration; none are assigned here.
+For a connected Android phone, enable Developer options and USB debugging, accept the computer's debugging authorization prompt, and select the phone:
 
 ```powershell
-npx.cmd eas-cli@latest login
-npx.cmd eas-cli@latest build:configure
-npx.cmd eas-cli@latest device:create
-npx.cmd eas-cli@latest build --platform ios --profile development
+npm.cmd run android -- --device
 npm.cmd start
 ```
 
-Register the iPhone before building, install via the EAS build link, and connect the installed development client to Metro on the same reachable network. Android cloud builds can use `npx.cmd eas-cli@latest build --platform android --profile development`. These cloud commands have not been executed. Development needs Metro; offline operation refers to an installed standalone app.
+This command builds and installs the app locally and starts Metro. For later sessions, run `npm.cmd start` and open the installed app; use the same reachable network for a Wi-Fi connection. Rebuild after changing native dependencies or native configuration. Development needs Metro; offline operation refers to an installed standalone app.
+
+Windows cannot run Xcode or an iOS Simulator. Local iPhone builds require macOS, Xcode, and device signing configuration. Cloud builds are not configured in this repository.
 
 References: [SDK compatibility](https://docs.expo.dev/versions/v58.0.0/), [local development](https://docs.expo.dev/guides/local-app-development/), [development builds](https://docs.expo.dev/develop/development-builds/introduction/), [iOS distribution](https://docs.expo.dev/build/internal-distribution/).
 
