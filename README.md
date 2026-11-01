@@ -62,4 +62,4 @@ This exports the committed revision, including docs and documentation images. De
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT â€” see [LICENSE](LICENSE).
