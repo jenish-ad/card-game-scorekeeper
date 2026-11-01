@@ -1,9 +1,9 @@
 import { test, expect } from '@jest/globals';
 import {
-  pagatBaseV1,
+  calculateMarriageRound as pagatBaseV1,
   scoreRound,
   currentRuleVersion,
-} from '../src/scoring/pagatBaseV1';
+} from '../src/features/marriage/scoring';
 import type { MarriageRoundInput } from '../src/features/marriage/scoring';
 
 const example: MarriageRoundInput = {
@@ -32,16 +32,16 @@ test('unseen maal is ignored without mutating canonical inputs', () => {
   };
   expect(pagatBaseV1(input)).toEqual(pagatBaseV1(example));
   expect(input.players[2].maal).toBe(9);
-  expect(scoreRound(input, 'pagat-base-v1')).not.toEqual(
-    scoreRound(input, currentRuleVersion),
-  );
+  expect(scoreRound(input, currentRuleVersion)).toEqual(pagatBaseV1(example));
 });
 
-test('new rules reject Dublee while historical Dublee remains reproducible', () => {
+test('Dublee applies the default extra fee', () => {
   const input = { ...example, dubleeWin: true };
-  expect(() => pagatBaseV1(input)).toThrow('Dublee rule not configured');
+  expect(pagatBaseV1(input).map((score) => score.points)).toEqual([
+    31, -9, -22,
+  ]);
   expect(
-    scoreRound(input, 'pagat-base-v1').map((score) => score.points),
+    scoreRound(input, currentRuleVersion).map((score) => score.points),
   ).toEqual([31, -9, -22]);
 });
 

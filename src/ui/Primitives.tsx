@@ -1,21 +1,31 @@
-import type { PropsWithChildren } from 'react';
-import { Pressable, Text, View } from 'react-native';
-import { theme } from '../theme';
-import { styles } from './Screen';
-
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTheme } from '../useTheme';
+import type { AppTheme } from '../theme';
+import { Icon, type IconName } from './Icon';
+import { useStyles } from './Screen';
 export function Button({
   label,
   onPress,
   secondary = false,
   disabled = false,
   destructive = false,
+  icon,
 }: {
   label: string;
   onPress: () => void;
   secondary?: boolean;
   disabled?: boolean;
   destructive?: boolean;
+  icon?: IconName;
 }) {
+  const theme = useTheme();
+  const styles = useStyles();
+  const local = createStyles(theme);
+  const color = destructive
+    ? theme.colors.loss
+    : secondary
+      ? theme.colors.primary
+      : theme.colors.onPrimary;
   return (
     <Pressable
       accessibilityRole="button"
@@ -24,76 +34,42 @@ export function Button({
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        { flexGrow: 1, opacity: disabled ? 0.4 : pressed ? 0.75 : 1 },
-        secondary && {
-          backgroundColor: theme.colors.surface,
-          borderWidth: 1,
-          borderColor: theme.colors.border,
-        },
+        local.button,
+        secondary && local.secondary,
+        { opacity: disabled ? 0.4 : pressed ? 0.8 : 1 },
       ]}
     >
-      <Text
-        style={[
-          styles.buttonText,
-          secondary && { color: theme.colors.primary },
-          destructive && { color: theme.colors.loss },
-        ]}
-      >
+      {icon && <Icon name={icon} color={color} size={18} />}
+      <Text style={[styles.buttonText, local.buttonText, { color }]}>
         {label}
       </Text>
     </Pressable>
   );
 }
-export function Chip({
-  children,
-  gold = false,
-}: PropsWithChildren<{ gold?: boolean }>) {
+export function Avatar({ name, size = 38 }: { name: string; size?: number }) {
+  const theme = useTheme();
+  const styles = useStyles();
+  const local = createStyles(theme);
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.slice(0, 1))
+    .join('')
+    .toUpperCase();
   return (
     <View
-      style={{
-        backgroundColor: gold
-          ? theme.colors.goldLight
-          : theme.colors.primaryTint,
-        borderRadius: theme.radius.chip,
-        paddingHorizontal: theme.spacing.md,
-        paddingVertical: theme.spacing.xs,
-        alignSelf: 'flex-start',
-      }}
+      accessible={false}
+      style={[local.avatar, { width: size, height: size }]}
     >
-      <Text
-        style={[styles.label, { fontSize: 10, color: theme.colors.primary }]}
-      >
-        {children}
-      </Text>
-    </View>
-  );
-}
-export function Avatar({ name, seat = 0 }: { name: string; seat?: number }) {
-  return (
-    <View
-      style={{
-        width: 36,
-        height: 36,
-        borderRadius: theme.radius.chip,
-        backgroundColor:
-          seat === 0 ? theme.colors.primary : theme.colors.goldLight,
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <Text
-        style={[
-          styles.label,
-          { color: seat === 0 ? theme.colors.surface : theme.colors.primary },
-        ]}
-      >
-        {name.slice(0, 1).toUpperCase()}
+      <Text style={[styles.label, { color: theme.colors.primary }]}>
+        {initials}
       </Text>
     </View>
   );
 }
 export function formatScore(value: number) {
-  return value > 0 ? `+${value}` : value < 0 ? `−${Math.abs(value)}` : '0';
+  return value > 0 ? `+${value}` : value < 0 ? `-${Math.abs(value)}` : '0';
 }
 export function scoreLabel(value: number) {
   return value > 0
@@ -109,6 +85,8 @@ export function Score({
   value: number;
   compact?: boolean;
 }) {
+  const theme = useTheme();
+  const local = createStyles(theme);
   const color =
     value > 0
       ? theme.colors.gain
@@ -118,34 +96,61 @@ export function Score({
   return (
     <View
       accessible
-      style={{ alignItems: 'flex-end', gap: theme.spacing.xs }}
+      style={local.score}
       accessibilityLabel={`${formatScore(value)}, ${scoreLabel(value)}`}
     >
       <Text
-        style={{
-          fontFamily: theme.fonts.bold,
-          fontSize: compact ? 14 : 22,
-          color,
-          fontVariant: ['tabular-nums'],
-        }}
+        adjustsFontSizeToFit
+        numberOfLines={1}
+        style={[local.number, compact && local.compact, { color }]}
       >
         {formatScore(value)}
-      </Text>
-      <Text style={{ fontFamily: theme.fonts.medium, fontSize: 10, color }}>
-        {scoreLabel(value)}
       </Text>
     </View>
   );
 }
-export function PresetCard() {
+export function SectionHeading({
+  title,
+  detail,
+}: {
+  title: string;
+  detail?: string;
+}) {
+  const styles = useStyles();
   return (
-    <View style={[styles.card, { backgroundColor: theme.colors.primaryTint }]}>
-      <Text style={styles.eyebrow}>Scoring preset</Text>
-      <View style={styles.spread}>
-        <Text style={styles.label}>♧ Pagat base v1</Text>
-        <Chip gold>Rules</Chip>
-      </View>
-      <Text style={styles.body}>Points · Normal finish · Seen maal only</Text>
+    <View style={styles.spread}>
+      <Text style={styles.label}>{title}</Text>
+      {detail && <Text style={styles.caption}>{detail}</Text>}
     </View>
   );
+}
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    button: {
+      flexGrow: 1,
+      flexShrink: 1,
+      flexDirection: 'row',
+      gap: theme.spacing.sm,
+    },
+    buttonText: { flexShrink: 1 },
+    secondary: {
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    avatar: {
+      borderRadius: theme.radius.button,
+      backgroundColor: theme.colors.avatar,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    },
+    score: { alignItems: 'flex-end', flexShrink: 0 },
+    number: {
+      fontFamily: theme.fonts.bold,
+      fontSize: 24,
+      fontVariant: ['tabular-nums'],
+    },
+    compact: { fontSize: 15 },
+  });
 }

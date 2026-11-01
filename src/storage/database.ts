@@ -28,7 +28,7 @@ export async function migrateDatabase(database: MatchDatabase) {
     const row = await transaction.getFirstAsync<{ user_version: number }>(
       'PRAGMA user_version',
     );
-    if (!row || !Number.isInteger(row.user_version) || row.user_version > 2) {
+    if (!row || !Number.isInteger(row.user_version) || row.user_version > 3) {
       throw new Error(
         'This database needs a newer app version. No saved matches were changed.',
       );
@@ -65,6 +65,15 @@ export async function migrateDatabase(database: MatchDatabase) {
       await transaction.execAsync(
         "ALTER TABLE matches ADD COLUMN title TEXT NOT NULL DEFAULT ''; PRAGMA user_version = 2;",
       );
+    }
+    if (row.user_version < 3) {
+      // Preserve canonical inputs while adopting the single unreleased scoring definition.
+      await transaction.execAsync(`
+        ALTER TABLE matches ADD COLUMN settings_json TEXT NOT NULL DEFAULT '{"seenFee":3,"unseenFee":10,"dubleeExtra":5,"moneyRate":null}';
+        UPDATE matches SET rule_version = 'marriage-v1' WHERE rule_version IN ('pagat-base-v1', 'pagat-base-v1-seen-maal');
+        UPDATE rounds SET rule_version = 'marriage-v1' WHERE rule_version IN ('pagat-base-v1', 'pagat-base-v1-seen-maal');
+        PRAGMA user_version = 3;
+      `);
     }
   });
 }

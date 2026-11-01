@@ -57,3 +57,9 @@ credentials.json
 # generated native folders
 /ios
 /android
+
+# Local captures and archives
+screenshots/
+*.zip
+.gitattributes
+docs

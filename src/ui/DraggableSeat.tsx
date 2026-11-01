@@ -1,7 +1,8 @@
 import { useMemo, useState, type PropsWithChildren } from 'react';
 import { Animated, PanResponder, Text, View } from 'react-native';
-import { theme } from '../theme';
-import { styles } from './Screen';
+import { useTheme } from '../useTheme';
+import { Icon } from './Icon';
+import { useStyles } from './Screen';
 
 export function DraggableSeat({
   seat,
@@ -13,6 +14,8 @@ export function DraggableSeat({
   name: string;
   move: (offset: number) => void;
 }>) {
+  const theme = useTheme();
+  const styles = useStyles();
   const [offset] = useState(() => new Animated.Value(0));
   const [height, setHeight] = useState(64);
   const [dragging, setDragging] = useState(false);
@@ -71,11 +74,28 @@ export function DraggableSeat({
         style={{
           minWidth: theme.touchTarget,
           minHeight: theme.touchTarget,
+          flexDirection: 'row',
+          gap: theme.spacing.xs,
           justifyContent: 'center',
           alignItems: 'center',
         }}
       >
-        <Text style={styles.label}>⠿ {seat}</Text>
+        <Icon name="reorder-two" size={18} color={theme.colors.textMuted} />
+        <Text
+          style={[
+            styles.label,
+            {
+              fontSize: 12,
+              color: theme.colors.primary,
+              backgroundColor: theme.colors.primaryTint,
+              borderRadius: theme.radius.chip,
+              paddingHorizontal: theme.spacing.xs,
+              fontVariant: ['tabular-nums'],
+            },
+          ]}
+        >
+          {seat}
+        </Text>
       </View>
       {children}
     </Animated.View>

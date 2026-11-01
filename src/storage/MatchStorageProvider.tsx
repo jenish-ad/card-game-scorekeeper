@@ -6,8 +6,8 @@ import {
   type PropsWithChildren,
 } from 'react';
 import { openDatabaseAsync } from 'expo-sqlite';
-import { Pressable, Text } from 'react-native';
-import { Screen, styles } from '../ui/Screen';
+import { ActivityIndicator, Pressable, Text } from 'react-native';
+import { Screen, useStyles } from '../ui/Screen';
 import { migrateDatabase, type MatchDatabase } from './database';
 
 const StorageContext = createContext<MatchDatabase | null>(null);
@@ -31,6 +31,7 @@ function openMatchDatabase() {
 }
 
 export function MatchStorageProvider({ children }: PropsWithChildren) {
+  const styles = useStyles();
   const [database, setDatabase] = useState<MatchDatabase | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -40,12 +41,10 @@ export function MatchStorageProvider({ children }: PropsWithChildren) {
       .then((connection) => {
         if (!cancelled) setDatabase(connection);
       })
-      .catch((failure: unknown) => {
+      .catch(() => {
         if (!cancelled)
           setError(
-            failure instanceof Error
-              ? failure.message
-              : 'Unable to open local match storage.',
+            'Could not open saved matches; check device storage and retry.',
           );
       });
     return () => {
@@ -60,17 +59,11 @@ export function MatchStorageProvider({ children }: PropsWithChildren) {
     );
   return (
     <Screen>
-      <Text accessibilityRole="header" style={styles.title}>
-        {error ? 'Storage unavailable' : 'Opening saved matches…'}
-      </Text>
+      {!error && <ActivityIndicator accessibilityLabel="Loading" />}
       {error && (
         <>
           <Text accessibilityRole="alert" style={styles.error}>
             {error}
-          </Text>
-          <Text style={styles.body}>
-            Your saved matches have not been reset. Check available device
-            storage and try again.
           </Text>
           <Pressable
             accessibilityRole="button"

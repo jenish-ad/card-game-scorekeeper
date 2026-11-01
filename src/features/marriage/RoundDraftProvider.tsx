@@ -25,6 +25,6 @@ export function RoundDraftProvider({ children }: PropsWithChildren) {
 }
 export function useRoundDraft() {
   const context = useContext(DraftContext);
-  if (!context) throw new Error('Round draft provider is missing.');
+  if (!context) throw new Error('Reopen this round to continue.');
   return context;
 }

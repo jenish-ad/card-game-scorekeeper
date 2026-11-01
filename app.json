@@ -1,26 +1,27 @@
 {
   "expo": {
     "name": "Marriage Scorekeeper",
-    "slug": "card-game-scorekeeper",
+    "slug": "marriage-scorekeeper",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.griffin.marriagescore"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#FAF6EC",
+        "backgroundColor": "#F5F6F8",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.cardgamescorekeeper"
+      "package": "com.griffin.marriagescore"
     },
     "plugins": ["expo-router", "expo-sqlite"],
-    "scheme": "card-game-scorekeeper",
+    "scheme": "marriage-scorekeeper",
     "platforms": ["android", "ios"]
   }
 }

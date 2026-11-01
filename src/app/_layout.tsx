@@ -1,8 +1,15 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, Text, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import {
+  ActivityIndicator,
+  Platform,
+  Text,
+  View,
+  StyleSheet,
+} from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useFonts, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
+import { useFonts } from 'expo-font';
 import {
   Manrope_400Regular,
   Manrope_500Medium,
@@ -10,21 +17,34 @@ import {
 } from '@expo-google-fonts/manrope';
 import { MatchStorageProvider } from '../storage/MatchStorageProvider';
 import { RoundDraftProvider } from '../features/marriage/RoundDraftProvider';
-import { theme } from '../theme';
+import { useTheme } from '../useTheme';
 
 export default function RootLayout() {
+  const theme = useTheme();
   const [loaded, error] = useFonts({
-    Fraunces_600SemiBold,
+    ...Ionicons.font,
     Manrope_400Regular,
     Manrope_500Medium,
     Manrope_700Bold,
   });
-  if (!loaded && !error) return null;
+  if (!loaded && !error)
+    return (
+      <View style={[local.fill, { backgroundColor: theme.colors.bg }]}>
+        <ActivityIndicator
+          accessibilityLabel="Loading"
+          color={theme.colors.primary}
+        />
+      </View>
+    );
   return (
-    <View style={{ flex: 1 }}>
+    <View style={[local.fill, { backgroundColor: theme.colors.bg }]}>
       <SafeAreaProvider>
-        <StatusBar style="dark" />
-        {error && <Text>Could not load fonts. Using system fonts.</Text>}
+        <StatusBar style="auto" />
+        {error && (
+          <Text style={{ color: theme.colors.text }}>
+            Could not load fonts; restart the app.
+          </Text>
+        )}
         <MatchStorageProvider>
           <RoundDraftProvider>
             <Stack
@@ -44,7 +64,7 @@ export default function RootLayout() {
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen
                 name="marriage/setup"
-                options={{ title: 'New Match' }}
+                options={{ title: 'New match' }}
               />
               <Stack.Screen
                 name="marriage/match/[id]"
@@ -52,11 +72,15 @@ export default function RootLayout() {
               />
               <Stack.Screen
                 name="marriage/round/[id]"
-                options={{ title: 'Add Round' }}
+                options={{ title: 'Add round' }}
               />
               <Stack.Screen
                 name="marriage/preview/[id]"
-                options={{ title: 'Preview Points' }}
+                options={{ title: 'Round details' }}
+              />
+              <Stack.Screen
+                name="marriage/settle/[id]"
+                options={{ title: 'Settle up' }}
               />
             </Stack>
           </RoundDraftProvider>
@@ -65,3 +89,7 @@ export default function RootLayout() {
     </View>
   );
 }
+
+const local = StyleSheet.create({
+  fill: { flex: 1, justifyContent: 'center' },
+});

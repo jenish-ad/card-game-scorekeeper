@@ -1,12 +1,24 @@
 import { useRef, useState, type ComponentRef } from 'react';
 import { useRouter } from 'expo-router';
-import { Pressable, Text, TextInput, View } from 'react-native';
-import { scoreRound } from '../../scoring/pagatBaseV1';
-import { theme } from '../../theme';
-import { Avatar, Button } from '../../ui/Primitives';
-import { Screen, styles } from '../../ui/Screen';
+import {
+  InputAccessoryView,
+  Keyboard,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { Icon } from '../../ui/Icon';
+import { nextSeenPlayerIndex } from './roundEntry';
+import { useTheme } from '../../useTheme';
+import { Avatar, Button, Score } from '../../ui/Primitives';
+import { Screen, useStyles } from '../../ui/Screen';
+import { useMatchDatabase } from '../../storage/MatchStorageProvider';
 import { useRoundDraft } from './RoundDraftProvider';
-import type { SavedMatch, SavedRound } from './matches';
+import { roundPreview } from './roundPreview';
+import { saveRound, type SavedMatch, type SavedRound } from './matches';
 
 export function RoundEditor({
   match,
@@ -15,7 +27,10 @@ export function RoundEditor({
   match: SavedMatch;
   round?: SavedRound;
 }) {
+  const theme = useTheme();
+  const styles = useStyles();
   const router = useRouter();
+  const database = useMatchDatabase();
   const { draft, setDraft } = useRoundDraft();
   const initial =
     draft?.matchId === match.id && draft.roundId === round?.id
@@ -38,265 +53,243 @@ export function RoundEditor({
   );
   const [dubleeWin, setDubleeWin] = useState(initial?.dubleeWin ?? false);
   const [error, setError] = useState<string | null>(null);
+  const [focusedIndex, setFocusedIndex] = useState(0);
+  const [saving, setSaving] = useState(false);
   const fields = useRef<(ComponentRef<typeof TextInput> | null)[]>([]);
   const number = round
     ? match.rounds.findIndex((entry) => entry.id === round.id) + 1
     : match.rounds.length + 1;
-  function updateMaal(playerId: number, maal: string) {
-    if (!/^\d*$/.test(maal)) return;
-    setPlayers((current) =>
-      current.map((entry) =>
-        entry.playerId === playerId ? { ...entry, maal } : entry,
-      ),
-    );
-  }
-  function preview() {
+  const preview = roundPreview(
+    players,
+    winnerId,
+    dubleeWin,
+    match.ruleVersion,
+    match.settings,
+  );
+  async function save() {
+    if (saving || !preview.ok) return;
+    setSaving(true);
+    setError(null);
     try {
-      if (winnerId === null)
-        throw new Error('Choose the winner before previewing.');
-      const input = {
-        winnerId,
-        dubleeWin,
-        players: players.map((entry) => {
-          if (!/^\d+$/.test(entry.maal))
-            throw new Error(
-              'Enter a whole-number maal total for every player, including 0.',
-            );
-          return { ...entry, maal: Number(entry.maal) };
-        }),
-      };
-      scoreRound(input, match.ruleVersion);
-      setDraft({ matchId: match.id, roundId: round?.id, input });
-      setError(null);
-      router.push({
-        pathname: '/marriage/preview/[id]',
-        params: { id: match.id, draft: '1' },
+      await saveRound(database, match.id, preview.input, round?.id);
+      setDraft(null);
+      router.dismissTo({
+        pathname: '/marriage/match/[id]',
+        params: {
+          id: match.id,
+          savedRound: String(number),
+          savedToken: String(number),
+        },
       });
-    } catch (failure) {
-      setError(
-        failure instanceof Error ? failure.message : 'Check the round inputs.',
-      );
+    } catch {
+      setError('Could not save the round; try again.');
+      setSaving(false);
     }
   }
+  function details() {
+    if (!preview.ok) return;
+    setDraft({ matchId: match.id, roundId: round?.id, input: preview.input });
+    router.push({
+      pathname: '/marriage/preview/[id]',
+      params: { id: match.id, draft: '1' },
+    });
+  }
   return (
-    <Screen footer={<Button label="Preview Points →" onPress={preview} />}>
+    <Screen
+      compact
+      footer={
+        <View style={[styles.flexible, local.footer]}>
+          {preview.ok ? (
+            <View style={local.results}>
+              {match.players.map((player) => (
+                <View key={player.id} style={local.result}>
+                  <Text numberOfLines={1} style={styles.caption}>
+                    {player.name}
+                  </Text>
+                  <Score
+                    compact
+                    value={
+                      preview.scores.find(
+                        (score) => score.playerId === player.id,
+                      )?.points ?? 0
+                    }
+                  />
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.caption}>{preview.message}</Text>
+          )}
+          <Button
+            label="Save round"
+            disabled={saving || !preview.ok}
+            onPress={() => void save()}
+          />
+        </View>
+      }
+    >
+      {Platform.OS === 'ios' && (
+        <InputAccessoryView nativeID="maal-navigation">
+          <View
+            style={[
+              styles.row,
+              { backgroundColor: theme.colors.surface, padding: 8 },
+            ]}
+          >
+            <Button
+              secondary
+              label="Next"
+              disabled={nextSeenPlayerIndex(players, focusedIndex) < 0}
+              onPress={() =>
+                fields.current[
+                  nextSeenPlayerIndex(players, focusedIndex)
+                ]?.focus()
+              }
+            />
+            <Button label="Done" onPress={() => Keyboard.dismiss()} />
+          </View>
+        </InputAccessoryView>
+      )}
+      <Text style={styles.subtitle}>Round {number}</Text>
       <View style={styles.spread}>
-        <Text style={styles.title}>Round {number}</Text>
-        <Text style={[styles.body, { flex: 1, textAlign: 'right' }]}>
-          {match.title}
-        </Text>
-      </View>
-      <View style={[styles.card, styles.spread]}>
         <Text style={styles.label}>Finish</Text>
-        <View
-          style={[
-            styles.row,
-            {
-              backgroundColor: theme.colors.surfaceAlt,
-              borderRadius: theme.radius.chip,
-              padding: theme.spacing.xs,
-              gap: theme.spacing.xs,
-            },
-          ]}
-        >
+        <View style={styles.row}>
           {[false, true].map((dublee) => (
             <Pressable
               key={String(dublee)}
               accessibilityRole="radio"
               accessibilityState={{ checked: dubleeWin === dublee }}
               onPress={() => setDubleeWin(dublee)}
-              style={{
-                minHeight: theme.touchTarget,
-                paddingHorizontal: theme.spacing.lg,
-                borderRadius: theme.radius.chip,
-                justifyContent: 'center',
-                backgroundColor:
-                  dubleeWin === dublee
-                    ? theme.colors.primary
-                    : theme.colors.surfaceAlt,
-              }}
+              style={[
+                local.option,
+                {
+                  backgroundColor:
+                    dubleeWin === dublee
+                      ? theme.colors.primaryTint
+                      : theme.colors.surface,
+                },
+              ]}
             >
-              <Text
-                style={[
-                  styles.label,
-                  {
-                    color:
-                      dubleeWin === dublee
-                        ? theme.colors.surface
-                        : theme.colors.textMuted,
-                  },
-                ]}
-              >
-                {dublee ? 'Dublee' : 'Normal'}
-              </Text>
+              <Text style={styles.label}>{dublee ? 'Dublee' : 'Normal'}</Text>
             </Pressable>
           ))}
         </View>
       </View>
-      {players.map((entry, index) => {
-        const player = match.players.find(
-          (item) => item.id === entry.playerId,
-        )!;
-        const winner = entry.playerId === winnerId;
-        return (
-          <View
-            key={entry.playerId}
-            style={[
-              styles.card,
-              winner && { borderColor: theme.colors.primary },
-            ]}
-          >
-            <View style={styles.spread}>
-              <View style={styles.row}>
-                <Avatar name={player.name} seat={player.seat} />
-                <View>
-                  <Text style={styles.label}>{player.name}</Text>
-                  <Text style={styles.body}>Seat {index + 1}</Text>
-                </View>
-              </View>
-              <Pressable
-                accessibilityRole="radio"
-                accessibilityLabel={`${player.name} is winner`}
-                accessibilityState={{ checked: winner }}
-                onPress={() => {
-                  setWinnerId(entry.playerId);
-                  setPlayers((current) =>
-                    current.map((item) =>
-                      item.playerId === entry.playerId
-                        ? { ...item, seen: true }
-                        : item,
-                    ),
-                  );
-                }}
-                style={{
-                  minHeight: theme.touchTarget,
-                  paddingHorizontal: theme.spacing.md,
-                  borderRadius: theme.radius.chip,
-                  backgroundColor: winner
-                    ? theme.colors.primary
-                    : theme.colors.surfaceAlt,
-                  justifyContent: 'center',
-                }}
-              >
-                <Text
-                  style={[
-                    styles.label,
-                    {
-                      color: winner
-                        ? theme.colors.surface
-                        : theme.colors.textMuted,
-                    },
-                  ]}
-                >
-                  {winner ? '♛ Winner' : '○ Winner'}
-                </Text>
-              </Pressable>
-            </View>
-            <Text style={styles.eyebrow}>Maal</Text>
-            <View style={styles.row}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Decrease ${player.name} maal`}
-                disabled={Number(entry.maal) === 0}
-                onPress={() =>
-                  updateMaal(
-                    entry.playerId,
-                    String(Math.max(0, Number(entry.maal) - 1)),
-                  )
-                }
-                style={[
-                  styles.input,
-                  { minWidth: theme.touchTarget, alignItems: 'center' },
-                ]}
-              >
-                <Text style={styles.label}>−</Text>
-              </Pressable>
+      <View style={local.players}>
+        {players.map((entry, index) => {
+          const player = match.players[index];
+          if (!player) return null;
+          const selected = winnerId === player.id;
+          return (
+            <View
+              key={player.id}
+              style={[
+                local.player,
+                {
+                  borderColor: theme.colors.border,
+                  backgroundColor: selected
+                    ? theme.colors.primaryTint
+                    : theme.colors.surface,
+                },
+              ]}
+            >
+              <Avatar name={player.name} size={28} />
+              <Text style={[styles.label, styles.flexible]} numberOfLines={1}>
+                {player.name}
+              </Text>
               <TextInput
                 ref={(field) => {
                   fields.current[index] = field;
                 }}
                 accessibilityLabel={`${player.name} maal`}
                 keyboardType="number-pad"
+                inputAccessoryViewID={
+                  Platform.OS === 'ios' ? 'maal-navigation' : undefined
+                }
+                onFocus={() => setFocusedIndex(index)}
+                selectTextOnFocus
+                editable={entry.seen}
                 returnKeyType={index === players.length - 1 ? 'done' : 'next'}
                 submitBehavior={
                   index === players.length - 1 ? 'blurAndSubmit' : 'submit'
                 }
-                onSubmitEditing={() => fields.current[index + 1]?.focus()}
-                value={entry.maal}
-                onChangeText={(value) => updateMaal(entry.playerId, value)}
+                onSubmitEditing={() => {
+                  const next = nextSeenPlayerIndex(players, index);
+                  if (next >= 0) fields.current[next]?.focus();
+                }}
+                value={entry.seen ? entry.maal : '0'}
+                onChangeText={(maal) => {
+                  if (/^\d*$/.test(maal))
+                    setPlayers((current) =>
+                      current.map((item) =>
+                        item.playerId === player.id ? { ...item, maal } : item,
+                      ),
+                    );
+                }}
                 style={[
-                  styles.input,
+                  local.maal,
                   {
-                    flex: 1,
-                    textAlign: 'center',
-                    fontVariant: ['tabular-nums'],
+                    color: theme.colors.text,
+                    backgroundColor: theme.colors.bg,
+                    borderColor: theme.colors.border,
+                    opacity: entry.seen ? 1 : 0.5,
                   },
                 ]}
               />
               <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Increase ${player.name} maal`}
+                accessibilityRole="switch"
+                accessibilityLabel={`${player.name} seen`}
+                accessibilityState={{ checked: entry.seen, disabled: selected }}
+                disabled={selected}
                 onPress={() =>
-                  updateMaal(
-                    entry.playerId,
-                    String(Number(entry.maal || 0) + 1),
+                  setPlayers((current) =>
+                    current.map((item) =>
+                      item.playerId === player.id
+                        ? { ...item, seen: !item.seen }
+                        : item,
+                    ),
                   )
                 }
-                style={[
-                  styles.input,
-                  { minWidth: theme.touchTarget, alignItems: 'center' },
-                ]}
+                style={local.seen}
               >
-                <Text style={styles.label}>＋</Text>
+                <Text style={styles.caption}>
+                  {entry.seen ? 'Seen' : 'Unseen'}
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="radio"
+                accessibilityLabel={`${player.name} winner`}
+                accessibilityState={{ checked: selected }}
+                onPress={() => {
+                  setWinnerId(player.id);
+                  setPlayers((current) =>
+                    current.map((item) =>
+                      item.playerId === player.id
+                        ? { ...item, seen: true }
+                        : item,
+                    ),
+                  );
+                }}
+                style={local.winner}
+              >
+                <Icon
+                  name={selected ? 'radio-button-on' : 'radio-button-off'}
+                  size={20}
+                />
+                <Text style={styles.caption}>Winner</Text>
               </Pressable>
             </View>
-            <View style={styles.row}>
-              {[true, false].map((seen) => (
-                <Pressable
-                  key={String(seen)}
-                  accessibilityRole="radio"
-                  accessibilityLabel={`${player.name} ${seen ? 'Seen' : 'Unseen'}`}
-                  accessibilityState={{
-                    checked: entry.seen === seen,
-                    disabled: winner && !seen,
-                  }}
-                  disabled={winner && !seen}
-                  onPress={() =>
-                    setPlayers((current) =>
-                      current.map((item) =>
-                        item.playerId === entry.playerId
-                          ? { ...item, seen }
-                          : item,
-                      ),
-                    )
-                  }
-                  style={{
-                    flex: 1,
-                    minHeight: theme.touchTarget,
-                    borderRadius: theme.radius.chip,
-                    backgroundColor:
-                      entry.seen === seen
-                        ? theme.colors.primaryTint
-                        : theme.colors.surfaceAlt,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    opacity: winner && !seen ? 0.4 : 1,
-                  }}
-                >
-                  <Text style={styles.label}>
-                    {seen ? '● Seen' : '○ Unseen'}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-        );
-      })}
-      {dubleeWin && match.ruleVersion !== 'pagat-base-v1' && (
-        <Text style={styles.body}>
-          Dublee rule not configured. Choose Normal to score this round.
-        </Text>
-      )}
+          );
+        })}
+      </View>
+      <Pressable
+        accessibilityRole="link"
+        disabled={!preview.ok}
+        onPress={details}
+        style={local.details}
+      >
+        <Text style={styles.label}>Details</Text>
+      </Pressable>
       {error && (
         <Text accessibilityRole="alert" style={styles.error}>
           {error}
@@ -305,3 +298,47 @@ export function RoundEditor({
     </Screen>
   );
 }
+const local = StyleSheet.create({
+  footer: { gap: 10 },
+  results: { flexDirection: 'row', gap: 6 },
+  result: { flex: 1, alignItems: 'center', gap: 4 },
+  players: { gap: 6 },
+  player: {
+    minHeight: 68,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+  },
+  maal: {
+    width: 48,
+    minHeight: 44,
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 4,
+    textAlign: 'center',
+    fontSize: 18,
+    fontVariant: ['tabular-nums'],
+  },
+  option: {
+    minHeight: 44,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+    borderRadius: 10,
+  },
+  seen: {
+    minWidth: 50,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  winner: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  details: { minHeight: 44, justifyContent: 'center' },
+});

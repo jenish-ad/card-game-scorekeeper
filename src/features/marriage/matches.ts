@@ -1,13 +1,17 @@
+import { defaultMatchTitle } from './matchTitle';
 import type { MatchConnection, MatchDatabase } from '../../storage/database';
-import { currentRuleVersion, scoreRound } from '../../scoring/pagatBaseV1';
-import { validatePlayerNames } from './playerNames';
 import {
+  currentRuleVersion,
+  scoreRound,
+  defaultSettings,
+  parseSettings,
+  type MatchSettings,
   calculateMarriageRound,
-  marriageRuleVersion,
   parseRoundInput,
   validateMarriagePlayerCount,
   type MarriageRoundInput,
 } from './scoring';
+import { validatePlayerNames } from './playerNames';
 
 export interface SavedPlayer {
   id: number;
@@ -22,6 +26,7 @@ export interface SavedRound {
 export interface SavedMatch {
   id: number;
   title: string;
+  settings: MatchSettings;
   ruleVersion: string;
   createdAt: string;
   finishedAt: string | null;
@@ -48,24 +53,27 @@ function timestamp(value: unknown): string {
 export async function createMatch(
   database: MatchDatabase,
   names: readonly string[],
-  title = 'Marriage Match',
+  title = defaultMatchTitle(),
   ruleVersion = currentRuleVersion,
+  settings: MatchSettings = defaultSettings,
 ): Promise<number> {
   if (!title.trim() || title.trim().length > 80)
     throw new Error('Enter a match title of 1 to 80 characters.');
-  if (![marriageRuleVersion, currentRuleVersion].includes(ruleVersion))
-    throw new Error('Unsupported scoring rule version.');
+  if (ruleVersion !== currentRuleVersion)
+    throw new Error('Update the app to open this match.');
+  const matchSettings = parseSettings(settings);
   const validation = validatePlayerNames(names);
   if (!validation.ok) throw new Error(validation.message);
   validateMarriagePlayerCount(validation.playerNames.length);
   let matchId = 0;
   await database.withExclusiveTransactionAsync(async (transaction) => {
     const result = await transaction.runAsync(
-      'INSERT INTO matches (game, rule_version, created_at, title) VALUES (?, ?, ?, ?)',
+      'INSERT INTO matches (game, rule_version, created_at, title, settings_json) VALUES (?, ?, ?, ?, ?)',
       'marriage',
       ruleVersion,
       new Date().toISOString(),
       title.trim(),
+      JSON.stringify(matchSettings),
     );
     matchId = result.lastInsertRowId;
     for (const [seat, name] of validation.playerNames.entries()) {
@@ -91,14 +99,9 @@ export async function getMatch(
   );
   if (!storedMatch) return null;
   const match = record(storedMatch);
-  if (
-    match.game !== 'marriage' ||
-    (match.rule_version !== marriageRuleVersion &&
-      match.rule_version !== currentRuleVersion)
-  )
-    throw new Error(
-      'This match uses an unsupported game or scoring rule version.',
-    );
+  if (match.game !== 'marriage' || match.rule_version !== currentRuleVersion)
+    throw new Error('Update the app to open this match.');
+  const settings = parseSettings(JSON.parse(String(match.settings_json)));
   const playerRows = await database.getAllAsync<unknown>(
     'SELECT * FROM players WHERE match_id = ? ORDER BY seat',
     id,
@@ -122,9 +125,9 @@ export async function getMatch(
       round.rule_version !== match.rule_version ||
       typeof round.inputs_json !== 'string'
     )
-      throw new Error('Saved round uses an unsupported scoring rule version.');
+      throw new Error('Update the app to open this match.');
     const input = parseRoundInput(JSON.parse(round.inputs_json));
-    scoreRound(input, String(match.rule_version));
+    scoreRound(input, String(match.rule_version), settings);
     validateRoundPlayers(players, input);
     return {
       id: positiveId(round.id),
@@ -134,10 +137,11 @@ export async function getMatch(
   });
   const savedMatch = {
     id: positiveId(match.id),
+    settings,
     title:
       typeof match.title === 'string' && match.title.trim()
         ? match.title
-        : `Match ${match.id}`,
+        : defaultMatchTitle(new Date(String(match.created_at))),
     ruleVersion: String(match.rule_version),
     createdAt: timestamp(match.created_at),
     finishedAt:
@@ -198,7 +202,7 @@ export async function saveRound(
   const canonicalInput = parseRoundInput(input);
   await database.withExclusiveTransactionAsync(async (transaction) => {
     const match = await requireActiveMatch(transaction, matchId);
-    scoreRound(canonicalInput, match.ruleVersion);
+    scoreRound(canonicalInput, match.ruleVersion, match.settings);
     validateRoundPlayers(match.players, canonicalInput);
     const nextRounds =
       roundId === undefined
@@ -264,6 +268,7 @@ export async function setMatchFinished(
 
 export function matchTotals(match: {
   ruleVersion?: string;
+  settings?: MatchSettings;
   players: readonly SavedPlayer[];
   rounds: readonly { input: MarriageRoundInput }[];
 }) {
@@ -271,7 +276,8 @@ export function matchTotals(match: {
   for (const round of match.rounds) {
     for (const score of scoreRound(
       round.input,
-      match.ruleVersion ?? marriageRuleVersion,
+      match.ruleVersion ?? currentRuleVersion,
+      match.settings ?? defaultSettings,
     )) {
       const total = (totals.get(score.playerId) ?? 0) + score.points;
       if (!Number.isSafeInteger(total))
@@ -279,5 +285,14 @@ export function matchTotals(match: {
       totals.set(score.playerId, total);
     }
   }
+  const rate = match.settings?.moneyRate;
+  if (
+    rate !== null &&
+    rate !== undefined &&
+    [...totals.values()].some(
+      (total) => !Number.isSafeInteger(total * Math.round(rate * 100)),
+    )
+  )
+    throw new Error('The Rs amount is too large; use a lower rate.');
   return totals;
 }

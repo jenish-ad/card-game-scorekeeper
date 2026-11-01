@@ -1,11 +1,12 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { Text } from 'react-native';
+import { ActivityIndicator, Text } from 'react-native';
 import { useMatches } from '../../../features/marriage/useMatches';
 import { RoundEditor } from '../../../features/marriage/RoundEditor';
 import { Button } from '../../../ui/Primitives';
-import { Screen, styles } from '../../../ui/Screen';
+import { Screen, useStyles } from '../../../ui/Screen';
 
 export default function AddRoundScreen() {
+  const styles = useStyles();
   const { id, roundId } = useLocalSearchParams<{
     id: string;
     roundId?: string;
@@ -15,7 +16,7 @@ export default function AddRoundScreen() {
   if (loading)
     return (
       <Screen>
-        <Text style={styles.body}>Loading round…</Text>
+        <ActivityIndicator accessibilityLabel="Loading" />
       </Screen>
     );
   if (!match || error)
@@ -45,7 +46,7 @@ export default function AddRoundScreen() {
     );
   return (
     <>
-      <Stack.Screen options={{ title: round ? 'Edit Round' : 'Add Round' }} />
+      <Stack.Screen options={{ title: round ? 'Edit round' : 'Add round' }} />
       <RoundEditor
         key={`${match.id}-${roundId ?? 'new'}`}
         match={match}

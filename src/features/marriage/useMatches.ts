@@ -27,13 +27,9 @@ export function useMatches(id?: number) {
             setLoading(false);
           }
         })
-        .catch((failure: unknown) => {
+        .catch(() => {
           if (!cancelled) {
-            setError(
-              failure instanceof Error
-                ? failure.message
-                : 'Could not read saved matches.',
-            );
+            setError('Could not load matches; try again.');
             setLoading(false);
           }
         });

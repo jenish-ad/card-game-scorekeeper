@@ -1,4 +1,52 @@
-export const marriageRuleVersion = 'pagat-base-v1';
+export const currentRuleVersion = 'marriage-v1';
+
+export interface MatchSettings {
+  seenFee: number;
+  unseenFee: number;
+  dubleeExtra: number;
+  moneyRate: number | null;
+}
+export const defaultSettings: Readonly<MatchSettings> = {
+  seenFee: 3,
+  unseenFee: 10,
+  dubleeExtra: 5,
+  moneyRate: null,
+};
+export function parseSettings(value: unknown): MatchSettings {
+  if (typeof value !== 'object' || value === null)
+    throw new Error('Enter valid match settings.');
+  const settings = value as Record<string, unknown>;
+  for (const key of ['seenFee', 'unseenFee', 'dubleeExtra']) {
+    const fee = settings[key];
+    if (typeof fee !== 'number' || !Number.isSafeInteger(fee) || fee < 0)
+      throw new Error('Enter fees as whole numbers of 0 or more.');
+  }
+  const rate = settings.moneyRate;
+  if (
+    rate !== null &&
+    (typeof rate !== 'number' ||
+      !Number.isFinite(rate) ||
+      rate <= 0 ||
+      !Number.isSafeInteger(Math.round(rate * 100)) ||
+      Math.abs(rate * 100 - Math.round(rate * 100)) > 0.000001)
+  )
+    throw new Error('Enter a positive Rs rate with up to two decimal places.');
+  return {
+    seenFee: Number(settings.seenFee),
+    unseenFee: Number(settings.unseenFee),
+    dubleeExtra: Number(settings.dubleeExtra),
+    moneyRate: rate as number | null,
+  };
+}
+export function scoreRound(
+  input: MarriageRoundInput,
+  ruleVersion = currentRuleVersion,
+  settings: MatchSettings = defaultSettings,
+): PlayerScore[] {
+  if (ruleVersion !== currentRuleVersion)
+    throw new Error('Update the app to open this match.');
+  return calculateMarriageRound(input, settings);
+}
 
 export interface MarriageRoundInput {
   winnerId: number;
@@ -13,15 +61,17 @@ export interface PlayerScore {
 
 export function validateMarriagePlayerCount(count: number) {
   if (!Number.isInteger(count) || count < 2 || count > 5) {
-    throw new Error('This Marriage preset requires 2 to 5 players.');
+    throw new Error('Choose 2 to 5 players.');
   }
 }
 
-// Settlement follows https://www.pagat.com/rummy/marriage.html#scoring.
+// Apply the user-approved Seen-only maal exchange and per-match finish fees.
 // Maal is the eligible total entered by the table, not a count of individual cards.
 export function calculateMarriageRound(
   input: MarriageRoundInput,
+  settings: MatchSettings = defaultSettings,
 ): PlayerScore[] {
+  const fees = parseSettings(settings);
   validateMarriagePlayerCount(input.players.length);
   const ids = new Set(input.players.map((player) => player.playerId));
   if (ids.size !== input.players.length || !ids.has(input.winnerId)) {
@@ -35,26 +85,31 @@ export function calculateMarriageRound(
       player.maal < 0 ||
       typeof player.seen !== 'boolean'
     ) {
-      throw new Error(
-        'Each player needs a valid ID, a nonnegative whole-number maal total, and seen status.',
-      );
+      throw new Error('Enter maal as a whole number of 0 or more.');
     }
   }
   if (
     typeof input.dubleeWin !== 'boolean' ||
     !input.players.find((player) => player.playerId === input.winnerId)?.seen
   ) {
-    throw new Error(
-      'The winner must have seen the joker. Choose a normal or dublee finish.',
-    );
+    throw new Error('The winner must be Seen.');
   }
-  const totalMaal = input.players.reduce((sum, player) => sum + player.maal, 0);
+  const totalMaal = input.players.reduce(
+    (sum, player) => sum + (player.seen ? player.maal : 0),
+    0,
+  );
   // Keep intermediate multiplication and accumulated payments exact as well.
-  const maximumFinishPayments = input.players.length * 15;
+  const maximumFinishPayments =
+    input.players.length *
+    (Math.max(fees.seenFee, fees.unseenFee) + fees.dubleeExtra);
   const safeTotal = Math.floor(
     (Number.MAX_SAFE_INTEGER - maximumFinishPayments) / input.players.length,
   );
-  if (!Number.isSafeInteger(totalMaal) || totalMaal > safeTotal) {
+  if (
+    !Number.isSafeInteger(maximumFinishPayments) ||
+    !Number.isSafeInteger(totalMaal) ||
+    totalMaal > safeTotal
+  ) {
     throw new Error('Maal totals are too large to calculate safely.');
   }
   let winnerPoints = 0;
@@ -63,9 +118,9 @@ export function calculateMarriageRound(
       return { playerId: player.playerId, points: 0 };
     const payment =
       totalMaal +
-      (player.seen ? 3 : 10) +
-      (input.dubleeWin ? 5 : 0) -
-      input.players.length * player.maal;
+      (player.seen ? fees.seenFee : fees.unseenFee) +
+      (input.dubleeWin ? fees.dubleeExtra : 0) -
+      input.players.length * (player.seen ? player.maal : 0);
     winnerPoints += payment;
     return { playerId: player.playerId, points: -payment };
   });

@@ -1,14 +1,15 @@
 {
-  "name": "card-game-scorekeeper",
+  "name": "marriage-scorekeeper",
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
-    "@expo-google-fonts/fraunces": "^0.4.1",
     "@expo-google-fonts/manrope": "^0.4.3",
+    "@expo/vector-icons": "^15.0.2",
     "expo": "~58.0.22",
     "expo-constants": "^58.0.14",
     "expo-dev-client": "~58.0.18",
     "expo-font": "^58.0.11",
+    "expo-haptics": "~58.0.7",
     "expo-linking": "^58.0.15",
     "expo-router": "~58.0.29",
     "expo-sqlite": "~58.0.15",

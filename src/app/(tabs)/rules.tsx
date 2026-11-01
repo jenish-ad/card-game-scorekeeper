@@ -1,82 +1,56 @@
 import { Text, View } from 'react-native';
-import { theme } from '../../theme';
-import { Chip, Score } from '../../ui/Primitives';
-import { Screen, styles } from '../../ui/Screen';
-
+import { Screen, useStyles } from '../../ui/Screen';
 export default function RulesScreen() {
+  const styles = useStyles();
   return (
     <Screen topSafeArea>
-      <Text style={styles.title}>Rules & About</Text>
-      <View style={[styles.card, { backgroundColor: theme.colors.primary }]}>
-        <Text style={[styles.eyebrow, { color: theme.colors.goldLight }]}>
-          Scoring preset
-        </Text>
-        <View style={styles.spread}>
-          <Text style={[styles.subtitle, { color: theme.colors.surface }]}>
-            ♧ Pagat base v1
-          </Text>
-          <Chip gold>Preset</Chip>
-        </View>
-      </View>
-      <Text style={styles.subtitle}>How points are calculated</Text>
+      <Text style={styles.title}>Rules</Text>
       <Text style={styles.body}>
-        The table counts each player’s maal. Enter it in the app, then select a
-        seen winner and the finish type.
+        For 2 to 5 players. Enter each player&apos;s maal and mark them Seen or
+        Unseen. The winner must be Seen. Unseen maal counts as 0.
+      </Text>
+      <Text style={styles.subtitle}>Scoring</Text>
+      <Text style={styles.body}>
+        For each opponent, multiply their counted maal by the number of players,
+        subtract the total Seen maal, then subtract their finish fee.
+      </Text>
+      <Text style={styles.body}>
+        The default finish fee is 3 for Seen players and 10 for Unseen players.
+        For a Dublee finish, each opponent pays an extra 5.
+      </Text>
+      <Text style={styles.body}>
+        The winner receives the opposite of all opponents&apos; combined points.
+        Every round totals 0. The winner can lose points if another player has
+        enough maal.
+      </Text>
+      <Text style={styles.body}>
+        You can change these fees and enable a Rs rate per point under Rules
+        when starting a match. Settings apply only to that match.
       </Text>
       <View style={styles.card}>
+        <Text style={styles.subtitle}>Example: 3 players</Text>
         <Text style={styles.body}>
-          1. Each player starts with their maal × number of players. Unseen
-          players’ maal counts as 0.
+          Sita wins with 5 maal (Seen). Ram has 2 maal (Seen). Hari is Unseen.
+          Total Seen maal is 7.
         </Text>
+        <Text style={styles.label}>Normal finish</Text>
         <Text style={styles.body}>
-          2. Subtract the total maal of all seen players.
+          Ram: 3 x 2 - 7 - 3 = -4{'\n'}Hari: 0 - 7 - 10 = -17{'\n'}Sita: +21
         </Text>
+        <Text style={styles.label}>Dublee finish</Text>
         <Text style={styles.body}>
-          3. Each non-winner also pays 3 points if seen, or 10 if unseen.
-        </Text>
-        <Text style={styles.body}>
-          4. The winner receives the opposite of the other players’ combined
-          points. Every round balances to 0.
+          Ram: -9{'\n'}Hari: -22{'\n'}Sita: +31
         </Text>
       </View>
-      <View style={[styles.card, { backgroundColor: theme.colors.surfaceAlt }]}>
-        <Text style={styles.label}>Dublee rule not configured</Text>
-        <Text style={styles.body}>
-          The Dublee adjustment has not been defined. Normal rounds can be
-          scored and saved.
-        </Text>
-      </View>
-      <View style={styles.card}>
-        <Text style={styles.eyebrow}>Worked example · 3 players</Text>
-        <Text style={styles.body}>
-          Sita wins normally. Total seen maal = 5 + 2 = 7.
-        </Text>
-        {[
-          { name: 'Sita', detail: '5 maal · Seen · Winner', points: 21 },
-          { name: 'Ram', detail: '2 maal · Seen', points: -4 },
-          { name: 'Hari', detail: '0 maal · Unseen', points: -17 },
-        ].map((player) => (
-          <View key={player.name} style={styles.spread}>
-            <View>
-              <Text style={styles.label}>{player.name}</Text>
-              <Text style={styles.body}>{player.detail}</Text>
-            </View>
-            <Score compact value={player.points} />
-          </View>
-        ))}
-        <Text style={[styles.body, { fontVariant: ['tabular-nums'] }]}>
-          Ram: 3 × 2 − 7 − 3 = −4{'\n'}Hari: 3 × 0 − 7 − 10 = −17{'\n'}Sita:
-          −(−4 + −17) = +21
-        </Text>
-      </View>
+      <Text style={styles.subtitle}>Settle up</Text>
       <Text style={styles.body}>
-        Matches saved with the original preset retain their original scoring,
-        including Dublee. They are never recalculated using the revised rules.
+        With a money rate enabled, totals also show Rs amounts. Settle up
+        matches the largest remaining payments to reduce transfers. Share result
+        opens your device&apos;s share sheet.
       </Text>
-      <View style={styles.divider} />
-      <Text style={styles.label}>Your matches are stored on this device.</Text>
-      <Text style={styles.body}>
-        Backup and cloud sync are not currently available.
+      <Text style={styles.caption}>
+        Matches are stored on this device. Cloud sync and backup are
+        unavailable.
       </Text>
     </Screen>
   );
