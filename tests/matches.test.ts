@@ -3,7 +3,8 @@ import { mkdtempSync, rmdirSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { test } from 'node:test';
+import { test, expect } from '@jest/globals';
+import { currentRuleVersion } from '../src/scoring/pagatBaseV1';
 import {
   migrateDatabase,
   type MatchConnection,
@@ -75,6 +76,79 @@ function roundFor(players: { id: number }[]): MarriageRoundInput {
   };
 }
 
+test('migration from v1 preserves historical titles, unseen maal and Dublee calculations', async () => {
+  const database = new TestDatabase();
+  try {
+    await migrateDatabase(database);
+    const id = await createMatch(
+      database,
+      ['Sita', 'Ram', 'Hari'],
+      'Marriage Match',
+      'pagat-base-v1',
+    );
+    const match = (await getMatch(database, id))!;
+    const input = { ...roundFor(match.players), dubleeWin: true };
+    input.players[2].maal = 4;
+    await saveRound(database, id, input);
+    const before = [...matchTotals((await getMatch(database, id))!).values()];
+    // Recreate the installed v1 schema, which did not have match titles.
+    await database.execAsync(
+      'ALTER TABLE matches DROP COLUMN title; PRAGMA user_version = 1;',
+    );
+    await migrateDatabase(database);
+    const restored = (await getMatch(database, id))!;
+    expect(restored.title).toBe(`Match ${id}`);
+    expect(restored.ruleVersion).toBe('pagat-base-v1');
+    expect([...matchTotals(restored).values()]).toEqual(before);
+    expect(restored.rounds[0].input).toEqual(input);
+    await migrateDatabase(database);
+    expect((await getMatch(database, id))!.rounds).toEqual(restored.rounds);
+  } finally {
+    database.sqlite.close();
+  }
+});
+
+test('new matches persist titles, seat order, rule revision, and canonical unseen maal', async () => {
+  const database = new TestDatabase();
+  try {
+    await migrateDatabase(database);
+    const id = await createMatch(
+      database,
+      ['Hari', 'Sita', 'Ram'],
+      '  Sunday Evening Game  ',
+      currentRuleVersion,
+    );
+    let match = (await getMatch(database, id))!;
+    expect(match.title).toBe('Sunday Evening Game');
+    expect(match.players.map((player) => player.name)).toEqual([
+      'Hari',
+      'Sita',
+      'Ram',
+    ]);
+    const input = roundFor(match.players);
+    input.players[2].maal = 9;
+    await saveRound(database, id, input);
+    match = (await getMatch(database, id))!;
+    expect(match.rounds[0].input.players[2].maal).toBe(9);
+    expect([...matchTotals(match).values()]).toEqual([21, -4, -17]);
+    await assert.rejects(
+      saveRound(database, id, { ...input, dubleeWin: true }),
+      /Dublee rule not configured/,
+    );
+    expect((await getMatch(database, id))!.rounds).toHaveLength(1);
+    await assert.rejects(
+      createMatch(database, ['A', 'B'], '   ', currentRuleVersion),
+      /match title/,
+    );
+    await assert.rejects(
+      createMatch(database, ['A', 'B'], 'x'.repeat(81), currentRuleVersion),
+      /match title/,
+    );
+  } finally {
+    database.sqlite.close();
+  }
+});
+
 test('migrations are repeatable, preserve records and reject newer schemas', async () => {
   const database = new TestDatabase();
   try {
@@ -82,7 +156,7 @@ test('migrations are repeatable, preserve records and reject newer schemas', asy
     const id = await createMatch(database, ['Sita', 'Ram']);
     await migrateDatabase(database);
     assert.equal((await getMatch(database, id))?.players[0].name, 'Sita');
-    await database.execAsync('PRAGMA user_version = 2');
+    await database.execAsync('PRAGMA user_version = 3');
     await assert.rejects(migrateDatabase(database), /newer app/);
     assert.equal(
       (
@@ -90,7 +164,7 @@ test('migrations are repeatable, preserve records and reject newer schemas', asy
           'PRAGMA user_version',
         )
       )?.user_version,
-      2,
+      3,
     );
   } finally {
     database.sqlite.close();
@@ -133,7 +207,7 @@ test('match and ordered players roll back together when a player write fails', a
       /disk write failed/,
     );
     assert.deepEqual(await listMatches(database), []);
-    assert.deepEqual(await database.getAllAsync('SELECT * FROM players'), []);
+    expect(await database.getAllAsync('SELECT * FROM players')).toEqual([]);
   } finally {
     database.sqlite.close();
   }
@@ -146,12 +220,18 @@ test('saved rounds survive reopening, correct/delete recalculate, and finished m
   try {
     await migrateDatabase(database);
     assert.deepEqual(await listMatches(database), []);
-    const id = await createMatch(database, [' Sita ', 'Ram', 'Hari']);
-    const initial = (await getMatch(database, id))!;
-    assert.deepEqual(
-      initial.players.map((player) => player.name),
-      ['Sita', 'Ram', 'Hari'],
+    const id = await createMatch(
+      database,
+      [' Sita ', 'Ram', 'Hari'],
+      'Marriage Match',
+      'pagat-base-v1',
     );
+    const initial = (await getMatch(database, id))!;
+    expect(initial.players.map((player) => player.name)).toEqual([
+      'Sita',
+      'Ram',
+      'Hari',
+    ]);
     const input = roundFor(initial.players);
     await saveRound(database, id, input);
     await saveRound(database, id, { ...input, dubleeWin: true });
@@ -159,7 +239,7 @@ test('saved rounds survive reopening, correct/delete recalculate, and finished m
     database = new TestDatabase(filename);
     await migrateDatabase(database);
     let saved = (await getMatch(database, id))!;
-    assert.deepEqual(saved.rounds[0].input, input);
+    expect(saved.rounds[0].input).toEqual(input);
     assert.deepEqual([...matchTotals(saved).values()], [52, -13, -39]);
     await saveRound(
       database,
@@ -230,7 +310,12 @@ test('invalid names, rule versions and corrupt round inputs fail explicitly', as
       createMatch(database, ['Sita', 'sita']),
       /different name/,
     );
-    const id = await createMatch(database, ['Sita', 'Ram']);
+    const id = await createMatch(
+      database,
+      ['Sita', 'Ram'],
+      'Marriage Match',
+      'pagat-base-v1',
+    );
     const match = (await getMatch(database, id))!;
     await saveRound(database, id, roundFor(match.players));
     await database.runAsync(

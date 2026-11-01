@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Card Game Scorekeeper",
+    "name": "Marriage Scorekeeper",
     "slug": "card-game-scorekeeper",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,15 +11,21 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FAF6EC",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      "expo-sqlite"
+    ],
     "scheme": "card-game-scorekeeper",
-    "platforms": ["android", "ios"]
+    "platforms": [
+      "android",
+      "ios"
+    ]
   }
 }

@@ -1,277 +1,275 @@
-import { Link, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import {
-  deleteRound,
-  getMatch,
   matchTotals,
-  saveRound,
   setMatchFinished,
-  type SavedMatch,
-  type SavedRound,
 } from '../../../features/marriage/matches';
-import { RoundEditor } from '../../../features/marriage/RoundEditor';
-import { calculateMarriageRound } from '../../../features/marriage/scoring';
+import { useMatches } from '../../../features/marriage/useMatches';
+import { useRoundDraft } from '../../../features/marriage/RoundDraftProvider';
+import { scoreRound } from '../../../scoring/pagatBaseV1';
 import { useMatchDatabase } from '../../../storage/MatchStorageProvider';
+import { theme } from '../../../theme';
+import { Avatar, Button, Chip, Score } from '../../../ui/Primitives';
 import { Screen, styles } from '../../../ui/Screen';
 
-export default function MatchScreen() {
+export default function ScoreboardScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const database = useMatchDatabase();
-  const [match, setMatch] = useState<SavedMatch | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [revision, setRevision] = useState(0);
-  const [editingRound, setEditingRound] = useState<SavedRound | 'new' | null>(
-    null,
-  );
+  const { match, loading, error, reload } = useMatches(Number(id));
+  const { setDraft } = useRoundDraft();
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    const matchId =
-      typeof id === 'string' && /^\d+$/.test(id) ? Number(id) : NaN;
-    getMatch(database, matchId)
-      .then((saved) => {
-        if (!cancelled) {
-          setMatch(saved);
-          setLoading(false);
-        }
-      })
-      .catch((failure: unknown) => {
-        if (!cancelled) {
-          setError(
-            failure instanceof Error
-              ? failure.message
-              : 'Could not read this match.',
-          );
-          setLoading(false);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [database, id, revision]);
-
-  function reload() {
-    setLoading(true);
-    setError(null);
-    setMatch(null);
-    setRevision((value) => value + 1);
-  }
-
-  async function changeMatch(operation: () => Promise<void>) {
-    if (busy) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await operation();
-      reload();
-    } catch (failure) {
-      setError(
-        failure instanceof Error
-          ? failure.message
-          : 'Could not save changes. Please try again.',
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  function confirmDelete(round: SavedRound) {
-    if (!match) return;
-    Alert.alert(
-      'Delete round?',
-      'This removes its saved inputs and recalculates the scoreboard. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete round',
-          style: 'destructive',
-          onPress: () =>
-            void changeMatch(() => deleteRound(database, match.id, round.id)),
-        },
-      ],
-    );
-  }
-
-  function confirmStatusChange() {
-    if (!match) return;
-    Alert.alert(
-      match.finishedAt ? 'Reopen match?' : 'Finish match?',
-      match.finishedAt
-        ? 'You will be able to add or correct rounds again.'
-        : 'The match will remain in history. Reopen it if you need to change rounds.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: match.finishedAt ? 'Reopen' : 'Finish match',
-          onPress: () =>
-            void changeMatch(() =>
-              setMatchFinished(database, match.id, !match.finishedAt),
-            ),
-        },
-      ],
-    );
-  }
-
+  const [writeError, setWriteError] = useState<string | null>(null);
   if (loading)
     return (
       <Screen>
         <Text style={styles.body}>Loading match…</Text>
       </Screen>
     );
-  if (!match)
+  if (!match || error)
     return (
       <Screen>
         <Text accessibilityRole="alert" style={styles.error}>
-          {error ?? 'This match was not found.'}
+          {error ?? 'Match not found.'}
         </Text>
-        <Pressable
-          accessibilityRole="button"
-          style={styles.button}
-          onPress={reload}
-        >
-          <Text style={styles.buttonText}>Retry match</Text>
-        </Pressable>
-        <Link href="/history">Return to saved matches</Link>
+        <Button label="Retry" onPress={reload} />
       </Screen>
     );
-  if (editingRound)
-    return (
-      <Screen>
-        <RoundEditor
-          key={editingRound === 'new' ? 'new' : editingRound.id}
-          match={match}
-          round={editingRound === 'new' ? undefined : editingRound}
-          onCancel={() => setEditingRound(null)}
-          onSave={async (input) => {
-            await saveRound(
-              database,
-              match.id,
-              input,
-              editingRound === 'new' ? undefined : editingRound.id,
-            );
-            setEditingRound(null);
-            reload();
-          }}
-        />
-      </Screen>
-    );
-
   const totals = matchTotals(match);
+  const ranked = [...match.players].sort(
+    (a, b) => totals.get(b.id)! - totals.get(a.id)!,
+  );
+  function changeStatus() {
+    if (!match || busy) return;
+    Alert.alert(
+      match.finishedAt ? 'Reopen match?' : 'Finish Match?',
+      match.finishedAt
+        ? 'You can add and edit rounds again.'
+        : 'Your match will be saved in history. You can reopen it later.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: match.finishedAt ? 'Reopen Match' : 'Finish Match',
+          onPress: () => {
+            setBusy(true);
+            setWriteError(null);
+            void setMatchFinished(database, match.id, !match.finishedAt)
+              .then(reload)
+              .catch((failure: unknown) =>
+                setWriteError(
+                  failure instanceof Error
+                    ? failure.message
+                    : 'Could not update match.',
+                ),
+              )
+              .finally(() => setBusy(false));
+          },
+        },
+      ],
+    );
+  }
+  const openRound = (roundId: number) =>
+    router.push({
+      pathname: '/marriage/preview/[id]',
+      params: { id: match.id, roundId },
+    });
   return (
-    <Screen>
-      <Text accessibilityRole="header" style={styles.title}>
-        Match {match.id}
-      </Text>
-      <Text style={styles.body}>
-        {match.finishedAt ? 'Finished' : 'In progress'} ·{' '}
-        {new Date(match.createdAt).toLocaleDateString()} · Pagat base v1
-      </Text>
-      <Text accessibilityRole="header" style={styles.label}>
-        Scoreboard · {match.rounds.length} rounds
-      </Text>
-      {match.players.map((player) => (
-        <Text key={player.id} style={styles.body}>
-          {player.name}: {totals.get(player.id)} points
-        </Text>
-      ))}
-      {!match.finishedAt && (
-        <Pressable
-          accessibilityRole="button"
-          disabled={busy}
-          style={styles.button}
-          onPress={() => setEditingRound('new')}
-        >
-          <Text style={styles.buttonText}>Enter next round</Text>
-        </Pressable>
-      )}
-      <Text accessibilityRole="header" style={styles.label}>
-        Round history
-      </Text>
-      {match.rounds.length === 0 && (
-        <Text style={styles.body}>
-          No rounds saved yet. Enter a round to begin scoring.
-        </Text>
-      )}
-      {match.rounds.map((round, index) => (
-        <View key={round.id} style={{ gap: 12 }}>
-          <Text style={styles.label}>
-            Round {index + 1} · {round.input.dubleeWin ? 'Dublee' : 'Normal'}{' '}
-            finish
-          </Text>
-          <Text style={styles.body}>
-            Winner:{' '}
-            {
-              match.players.find((player) => player.id === round.input.winnerId)
-                ?.name
-            }
-          </Text>
-          {calculateMarriageRound(round.input).map((score) => {
-            const input = round.input.players.find(
-              (player) => player.playerId === score.playerId,
-            )!;
-            return (
-              <Text key={score.playerId} style={styles.body}>
-                {
-                  match.players.find((player) => player.id === score.playerId)
-                    ?.name
-                }
-                : {input.maal} maal · {input.seen ? 'Seen' : 'Unseen'} ·{' '}
-                {score.points > 0 ? '+' : ''}
-                {score.points} points
-              </Text>
-            );
-          })}
+    <Screen
+      footer={
+        <>
+          <Button
+            secondary
+            label={match.finishedAt ? 'Reopen Match' : 'Finish Match'}
+            disabled={busy}
+            onPress={changeStatus}
+          />
           {!match.finishedAt && (
-            <>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Correct round ${index + 1}`}
-                disabled={busy}
-                style={styles.button}
-                onPress={() => setEditingRound(round)}
-              >
-                <Text style={styles.buttonText}>Correct round</Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Delete round ${index + 1}`}
-                disabled={busy}
-                style={styles.button}
-                onPress={() => confirmDelete(round)}
-              >
-                <Text style={styles.buttonText}>Delete round</Text>
-              </Pressable>
-            </>
+            <Button
+              label="＋ Add Round"
+              disabled={busy}
+              onPress={() => {
+                setDraft(null);
+                router.push(`/marriage/round/${match.id}`);
+              }}
+            />
           )}
+        </>
+      }
+    >
+      <Text style={styles.title}>{match.title}</Text>
+      <View style={styles.row}>
+        <Chip>{match.finishedAt ? 'Finished' : '● Active'}</Chip>
+        <Text style={styles.body}>
+          {match.rounds.length} rounds · Pagat base v1
+        </Text>
+      </View>
+      <Text style={styles.eyebrow}>Standings</Text>
+      <View style={styles.card}>
+        {ranked.map((player, index) => (
+          <View
+            key={player.id}
+            style={[styles.spread, { paddingVertical: theme.spacing.sm }]}
+          >
+            <View style={styles.row}>
+              <Text style={styles.eyebrow}>{index + 1}</Text>
+              <Avatar name={player.name} seat={player.seat} />
+              <View>
+                <Text style={styles.label}>{player.name}</Text>
+                <Text style={styles.body}>
+                  {index === 0 && match.rounds.length
+                    ? 'Leading'
+                    : `Seat ${player.seat + 1}`}
+                </Text>
+              </View>
+            </View>
+            <Score value={totals.get(player.id)!} />
+          </View>
+        ))}
+      </View>
+      <View style={styles.spread}>
+        <Text style={styles.eyebrow}>Rounds</Text>
+        <Text style={[styles.body, { fontSize: 11 }]}>
+          Tap a round for details
+        </Text>
+      </View>
+      {!match.rounds.length ? (
+        <View style={styles.card}>
+          <Text style={styles.subtitle}>Let the first round begin</Text>
+          <Text style={styles.body}>Add a round to start your scoreboard.</Text>
         </View>
-      ))}
-      {error && (
+      ) : (
+        <View
+          style={[
+            styles.card,
+            { padding: 0, overflow: 'hidden', flexDirection: 'row', gap: 0 },
+          ]}
+        >
+          <View style={{ width: 68, backgroundColor: theme.colors.surfaceAlt }}>
+            <View
+              style={{
+                height: 52,
+                justifyContent: 'center',
+                paddingHorizontal: theme.spacing.md,
+              }}
+            >
+              <Text style={styles.eyebrow}>Round</Text>
+            </View>
+            {match.rounds.map((round, index) => (
+              <Pressable
+                key={round.id}
+                accessibilityRole="button"
+                accessibilityLabel={`Round ${index + 1} details`}
+                onPress={() => openRound(round.id)}
+                style={{
+                  height: 72,
+                  padding: theme.spacing.md,
+                  justifyContent: 'center',
+                  borderTopWidth: 1,
+                  borderColor: theme.colors.border,
+                }}
+              >
+                <Text style={styles.label}>{index + 1} ›</Text>
+              </Pressable>
+            ))}
+            <View
+              style={{
+                height: 72,
+                padding: theme.spacing.md,
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={styles.label}>Total</Text>
+            </View>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={match.players.length >= 4}
+            style={{ flex: 1 }}
+          >
+            <View>
+              <View style={{ flexDirection: 'row', height: 52 }}>
+                {match.players.map((player) => (
+                  <View
+                    key={player.id}
+                    style={{
+                      width: 88,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text style={styles.label} numberOfLines={1}>
+                      {player.name}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+              {match.rounds.map((round, index) => (
+                <Pressable
+                  key={round.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Round ${index + 1} details`}
+                  onPress={() => openRound(round.id)}
+                  style={{
+                    flexDirection: 'row',
+                    height: 72,
+                    borderTopWidth: 1,
+                    borderColor: theme.colors.border,
+                  }}
+                >
+                  {match.players.map((player) => (
+                    <View
+                      key={player.id}
+                      style={{
+                        width: 88,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Score
+                        compact
+                        value={
+                          scoreRound(round.input, match.ruleVersion).find(
+                            (entry) => entry.playerId === player.id,
+                          )!.points
+                        }
+                      />
+                    </View>
+                  ))}
+                </Pressable>
+              ))}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  height: 72,
+                  backgroundColor: theme.colors.surfaceAlt,
+                }}
+              >
+                {match.players.map((player) => (
+                  <View
+                    key={player.id}
+                    style={{
+                      width: 88,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Score compact value={totals.get(player.id)!} />
+                  </View>
+                ))}
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+      )}
+      <Text style={styles.body}>
+        All points balance to 0. Scores are recalculated from saved rounds.
+      </Text>
+      {writeError && (
         <Text accessibilityRole="alert" style={styles.error}>
-          {error}
+          {writeError}
         </Text>
       )}
-      <Pressable
-        accessibilityRole="button"
-        disabled={busy}
-        style={styles.button}
-        onPress={confirmStatusChange}
-      >
-        <Text style={styles.buttonText}>
-          {busy
-            ? 'Saving changes…'
-            : match.finishedAt
-              ? 'Reopen match'
-              : 'Finish match'}
-        </Text>
-      </Pressable>
-      <Link href="/history" asChild>
-        <Pressable accessibilityRole="button" style={styles.button}>
-          <Text style={styles.buttonText}>All saved matches</Text>
-        </Pressable>
-      </Link>
     </Screen>
   );
 }

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
+import { test } from '@jest/globals';
 import { validatePlayerNames } from '../src/features/marriage/playerNames';
 
 test('trims seating-order names without changing the supplied draft', () => {

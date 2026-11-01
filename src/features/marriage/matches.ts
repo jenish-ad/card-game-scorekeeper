@@ -1,4 +1,5 @@
 import type { MatchConnection, MatchDatabase } from '../../storage/database';
+import { currentRuleVersion, scoreRound } from '../../scoring/pagatBaseV1';
 import { validatePlayerNames } from './playerNames';
 import {
   calculateMarriageRound,
@@ -20,6 +21,8 @@ export interface SavedRound {
 }
 export interface SavedMatch {
   id: number;
+  title: string;
+  ruleVersion: string;
   createdAt: string;
   finishedAt: string | null;
   players: SavedPlayer[];
@@ -45,17 +48,24 @@ function timestamp(value: unknown): string {
 export async function createMatch(
   database: MatchDatabase,
   names: readonly string[],
+  title = 'Marriage Match',
+  ruleVersion = currentRuleVersion,
 ): Promise<number> {
+  if (!title.trim() || title.trim().length > 80)
+    throw new Error('Enter a match title of 1 to 80 characters.');
+  if (![marriageRuleVersion, currentRuleVersion].includes(ruleVersion))
+    throw new Error('Unsupported scoring rule version.');
   const validation = validatePlayerNames(names);
   if (!validation.ok) throw new Error(validation.message);
   validateMarriagePlayerCount(validation.playerNames.length);
   let matchId = 0;
   await database.withExclusiveTransactionAsync(async (transaction) => {
     const result = await transaction.runAsync(
-      'INSERT INTO matches (game, rule_version, created_at) VALUES (?, ?, ?)',
+      'INSERT INTO matches (game, rule_version, created_at, title) VALUES (?, ?, ?, ?)',
       'marriage',
-      marriageRuleVersion,
+      ruleVersion,
       new Date().toISOString(),
+      title.trim(),
     );
     matchId = result.lastInsertRowId;
     for (const [seat, name] of validation.playerNames.entries()) {
@@ -81,7 +91,11 @@ export async function getMatch(
   );
   if (!storedMatch) return null;
   const match = record(storedMatch);
-  if (match.game !== 'marriage' || match.rule_version !== marriageRuleVersion)
+  if (
+    match.game !== 'marriage' ||
+    (match.rule_version !== marriageRuleVersion &&
+      match.rule_version !== currentRuleVersion)
+  )
     throw new Error(
       'This match uses an unsupported game or scoring rule version.',
     );
@@ -105,11 +119,12 @@ export async function getMatch(
   const rounds = roundRows.map((row) => {
     const round = record(row);
     if (
-      round.rule_version !== marriageRuleVersion ||
+      round.rule_version !== match.rule_version ||
       typeof round.inputs_json !== 'string'
     )
       throw new Error('Saved round uses an unsupported scoring rule version.');
     const input = parseRoundInput(JSON.parse(round.inputs_json));
+    scoreRound(input, String(match.rule_version));
     validateRoundPlayers(players, input);
     return {
       id: positiveId(round.id),
@@ -119,6 +134,11 @@ export async function getMatch(
   });
   const savedMatch = {
     id: positiveId(match.id),
+    title:
+      typeof match.title === 'string' && match.title.trim()
+        ? match.title
+        : `Match ${match.id}`,
+    ruleVersion: String(match.rule_version),
     createdAt: timestamp(match.created_at),
     finishedAt:
       match.finished_at === null ? null : timestamp(match.finished_at),
@@ -178,6 +198,7 @@ export async function saveRound(
   const canonicalInput = parseRoundInput(input);
   await database.withExclusiveTransactionAsync(async (transaction) => {
     const match = await requireActiveMatch(transaction, matchId);
+    scoreRound(canonicalInput, match.ruleVersion);
     validateRoundPlayers(match.players, canonicalInput);
     const nextRounds =
       roundId === undefined
@@ -190,7 +211,7 @@ export async function saveRound(
       const result = await transaction.runAsync(
         'UPDATE rounds SET inputs_json = ?, rule_version = ? WHERE id = ? AND match_id = ?',
         JSON.stringify(canonicalInput),
-        marriageRuleVersion,
+        match.ruleVersion,
         positiveId(roundId),
         matchId,
       );
@@ -200,7 +221,7 @@ export async function saveRound(
       await transaction.runAsync(
         'INSERT INTO rounds (match_id, rule_version, inputs_json, created_at) VALUES (?, ?, ?, ?)',
         matchId,
-        marriageRuleVersion,
+        match.ruleVersion,
         JSON.stringify(canonicalInput),
         new Date().toISOString(),
       );
@@ -242,12 +263,16 @@ export async function setMatchFinished(
 }
 
 export function matchTotals(match: {
+  ruleVersion?: string;
   players: readonly SavedPlayer[];
   rounds: readonly { input: MarriageRoundInput }[];
 }) {
   const totals = new Map(match.players.map((player) => [player.id, 0]));
   for (const round of match.rounds) {
-    for (const score of calculateMarriageRound(round.input)) {
+    for (const score of scoreRound(
+      round.input,
+      match.ruleVersion ?? marriageRuleVersion,
+    )) {
       const total = (totals.get(score.playerId) ?? 0) + score.points;
       if (!Number.isSafeInteger(total))
         throw new Error('Match totals are too large to calculate safely.');

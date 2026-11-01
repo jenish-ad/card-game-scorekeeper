@@ -28,7 +28,7 @@ export async function migrateDatabase(database: MatchDatabase) {
     const row = await transaction.getFirstAsync<{ user_version: number }>(
       'PRAGMA user_version',
     );
-    if (!row || !Number.isInteger(row.user_version) || row.user_version > 1) {
+    if (!row || !Number.isInteger(row.user_version) || row.user_version > 2) {
       throw new Error(
         'This database needs a newer app version. No saved matches were changed.',
       );
@@ -60,6 +60,11 @@ export async function migrateDatabase(database: MatchDatabase) {
         CREATE INDEX rounds_by_match ON rounds(match_id, id);
         PRAGMA user_version = 1;
       `);
+    }
+    if (row.user_version < 2) {
+      await transaction.execAsync(
+        "ALTER TABLE matches ADD COLUMN title TEXT NOT NULL DEFAULT ''; PRAGMA user_version = 2;",
+      );
     }
   });
 }

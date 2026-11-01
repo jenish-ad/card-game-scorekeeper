@@ -1,0 +1,27 @@
+export const theme = {
+  colors: {
+    bg: '#FAF6EC',
+    surface: '#FFFDF8',
+    surfaceAlt: '#F3EEDF',
+    border: '#E4DCC8',
+    primary: '#1F4D3A',
+    primaryTint: '#E3EDE6',
+    gold: '#B8913A',
+    goldLight: '#E9D49A',
+    text: '#1C211D',
+    textMuted: '#5E6359',
+    gain: '#1E6B45',
+    loss: '#A33A2C',
+    zero: '#3C423B',
+  },
+  radius: { card: 20, button: 18, chip: 999 },
+  spacing: { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24 },
+  fonts: {
+    title: 'Fraunces_600SemiBold',
+    body: 'Manrope_400Regular',
+    medium: 'Manrope_500Medium',
+    bold: 'Manrope_700Bold',
+  },
+  touchTarget: 44,
+  buttonHeight: 56,
+} as const;
