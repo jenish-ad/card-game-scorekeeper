@@ -4,11 +4,11 @@ An offline Android and iPhone scorekeeper for the Nepali card game Marriage. Cre
 
 ## Screenshots
 
-Local Android emulator captures are kept outside version control and excluded from source archives.
+Android emulator captures; documentation images are included with source.
 
-| Home                          | Round entry                                       | Standings                                           | Dark mode                                     |
-| ----------------------------- | ------------------------------------------------- | --------------------------------------------------- | --------------------------------------------- |
-| ![Home](screenshots/home.png) | ![Five-player round](screenshots/round-entry.png) | ![Standings and totals](screenshots/scoreboard.png) | ![Dark mode](screenshots/dark-scoreboard.png) |
+| Home                          | Round entry                                       | Standings                                           |
+| ----------------------------- | ------------------------------------------------- | --------------------------------------------------- |
+| ![Home](docs/images/home.png) | ![Five-player round](docs/images/round-entry.png) | ![Standings and totals](docs/images/scoreboard.png) |
 
 ## Features
 
@@ -58,7 +58,7 @@ Checks cover formatting, lint, strict types, scoring, settings, SQLite migration
 git archive --format=zip -o marriage-scorekeeper.zip HEAD
 ```
 
-This exports the committed revision. Generated native folders, dependencies, Expo caches, bundle output, screenshots and logs are excluded. Keep screenshots local; capture instructions are in the development notes.
+This exports the committed revision. Generated native folders, dependencies, Expo caches, bundle output, temporary captures and logs are excluded. Keep screenshots local; capture instructions are in the development notes.
 
 ## License
 

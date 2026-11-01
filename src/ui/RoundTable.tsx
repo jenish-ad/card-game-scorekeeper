@@ -4,6 +4,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
   type ViewStyle,
 } from 'react-native';
 import { useState } from 'react';
@@ -22,10 +23,16 @@ export function RoundTable({
 }) {
   const theme = useTheme();
   const styles = useStyles();
+  const { fontScale } = useWindowDimensions();
+  const rowHeight = Math.ceil(48 * Math.max(1, fontScale));
+  const rowSize = { height: rowHeight };
   const [width, setWidth] = useState(0);
-  const available = Math.max(0, width - 58);
-  const fits = available / match.players.length >= 64;
-  const column: ViewStyle = fits ? { flex: 1 } : { width: 80 };
+  const roundWidth = 58 * Math.max(1, fontScale);
+  const available = Math.max(0, width - roundWidth);
+  const fits = available / match.players.length >= 64 * Math.max(1, fontScale);
+  const column: ViewStyle = fits
+    ? { flex: 1 }
+    : { width: 80 * Math.max(1, fontScale) };
   const totals = matchTotals(match);
   const totalStyle = {
     backgroundColor: theme.colors.surfaceAlt,
@@ -33,9 +40,9 @@ export function RoundTable({
   };
   const columns = (
     <View style={fits ? local.fill : undefined}>
-      <View style={local.row}>
+      <View style={[local.row, rowSize]}>
         {match.players.map((player) => (
-          <View key={player.id} style={[local.cell, column]}>
+          <View key={player.id} style={[local.cell, rowSize, column]}>
             <Text numberOfLines={1} style={styles.label}>
               {player.name}
             </Text>
@@ -56,12 +63,13 @@ export function RoundTable({
             onPress={() => openRound(round.id)}
             style={[
               local.row,
+              rowSize,
               local.border,
               { borderColor: theme.colors.border },
             ]}
           >
             {match.players.map((player) => (
-              <View key={player.id} style={[local.cell, column]}>
+              <View key={player.id} style={[local.cell, rowSize, column]}>
                 <Score
                   compact
                   value={
@@ -74,9 +82,9 @@ export function RoundTable({
           </Pressable>
         );
       })}
-      <View style={[local.row, local.total, totalStyle]}>
+      <View style={[local.row, rowSize, local.total, totalStyle]}>
         {match.players.map((player) => (
-          <View key={player.id} style={[local.cell, column]}>
+          <View key={player.id} style={[local.cell, rowSize, column]}>
             <Score compact value={totals.get(player.id) ?? 0} />
           </View>
         ))}
@@ -90,11 +98,11 @@ export function RoundTable({
     >
       <View
         style={[
-          local.roundColumn,
+          { width: roundWidth },
           { backgroundColor: theme.colors.surfaceAlt },
         ]}
       >
-        <View style={local.cell}>
+        <View style={[local.cell, rowSize]}>
           <Text style={styles.caption}>Round</Text>
         </View>
         {match.rounds.map((round, index) => (
@@ -105,6 +113,7 @@ export function RoundTable({
             onPress={() => openRound(round.id)}
             style={[
               local.cell,
+              rowSize,
               local.border,
               { borderColor: theme.colors.border },
             ]}
@@ -112,7 +121,7 @@ export function RoundTable({
             <Text style={styles.label}>{index + 1}</Text>
           </Pressable>
         ))}
-        <View style={[local.cell, local.total, totalStyle]}>
+        <View style={[local.cell, rowSize, local.total, totalStyle]}>
           <Text style={styles.label}>Total</Text>
         </View>
       </View>
@@ -134,7 +143,6 @@ const local = StyleSheet.create({
     overflow: 'hidden',
   },
   fill: { flex: 1 },
-  roundColumn: { width: 58 },
   row: { flexDirection: 'row', height: 48 },
   cell: {
     height: 48,

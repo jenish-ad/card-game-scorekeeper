@@ -85,9 +85,16 @@ test('share summary contains title, date, tied ranks, signed totals and optional
     ],
   };
   expect(resultSummary(match)).toContain('1. Sita: +21 (Rs 26.25)');
-  expect(resultSummary(match)).toContain('3. Hari: -17 (Rs -21.25)');
+  expect(resultSummary(match)).toContain('3. Hari: -17 (\u2212Rs 21.25)');
   expect(resultSummary(match)).toContain('1 Nov 2025');
   expect(
     resultSummary({ ...match, settings: { ...defaultSettings } }),
   ).not.toContain('Rs');
+});
+
+test('money formatting places the sign first and omits whole-rupee decimals', () => {
+  expect(formatMoney(-1500)).toBe('\u2212Rs 15');
+  expect(formatMoney(1500)).toBe('Rs 15');
+  expect(formatMoney(0)).toBe('Rs 0');
+  expect(formatMoney(-1525)).toBe('\u2212Rs 15.25');
 });

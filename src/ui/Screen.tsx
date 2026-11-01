@@ -1,4 +1,5 @@
-import type { PropsWithChildren, ReactNode } from 'react';
+import { useContext, type PropsWithChildren, type ReactNode } from 'react';
+import { HeaderHeightContext } from 'expo-router/react-navigation';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -21,6 +22,19 @@ export function Screen({
   compact?: boolean;
 }>) {
   const styles = useStyles();
+  // Storage initialization also renders Screen before a navigator exists.
+  const headerHeight = useContext(HeaderHeightContext) ?? 0;
+  const content = (
+    <>
+      <ScrollView
+        contentContainerStyle={[styles.content, compact && styles.compact]}
+        keyboardShouldPersistTaps="handled"
+      >
+        {children}
+      </ScrollView>
+      {footer && <View style={styles.footer}>{footer}</View>}
+    </>
+  );
   return (
     <SafeAreaView
       style={styles.fill}
@@ -30,19 +44,17 @@ export function Screen({
           : ['bottom', 'left', 'right']
       }
     >
-      <KeyboardAvoidingView
-        style={styles.fill}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={100}
-      >
-        <ScrollView
-          contentContainerStyle={[styles.content, compact && styles.compact]}
-          keyboardShouldPersistTaps="handled"
+      {Platform.OS === 'ios' ? (
+        <KeyboardAvoidingView
+          style={styles.fill}
+          behavior="padding"
+          keyboardVerticalOffset={headerHeight}
         >
-          {children}
-        </ScrollView>
-        {footer && <View style={styles.footer}>{footer}</View>}
-      </KeyboardAvoidingView>
+          {content}
+        </KeyboardAvoidingView>
+      ) : (
+        <View style={styles.fill}>{content}</View>
+      )}
     </SafeAreaView>
   );
 }

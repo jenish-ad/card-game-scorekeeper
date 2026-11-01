@@ -8,7 +8,8 @@ export function moneyAmount(points: number, rate: number): number {
   return amount;
 }
 export function formatMoney(paisa: number): string {
-  return `Rs ${(paisa / 100).toFixed(2)}`;
+  const amount = Math.abs(paisa) / 100;
+  return `${paisa < 0 ? '\u2212' : ''}Rs ${Number.isInteger(amount) ? amount : amount.toFixed(2)}`;
 }
 export interface Transfer {
   from: number;

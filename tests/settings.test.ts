@@ -1,5 +1,9 @@
-import { nextSeenPlayerIndex } from '../src/features/marriage/roundEntry';
-import { expect, test } from '@jest/globals';
+import {
+  nextSeenPlayerIndex,
+  setPlayerSeen,
+  savedRoundToken,
+} from '../src/features/marriage/roundEntry';
+import { expect, test, jest } from '@jest/globals';
 import {
   calculateMarriageRound,
   defaultSettings,
@@ -68,4 +72,24 @@ test('numeric Next skips disabled unseen players and ends at the last field', ()
   ];
   expect(nextSeenPlayerIndex(players, 0)).toBe(2);
   expect(nextSeenPlayerIndex(players, 2)).toBe(-1);
+});
+
+test('marking Unseen clears entered maal without changing the previous draft', () => {
+  const player = { playerId: 1, seen: true, maal: '12' };
+  const unseen = setPlayerSeen(player, false);
+  expect(unseen).toEqual({ playerId: 1, seen: false, maal: '0' });
+  expect(setPlayerSeen(unseen, true).maal).toBe('0');
+  expect(player.maal).toBe('12');
+});
+test('save notice tokens refresh when the same round is saved again', () => {
+  const clock = jest
+    .spyOn(Date, 'now')
+    .mockReturnValueOnce(1000)
+    .mockReturnValueOnce(2000);
+  try {
+    expect(savedRoundToken()).toBe('1000');
+    expect(savedRoundToken()).toBe('2000');
+  } finally {
+    clock.mockRestore();
+  }
 });

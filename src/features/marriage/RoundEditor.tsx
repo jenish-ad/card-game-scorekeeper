@@ -11,9 +11,13 @@ import {
   View,
 } from 'react-native';
 import { Icon } from '../../ui/Icon';
-import { nextSeenPlayerIndex } from './roundEntry';
+import {
+  nextSeenPlayerIndex,
+  setPlayerSeen,
+  savedRoundToken,
+} from './roundEntry';
 import { useTheme } from '../../useTheme';
-import { Avatar, Button, Score } from '../../ui/Primitives';
+import { Button, Score } from '../../ui/Primitives';
 import { Screen, useStyles } from '../../ui/Screen';
 import { useMatchDatabase } from '../../storage/MatchStorageProvider';
 import { useRoundDraft } from './RoundDraftProvider';
@@ -43,7 +47,7 @@ export function RoundEditor({
       );
       return {
         playerId: player.id,
-        maal: String(entry?.maal ?? 0),
+        maal: String(entry?.seen === false ? 0 : (entry?.maal ?? 0)),
         seen: entry?.seen ?? true,
       };
     }),
@@ -78,7 +82,7 @@ export function RoundEditor({
         params: {
           id: match.id,
           savedRound: String(number),
-          savedToken: String(number),
+          savedToken: savedRoundToken(),
         },
       });
     } catch {
@@ -175,6 +179,12 @@ export function RoundEditor({
           ))}
         </View>
       </View>
+      <View style={local.columnHeadings}>
+        <Text style={[styles.caption, styles.flexible]}>Player</Text>
+        <Text style={[styles.caption, local.maalHeading]}>Maal</Text>
+        <Text style={[styles.caption, local.seenHeading]}>Status</Text>
+        <Text style={[styles.caption, local.winnerHeading]}>Winner</Text>
+      </View>
       <View style={local.players}>
         {players.map((entry, index) => {
           const player = match.players[index];
@@ -193,7 +203,6 @@ export function RoundEditor({
                 },
               ]}
             >
-              <Avatar name={player.name} size={28} />
               <Text style={[styles.label, styles.flexible]} numberOfLines={1}>
                 {player.name}
               </Text>
@@ -245,12 +254,21 @@ export function RoundEditor({
                   setPlayers((current) =>
                     current.map((item) =>
                       item.playerId === player.id
-                        ? { ...item, seen: !item.seen }
+                        ? setPlayerSeen(item, !item.seen)
                         : item,
                     ),
                   )
                 }
-                style={local.seen}
+                style={[
+                  local.seen,
+                  {
+                    borderColor: theme.colors.border,
+                    backgroundColor: entry.seen
+                      ? theme.colors.surface
+                      : theme.colors.surfaceAlt,
+                    opacity: selected ? 0.55 : 1,
+                  },
+                ]}
               >
                 <Text style={styles.caption}>
                   {entry.seen ? 'Seen' : 'Unseen'}
@@ -276,7 +294,6 @@ export function RoundEditor({
                   name={selected ? 'radio-button-on' : 'radio-button-off'}
                   size={20}
                 />
-                <Text style={styles.caption}>Winner</Text>
               </Pressable>
             </View>
           );
@@ -302,6 +319,15 @@ const local = StyleSheet.create({
   footer: { gap: 10 },
   results: { flexDirection: 'row', gap: 6 },
   result: { flex: 1, alignItems: 'center', gap: 4 },
+  columnHeadings: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 9,
+  },
+  maalHeading: { width: 48, textAlign: 'center' },
+  seenHeading: { width: 64, textAlign: 'center' },
+  winnerHeading: { width: 44, textAlign: 'center' },
   players: { gap: 6 },
   player: {
     minHeight: 68,
@@ -329,7 +355,9 @@ const local = StyleSheet.create({
     borderRadius: 10,
   },
   seen: {
-    minWidth: 50,
+    width: 64,
+    borderWidth: 1,
+    borderRadius: 8,
     minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',

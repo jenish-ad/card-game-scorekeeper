@@ -8,7 +8,7 @@ export default function HomeScreen() {
   const styles = useStyles();
   const router = useRouter();
   const { matches, loading, error, reload } = useMatches();
-  const active = matches.find((match) => !match.finishedAt);
+  const active = matches.filter((match) => !match.finishedAt);
   const recent = matches.filter((match) => match.finishedAt).slice(0, 3);
   return (
     <Screen topSafeArea>
@@ -22,9 +22,11 @@ export default function HomeScreen() {
           </Text>
           <Button label="Try again" onPress={reload} />
         </>
-      ) : active ? (
-        <MatchCard match={active} expanded />
-      ) : null}
+      ) : (
+        active.map((match) => (
+          <MatchCard key={match.id} match={match} expanded />
+        ))
+      )}
       <Button
         label="New match"
         onPress={() => router.push('/marriage/setup')}
