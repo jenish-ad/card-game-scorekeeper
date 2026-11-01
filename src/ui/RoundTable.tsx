@@ -1,3 +1,5 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { roundTableLayout } from './roundTableLayout';
 import {
   Pressable,
   ScrollView,
@@ -27,12 +29,12 @@ export function RoundTable({
   const rowHeight = Math.ceil(48 * Math.max(1, fontScale));
   const rowSize = { height: rowHeight };
   const [width, setWidth] = useState(0);
-  const roundWidth = 58 * Math.max(1, fontScale);
-  const available = Math.max(0, width - roundWidth);
-  const fits = available / match.players.length >= 64 * Math.max(1, fontScale);
-  const column: ViewStyle = fits
-    ? { flex: 1 }
-    : { width: 80 * Math.max(1, fontScale) };
+  const { roundWidth, minimumPlayerWidth, fits } = roundTableLayout(
+    width,
+    match.players.length,
+    fontScale,
+  );
+  const column: ViewStyle = fits ? { flex: 1 } : { width: minimumPlayerWidth };
   const totals = matchTotals(match);
   const totalStyle = {
     backgroundColor: theme.colors.surfaceAlt,
@@ -43,8 +45,12 @@ export function RoundTable({
       <View style={[local.row, rowSize]}>
         {match.players.map((player) => (
           <View key={player.id} style={[local.cell, rowSize, column]}>
-            <Text numberOfLines={1} style={styles.label}>
-              {player.name}
+            <Text
+              numberOfLines={1}
+              accessibilityLabel={player.name}
+              style={styles.label}
+            >
+              {player.name.slice(0, 6)}
             </Text>
           </View>
         ))}
@@ -102,8 +108,10 @@ export function RoundTable({
           { backgroundColor: theme.colors.surfaceAlt },
         ]}
       >
-        <View style={[local.cell, rowSize]}>
-          <Text style={styles.caption}>Round</Text>
+        <View style={[local.cell, rowSize, local.roundCell]}>
+          <Text numberOfLines={1} adjustsFontSizeToFit style={styles.caption}>
+            Round
+          </Text>
         </View>
         {match.rounds.map((round, index) => (
           <Pressable
@@ -114,6 +122,7 @@ export function RoundTable({
             style={[
               local.cell,
               rowSize,
+              local.roundCell,
               local.border,
               { borderColor: theme.colors.border },
             ]}
@@ -121,16 +130,40 @@ export function RoundTable({
             <Text style={styles.label}>{index + 1}</Text>
           </Pressable>
         ))}
-        <View style={[local.cell, rowSize, local.total, totalStyle]}>
-          <Text style={styles.label}>Total</Text>
+        <View
+          style={[
+            local.cell,
+            rowSize,
+            local.roundCell,
+            local.total,
+            totalStyle,
+          ]}
+        >
+          <Text numberOfLines={1} adjustsFontSizeToFit style={styles.label}>
+            Total
+          </Text>
         </View>
       </View>
       {fits ? (
         columns
       ) : (
-        <ScrollView horizontal style={local.fill}>
+        <ScrollView
+          horizontal
+          persistentScrollbar
+          showsHorizontalScrollIndicator
+          style={local.fill}
+        >
           {columns}
         </ScrollView>
+      )}
+      {!fits && (
+        <LinearGradient
+          pointerEvents="none"
+          colors={[`${theme.colors.surface}00`, theme.colors.surface]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={local.fade}
+        />
       )}
     </View>
   );
@@ -142,6 +175,7 @@ const local = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
   },
+  fade: { position: 'absolute', top: 0, bottom: 0, right: 0, width: 20 },
   fill: { flex: 1 },
   row: { flexDirection: 'row', height: 48 },
   cell: {
@@ -150,6 +184,7 @@ const local = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 4,
   },
+  roundCell: { paddingHorizontal: 0 },
   border: { borderTopWidth: 1 },
   total: { borderTopWidth: 2 },
 });

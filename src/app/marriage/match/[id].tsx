@@ -1,6 +1,6 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Share, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Share, Text } from 'react-native';
 import {
   deleteRound,
   setMatchFinished,
@@ -9,6 +9,7 @@ import { resultSummary } from '../../../features/marriage/settlement';
 import { useMatches } from '../../../features/marriage/useMatches';
 import { useRoundDraft } from '../../../features/marriage/RoundDraftProvider';
 import { useMatchDatabase } from '../../../storage/MatchStorageProvider';
+import { ScoreboardActions } from '../../../ui/ScoreboardActions';
 import { Button } from '../../../ui/Primitives';
 import { StandingsBoard } from '../../../ui/StandingsBoard';
 import { RoundTable } from '../../../ui/RoundTable';
@@ -103,12 +104,6 @@ export default function ScoreboardScreen() {
         !match.finishedAt ? (
           <>
             <Button
-              secondary
-              label="Undo last round"
-              disabled={busy || !match.rounds.length}
-              onPress={undo}
-            />
-            <Button
               label="Add round"
               disabled={busy}
               onPress={() => {
@@ -120,6 +115,24 @@ export default function ScoreboardScreen() {
         ) : undefined
       }
     >
+      <Stack.Screen
+        options={{
+          headerRight: () => (
+            <ScoreboardActions
+              finished={Boolean(match.finishedAt)}
+              canUndo={!match.finishedAt && match.rounds.length > 0}
+              busy={busy}
+              share={() => {
+                void Share.share({ message: resultSummary(match) }).catch(() =>
+                  setWriteError('Could not share the result; try again.'),
+                );
+              }}
+              changeStatus={changeStatus}
+              undo={undo}
+            />
+          ),
+        }}
+      />
       {savedRound && (
         <SavedRoundNotice
           key={savedToken}
@@ -147,14 +160,6 @@ export default function ScoreboardScreen() {
       ) : (
         <Text style={styles.body}>Add a round to start scoring.</Text>
       )}
-      <View style={styles.row}>
-        <Button
-          secondary
-          label={match.finishedAt ? 'Reopen match' : 'Finish match'}
-          disabled={busy}
-          onPress={changeStatus}
-        />
-      </View>
       {match.settings.moneyRate !== null && (
         <Button
           secondary
@@ -162,15 +167,6 @@ export default function ScoreboardScreen() {
           onPress={() => router.push(`/marriage/settle/${match.id}`)}
         />
       )}
-      <Button
-        secondary
-        label="Share result"
-        onPress={() => {
-          void Share.share({ message: resultSummary(match) }).catch(() =>
-            setWriteError('Could not share the result; try again.'),
-          );
-        }}
-      />
       {writeError && (
         <Text accessibilityRole="alert" style={styles.error}>
           {writeError}

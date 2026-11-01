@@ -4,7 +4,7 @@ An offline Android and iPhone scorekeeper for the Nepali card game Marriage. Cre
 
 ## Screenshots
 
-Android screenshots.
+Android release screenshots at the default font scale.
 
 | Home                          | Round entry                                       | Standings                                           |
 | ----------------------------- | ------------------------------------------------- | --------------------------------------------------- |

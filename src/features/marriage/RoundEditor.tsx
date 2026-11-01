@@ -305,7 +305,10 @@ export function RoundEditor({
         onPress={details}
         style={local.details}
       >
-        <Text style={styles.label}>Details</Text>
+        <Text style={[styles.label, { color: theme.colors.primary }]}>
+          Details
+        </Text>
+        <Icon name="chevron-forward" size={18} />
       </Pressable>
       {error && (
         <Text accessibilityRole="alert" style={styles.error}>
@@ -368,5 +371,11 @@ const local = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  details: { minHeight: 44, justifyContent: 'center' },
+  details: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 4,
+  },
 });

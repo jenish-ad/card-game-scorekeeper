@@ -36,7 +36,14 @@ Git attributes enforce LF for tracked text, while PNG, JPEG and font files remai
 
 ## README screenshots
 
-Use an Android emulator with the development client connected to Metro. Prepare a demo match with five players, one long name and about six saved rounds. Capture Home, Add Round and the scoreboard at the default font scale. Use demo names rather than personal match data.
+Use an Android emulator with a local release build, so development-menu controls are absent:
+
+```sh
+npx expo run:android --variant release --no-bundler
+adb shell settings put system font_scale 1.0
+```
+
+Prepare a demo match with five players, one long name and about six saved rounds. Capture Home, Add Round and the scoreboard. Round entry should show entered maal, one Unseen player and a selected winner. Capture the scoreboard from the top with all five player columns visible. A taller portrait emulator display can include the full standings and round table in one capture while retaining the default font scale. Restore any emulator display overrides afterward. Use demo names rather than personal match data.
 
 ```sh
 adb shell screencap -p /sdcard/marriage.png
