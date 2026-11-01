@@ -1,7 +1,6 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, Text } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Platform, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
 import {
@@ -22,7 +21,7 @@ export default function RootLayout() {
   });
   if (!loaded && !error) return null;
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <SafeAreaProvider>
         <StatusBar style="dark" />
         {error && <Text>Could not load fonts. Using system fonts.</Text>}
@@ -63,6 +62,6 @@ export default function RootLayout() {
           </RoundDraftProvider>
         </MatchStorageProvider>
       </SafeAreaProvider>
-    </GestureHandlerRootView>
+    </View>
   );
 }

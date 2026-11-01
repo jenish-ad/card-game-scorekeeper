@@ -108,6 +108,8 @@ Run `npm run check`, `npx expo install --check`, and `npm run bundle:check` with
 
 This increment passed formatting, lint, strict TypeScript, and 24 Jest tests. Android and iOS Hermes bundle exports also passed. Expo dependency compatibility passed using the installed SDK's local dependency map when its online endpoint was unavailable.
 
-No Android/iPhone device test has been performed. Device checks still needed: save/restart/resume, confirmation dialogs, keyboard scrolling, large text, screen readers, touch targets, interrupted writes, and low-storage failures. GitHub Actions has not been run remotely. Callbreak, backup/export, other scoring variants, and cloud sync are outside this increment.
+An Android emulator smoke check verified that Home renders and an existing saved match remains visible after an emulator cold boot. An unnecessary gesture-handler root wrapper caused a native startup crash and has been removed; seating uses React Native PanResponder. The emulator also had a graphics driver stall and recovered with software rendering (`-gpu swiftshader -no-snapshot-load -no-snapshot-save`), without wiping its data. Keep Metro running and use `adb reverse tcp:8081 tcp:8081` when connecting through localhost.
+
+No iPhone device test has been performed. Further device checks still needed: save/restart/resume, confirmation dialogs, keyboard scrolling, large text, screen readers, touch targets, interrupted writes, and low-storage failures. GitHub Actions has not been run remotely. Callbreak, backup/export, other scoring variants, and cloud sync are outside this increment.
 
 Dependency audit findings change with registry advisories. Review `npm audit` before release; do not apply forced framework downgrades without reviewing compatibility.
