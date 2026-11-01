@@ -1,4 +1,13 @@
-import { useContext, type PropsWithChildren, type ReactNode } from 'react';
+import {
+  useContext,
+  useState,
+  type PropsWithChildren,
+  type ReactNode,
+} from 'react';
+import {
+  KeyboardAvoidingView as AndroidKeyboardAvoidingView,
+  KeyboardAwareScrollView,
+} from 'react-native-keyboard-controller';
 import { HeaderHeightContext } from 'expo-router/react-navigation';
 import {
   KeyboardAvoidingView,
@@ -22,17 +31,40 @@ export function Screen({
   compact?: boolean;
 }>) {
   const styles = useStyles();
+  const [footerHeight, setFooterHeight] = useState(0);
   // Storage initialization also renders Screen before a navigator exists.
   const headerHeight = useContext(HeaderHeightContext) ?? 0;
-  const content = (
-    <>
+  const scrollStyle = [styles.content, compact && styles.compact];
+  const scrollView =
+    Platform.OS === 'android' ? (
+      <KeyboardAwareScrollView
+        contentContainerStyle={scrollStyle}
+        keyboardShouldPersistTaps="handled"
+        bottomOffset={footerHeight}
+      >
+        {children}
+      </KeyboardAwareScrollView>
+    ) : (
       <ScrollView
-        contentContainerStyle={[styles.content, compact && styles.compact]}
+        contentContainerStyle={scrollStyle}
         keyboardShouldPersistTaps="handled"
       >
         {children}
       </ScrollView>
-      {footer && <View style={styles.footer}>{footer}</View>}
+    );
+  const content = (
+    <>
+      {scrollView}
+      {footer && (
+        <View
+          style={styles.footer}
+          onLayout={({ nativeEvent }) =>
+            setFooterHeight(nativeEvent.layout.height)
+          }
+        >
+          {footer}
+        </View>
+      )}
     </>
   );
   return (
@@ -53,7 +85,13 @@ export function Screen({
           {content}
         </KeyboardAvoidingView>
       ) : (
-        <View style={styles.fill}>{content}</View>
+        <AndroidKeyboardAvoidingView
+          style={styles.fill}
+          behavior="padding"
+          automaticOffset
+        >
+          {content}
+        </AndroidKeyboardAvoidingView>
       )}
     </SafeAreaView>
   );

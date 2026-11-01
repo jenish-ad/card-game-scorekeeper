@@ -1,0 +1,14 @@
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ttf binary
+
+# Keep generated and local-only files out of source archives.
+.expo export-ignore
+dist export-ignore
+screenshots export-ignore
+*.log export-ignore
+*.zip export-ignore
+node_modules export-ignore
+android export-ignore
+ios export-ignore

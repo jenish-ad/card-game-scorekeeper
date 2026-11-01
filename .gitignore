@@ -61,5 +61,3 @@ credentials.json
 # Local captures and archives
 screenshots/
 *.zip
-.gitattributes
-docs
