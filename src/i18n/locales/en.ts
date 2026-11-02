@@ -371,6 +371,14 @@ export const en = {
     'Their past rounds and points stay in the match.',
   "They haven't played yet and will be removed.":
     "They haven't played yet and will be removed.",
+  'Delete match': 'Delete match',
+  'Delete {name}?': 'Delete {name}?',
+  'This permanently deletes the match, all players and all rounds. This cannot be undone.':
+    'This permanently deletes the match, all players and all rounds. This cannot be undone.',
+  Appearance: 'Appearance',
+  System: 'System',
+  Light: 'Light',
+  Dark: 'Dark',
 } as const;
 export type TranslationKey = keyof typeof en;
 export type Dictionary = { [K in TranslationKey]: string };

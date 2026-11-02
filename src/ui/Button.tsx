@@ -8,6 +8,7 @@ import { useMotionEnabled } from '@/theme/useReducedMotion';
 export function Button({
   label,
   onPress,
+  onLongPress,
   secondary = false,
   disabled = false,
   destructive = false,
@@ -18,6 +19,7 @@ export function Button({
 }: {
   label: string;
   onPress: () => void;
+  onLongPress?: () => void;
   secondary?: boolean;
   disabled?: boolean;
   destructive?: boolean;
@@ -44,6 +46,7 @@ export function Button({
       accessibilityLabel={label}
       accessibilityState={{ disabled: disabled || loading, busy: loading }}
       disabled={disabled || loading}
+      onLongPress={onLongPress}
       onPress={() => {
         void feedback(destructive ? 'warning' : 'selection');
         onPress();

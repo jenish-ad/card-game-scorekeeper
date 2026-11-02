@@ -1,5 +1,5 @@
 import { t } from '@/i18n';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   ActionSheetIOS,
   Modal,
@@ -22,6 +22,9 @@ export function ScoreboardActions({
   undo,
   players,
   recordFoul,
+  removeMatch,
+  renderTrigger,
+  title,
 }: {
   finished: boolean;
   canUndo: boolean;
@@ -31,12 +34,16 @@ export function ScoreboardActions({
   undo: () => void;
   players: () => void;
   recordFoul: () => void;
+  removeMatch: () => void;
+  renderTrigger?: (showMenu: () => void) => ReactNode;
+  title?: string;
 }) {
   const theme = useTheme();
   const styles = useStyles();
   const [open, setOpen] = useState(false);
   const statusLabel = finished ? t('Reopen match') : t('Finish match');
   function showMenu() {
+    if (busy) return;
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
@@ -45,10 +52,12 @@ export function ScoreboardActions({
             t('Undo last round'),
             t('Record foul'),
             t('Players'),
+            t('Delete match'),
+            t('Share result'),
             t('Cancel'),
           ],
-          cancelButtonIndex: 4,
-          destructiveButtonIndex: canUndo ? 1 : undefined,
+          cancelButtonIndex: 6,
+          destructiveButtonIndex: canUndo ? [1, 4] : 4,
           disabledButtonIndices: [
             ...(canUndo ? [] : [1]),
             ...(finished ? [2] : []),
@@ -59,6 +68,8 @@ export function ScoreboardActions({
           else if (index === 1 && canUndo) undo();
           else if (index === 2 && !finished) recordFoul();
           else if (index === 3) players();
+          else if (index === 4) removeMatch();
+          else if (index === 5) share();
         },
       );
     } else setOpen(true);
@@ -68,25 +79,31 @@ export function ScoreboardActions({
     action();
   }
   return (
-    <View style={local.actions}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t('Share result')}
-        disabled={busy}
-        onPress={share}
-        style={local.icon}
-      >
-        <Icon name="share-outline" />
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t('Match actions')}
-        disabled={busy}
-        onPress={showMenu}
-        style={local.icon}
-      >
-        <Icon name="ellipsis-horizontal" />
-      </Pressable>
+    <>
+      {renderTrigger ? (
+        renderTrigger(showMenu)
+      ) : (
+        <View style={local.actions}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('Share result')}
+            disabled={busy}
+            onPress={share}
+            style={local.icon}
+          >
+            <Icon name="share-outline" />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('Match actions')}
+            disabled={busy}
+            onPress={showMenu}
+            style={local.icon}
+          >
+            <Icon name="ellipsis-horizontal" />
+          </Pressable>
+        </View>
+      )}
       <Modal
         visible={open}
         transparent
@@ -113,6 +130,14 @@ export function ScoreboardActions({
             onPress={() => {}}
           >
             <Text style={styles.subtitle}>{t('Match actions')}</Text>
+            {title && <Text style={styles.label}>{title}</Text>}
+            {renderTrigger && (
+              <Button
+                secondary
+                label={t('Share result')}
+                onPress={() => choose(share)}
+              />
+            )}
             <Button
               secondary
               label={statusLabel}
@@ -138,6 +163,11 @@ export function ScoreboardActions({
               onPress={() => choose(players)}
             />
             <Button
+              destructive
+              label={t('Delete match')}
+              onPress={() => choose(removeMatch)}
+            />
+            <Button
               secondary
               label={t('Cancel')}
               onPress={() => setOpen(false)}
@@ -145,7 +175,7 @@ export function ScoreboardActions({
           </Pressable>
         </Pressable>
       </Modal>
-    </View>
+    </>
   );
 }
 const local = StyleSheet.create({

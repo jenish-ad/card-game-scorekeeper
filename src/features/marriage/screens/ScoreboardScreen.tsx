@@ -10,6 +10,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Share, Text } from 'react-native';
 import {
+  deleteMatch,
   deleteRound,
   setMatchFinished,
 } from '@/features/marriage/data/matches';
@@ -95,6 +96,28 @@ export default function ScoreboardScreen() {
     });
   }
 
+  function removeMatch() {
+    if (!match) return;
+    void confirm({
+      title: t('Delete {name}?', { name: displayMatchTitle(match) }),
+      body: t(
+        'This permanently deletes the match, all players and all rounds. This cannot be undone.',
+      ),
+      confirmLabel: t('Delete match'),
+      destructive: true,
+      action: async () => {
+        setBusy(true);
+        try {
+          await deleteMatch(database, match.id);
+          setDraft(null);
+          router.replace('/(tabs)/history');
+        } finally {
+          setBusy(false);
+        }
+      },
+    });
+  }
+
   return (
     <Screen
       footer={
@@ -133,6 +156,7 @@ export default function ScoreboardScreen() {
               }}
               changeStatus={changeStatus}
               undo={undo}
+              removeMatch={removeMatch}
               recordFoul={() => {
                 setDraft(null);
                 router.push({

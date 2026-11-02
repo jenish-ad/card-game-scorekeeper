@@ -4,6 +4,16 @@ All notable changes are documented here following [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+### Fixed
+
+- Repair older player color tables missing match references without resetting saved matches.
+
+### Added
+
+- Long-press matches in Home or History to open match actions.
+- Saved System, Light and Dark appearance options in Settings.
+- Delete active or finished matches from match actions with a confirmation dialog.
+
 ## [1.0.0] - 2026-11-02
 
 ### Added

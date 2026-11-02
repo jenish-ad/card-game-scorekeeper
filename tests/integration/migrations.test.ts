@@ -2,6 +2,12 @@ import { expect, test } from '@jest/globals';
 import { TestDatabase } from '../support/database';
 import { migrateDatabase } from '@/storage/database';
 import * as initial from '@/storage/migrations/001_initial';
+import {
+  createMatch,
+  getMatch,
+  saveRound,
+  deleteMatch,
+} from '@/features/marriage/data/matches';
 
 test('the ordered migration runner upgrades version 1 without changing historical input JSON', async () => {
   const db = new TestDatabase();
@@ -26,7 +32,7 @@ test('the ordered migration runner upgrades version 1 without changing historica
     );
     await migrateDatabase(db);
     expect(await db.getFirstAsync('PRAGMA user_version')).toEqual({
-      user_version: 7,
+      user_version: 8,
     });
     expect(
       await db.getFirstAsync('SELECT inputs_json,rule_version FROM rounds'),
@@ -58,3 +64,53 @@ test('the ordered migration runner upgrades version 1 without changing historica
     db.sqlite.close();
   }
 });
+
+test.each([6, 7])(
+  'repairs legacy color schema at version %s without losing match data',
+  async (version) => {
+    const db = new TestDatabase();
+    try {
+      await migrateDatabase(db);
+      const id = await createMatch(db, ['Sita', 'Ram']);
+      const match = (await getMatch(db, id))!;
+      await saveRound(db, id, {
+        winnerId: match.players[0].id,
+        dubleeWin: false,
+        players: match.players.map((player) => ({
+          playerId: player.id,
+          maal: 0,
+          seen: true,
+        })),
+      });
+      const before = await getMatch(db, id);
+      await db.execAsync(`
+        CREATE TABLE legacy_colors (player_id INTEGER PRIMARY KEY, color_index INTEGER NOT NULL);
+        INSERT INTO legacy_colors SELECT player_id, color_index FROM player_colors;
+        DROP TABLE player_colors;
+        ALTER TABLE legacy_colors RENAME TO player_colors;
+        PRAGMA user_version = ${version};
+      `);
+
+      await migrateDatabase(db);
+      expect(await getMatch(db, id)).toEqual(before);
+      expect(await db.getAllAsync('PRAGMA foreign_key_check')).toEqual([]);
+      expect(
+        await db.getAllAsync('SELECT DISTINCT match_id FROM player_colors'),
+      ).toEqual([{ match_id: id }]);
+      await migrateDatabase(db);
+      expect(await getMatch(db, id)).toEqual(before);
+      const newId = await createMatch(db, ['Hari', 'Gita']);
+      expect((await getMatch(db, newId))?.players).toHaveLength(2);
+      await deleteMatch(db, id);
+      expect(
+        await db.getAllAsync(
+          'SELECT * FROM player_colors WHERE match_id = ?',
+          id,
+        ),
+      ).toEqual([]);
+      expect(await getMatch(db, newId)).not.toBeNull();
+    } finally {
+      db.sqlite.close();
+    }
+  },
+);

@@ -81,7 +81,7 @@ function AppLayout() {
     );
   return (
     <View style={[local.fill, { backgroundColor: theme.colors.bg }]}>
-      <StatusBar style="auto" />
+      <StatusBar style={theme.dark ? 'light' : 'dark'} />
       {error && (
         <Text style={{ color: theme.colors.text }}>
           {t('Could not load fonts; restart the app.')}

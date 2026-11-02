@@ -27,6 +27,7 @@ import {
   addPlayer,
   setPlayerActive,
   deleteRound,
+  deleteMatch,
   getMatch,
   listMatches,
   matchTotals,
@@ -52,6 +53,75 @@ function roundFor(players: { id: number }[]): NormalRoundInput {
     })),
   };
 }
+
+test.each([false, true])(
+  'deleting a match cascades its records and preserves other matches (finished=%s)',
+  async (finished) => {
+    const database = new TestDatabase();
+    try {
+      await migrateDatabase(database);
+      const id = await createMatch(database, ['Sita', 'Ram', 'Hari']);
+      const match = requireMatch(await getMatch(database, id));
+      await saveRound(database, id, roundFor(match.players));
+      await setPlayerActive(database, id, match.players[2].id, false);
+      await addPlayer(database, id, 'Gita');
+      const unused = requireMatch(await getMatch(database, id)).players.find(
+        (player) => player.name === 'Gita',
+      )!;
+      await setPlayerActive(database, id, unused.id, false);
+      if (finished) await setMatchFinished(database, id, true);
+      const otherId = await createMatch(database, ['Other A', 'Other B']);
+      const other = requireMatch(await getMatch(database, otherId));
+      await saveRound(database, otherId, roundFor(other.players));
+      const before = await getMatch(database, otherId);
+      await writePreference(database, 'language', 'ne');
+
+      await deleteMatch(database, id);
+
+      expect(await getMatch(database, id)).toBeNull();
+      for (const table of ['players', 'rounds', 'player_colors']) {
+        expect(
+          await database.getAllAsync(
+            `SELECT * FROM ${table} WHERE match_id = ?`,
+            id,
+          ),
+        ).toEqual([]);
+      }
+      expect(await getMatch(database, otherId)).toEqual(before);
+      expect((await readPreferences(database, 'en')).language).toBe('ne');
+      expect(await database.getAllAsync('PRAGMA foreign_key_check')).toEqual(
+        [],
+      );
+      await deleteMatch(database, id);
+      expect(await getMatch(database, otherId)).toEqual(before);
+    } finally {
+      database.sqlite.close();
+    }
+  },
+);
+
+test('failed match deletion rolls back all related records', async () => {
+  const database = new TestDatabase();
+  try {
+    await migrateDatabase(database);
+    const id = await createMatch(database, ['Sita', 'Ram']);
+    const match = requireMatch(await getMatch(database, id));
+    await saveRound(database, id, roundFor(match.players));
+    const before = await getMatch(database, id);
+    const colors = await database.getAllAsync('SELECT * FROM player_colors');
+    await database.execAsync(
+      "CREATE TRIGGER reject_match_delete AFTER DELETE ON matches BEGIN SELECT RAISE(ABORT, 'delete failed'); END;",
+    );
+
+    await expect(deleteMatch(database, id)).rejects.toThrow('delete failed');
+    expect(await getMatch(database, id)).toEqual(before);
+    expect(await database.getAllAsync('SELECT * FROM player_colors')).toEqual(
+      colors,
+    );
+  } finally {
+    database.sqlite.close();
+  }
+});
 
 test.each(['pagat-base-v1', 'pagat-base-v1-seen-maal'])(
   'migration maps %s and retains canonical round inputs',
@@ -145,7 +215,7 @@ test('migrations are repeatable, preserve records and reject newer schemas', asy
     const id = await createMatch(database, ['Sita', 'Ram']);
     await migrateDatabase(database);
     assert.equal((await getMatch(database, id))?.players[0].name, 'Sita');
-    await database.execAsync('PRAGMA user_version = 8');
+    await database.execAsync('PRAGMA user_version = 9');
     await assert.rejects(migrateDatabase(database), /newer app/);
     assert.equal(
       (
@@ -153,7 +223,7 @@ test('migrations are repeatable, preserve records and reject newer schemas', asy
           'PRAGMA user_version',
         )
       )?.user_version,
-      8,
+      9,
     );
   } finally {
     database.sqlite.close();
@@ -521,11 +591,13 @@ test('preferences persist across closing and reopening the database', async () =
       numerals: 'latin',
       calendar: 'ad',
       keepAwake: true,
+      theme: 'system',
     });
     await writePreference(database, 'language', 'ne');
     await writePreference(database, 'numerals', 'devanagari');
     await writePreference(database, 'calendar', 'bs');
     await writePreference(database, 'keepAwake', false);
+    await writePreference(database, 'theme', 'dark');
     database.sqlite.close();
     database = new TestDatabase(filename);
     await migrateDatabase(database);
@@ -534,6 +606,7 @@ test('preferences persist across closing and reopening the database', async () =
       numerals: 'devanagari',
       calendar: 'bs',
       keepAwake: false,
+      theme: 'dark',
     });
   } finally {
     database.sqlite.close();
@@ -769,7 +842,7 @@ test('[9] v6 clears only exact historical auto titles and preserves custom title
     await database.execAsync('PRAGMA user_version = 5;');
     await migrateDatabase(database);
     expect(await database.getFirstAsync('PRAGMA user_version')).toEqual({
-      user_version: 7,
+      user_version: 8,
     });
     for (const [index, id] of ids.entries()) {
       const match = requireMatch(await getMatch(database, id));

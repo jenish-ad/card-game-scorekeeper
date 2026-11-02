@@ -45,7 +45,7 @@ export default function HistoryScreen() {
           {filtered.map((match, index) => (
             <View key={match.id}>
               {index > 0 && <View style={styles.divider} />}
-              <MatchCard match={match} grouped />
+              <MatchCard match={match} grouped reload={reload} />
             </View>
           ))}
         </Card>

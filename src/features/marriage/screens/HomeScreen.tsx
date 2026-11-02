@@ -41,7 +41,12 @@ export default function HomeScreen() {
         </>
       ) : (
         active.map((match, index) => (
-          <MatchCard key={match.id} match={match} expanded={index === 0} />
+          <MatchCard
+            key={match.id}
+            match={match}
+            expanded={index === 0}
+            reload={reload}
+          />
         ))
       )}
       {!loading && !error && active.length === 0 && (
@@ -61,7 +66,7 @@ export default function HomeScreen() {
           {recent.map((match, index) => (
             <View key={match.id}>
               {index > 0 && <View style={styles.divider} />}
-              <MatchCard match={match} grouped />
+              <MatchCard match={match} grouped reload={reload} />
             </View>
           ))}
         </Card>

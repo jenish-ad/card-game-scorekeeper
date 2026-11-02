@@ -85,6 +85,14 @@ export async function createMatch(
   return matchId;
 }
 
+export async function deleteMatch(database: MatchDatabase, matchId: number) {
+  positiveId(matchId);
+  // Foreign-key cascades remove this match's rounds, roster and color history.
+  await database.withExclusiveTransactionAsync(async (transaction) => {
+    await transaction.runAsync('DELETE FROM matches WHERE id = ?', matchId);
+  });
+}
+
 export async function getMatch(
   database: MatchConnection,
   id: number,

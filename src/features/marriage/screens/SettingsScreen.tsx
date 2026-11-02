@@ -34,6 +34,17 @@ export default function RulesScreen() {
       <Text style={styles.title}>{t('Rules')}</Text>
       <Text style={styles.subtitle}>{t('Settings')}</Text>
       <View style={styles.card}>
+        <Text style={styles.label}>{t('Appearance')}</Text>
+        <SegmentedControl
+          label={t('Appearance')}
+          value={preferences.theme}
+          onChange={(value) => void change('theme', value)}
+          options={[
+            { value: 'system', label: t('System') },
+            { value: 'light', label: t('Light') },
+            { value: 'dark', label: t('Dark') },
+          ]}
+        />
         <Button
           secondary
           label={t('Keep screen on during matches: {p0}', {

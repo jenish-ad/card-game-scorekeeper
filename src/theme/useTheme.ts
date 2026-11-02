@@ -9,7 +9,10 @@ import {
 } from '@/theme/tokens';
 export function useTheme(): AppTheme {
   const { preferences } = usePreferences();
-  const theme = useColorScheme() === 'dark' ? darkTheme : lightTheme;
+  const systemScheme = useColorScheme();
+  const scheme =
+    preferences.theme === 'system' ? systemScheme : preferences.theme;
+  const theme = scheme === 'dark' ? darkTheme : lightTheme;
   return preferences.language === 'ne' || preferences.numerals === 'devanagari'
     ? theme === darkTheme
       ? nepaliDarkTheme

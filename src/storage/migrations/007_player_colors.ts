@@ -2,6 +2,25 @@ import type { MatchConnection } from '../database';
 import { nextPlayerColor } from '@/lib/playerColors';
 export const version = 7;
 async function backfillPlayerColors(db: MatchConnection) {
+  const columns = await db.getAllAsync<{ name: string }>(
+    'PRAGMA table_info(player_colors)',
+  );
+  // Earlier development builds stored colors without a match reference.
+  // CREATE TABLE IF NOT EXISTS cannot upgrade an existing table.
+  if (columns.length && !columns.some((column) => column.name === 'match_id')) {
+    await db.execAsync(`
+      CREATE TABLE player_colors_repaired (
+        player_id INTEGER PRIMARY KEY,
+        match_id INTEGER NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+        color_index INTEGER NOT NULL CHECK(color_index BETWEEN 0 AND 5)
+      );
+      INSERT INTO player_colors_repaired(player_id, match_id, color_index)
+        SELECT c.player_id, p.match_id, c.color_index
+        FROM player_colors c JOIN players p ON p.id = c.player_id;
+      DROP TABLE player_colors;
+      ALTER TABLE player_colors_repaired RENAME TO player_colors;
+    `);
+  }
   await db.execAsync(
     'CREATE TABLE IF NOT EXISTS player_colors (player_id INTEGER PRIMARY KEY, match_id INTEGER NOT NULL REFERENCES matches(id) ON DELETE CASCADE, color_index INTEGER NOT NULL CHECK(color_index BETWEEN 0 AND 5));',
   );

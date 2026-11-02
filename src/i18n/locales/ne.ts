@@ -374,4 +374,12 @@ export const ne: Dictionary = {
     'उहाँका अघिल्ला राउन्ड र अङ्क खेलमै रहन्छन्।',
   "They haven't played yet and will be removed.":
     'उहाँले अहिलेसम्म खेल्नुभएको छैन र उहाँलाई हटाइनेछ।',
+  'Delete match': 'खेल मेट्नुहोस्',
+  'Delete {name}?': '{name} मेट्ने?',
+  'This permanently deletes the match, all players and all rounds. This cannot be undone.':
+    'यसले खेल, सबै खेलाडी र सबै राउन्ड स्थायी रूपमा मेटाउँछ। यसलाई पूर्ववत् गर्न सकिँदैन।',
+  Appearance: 'रूप',
+  System: 'प्रणाली',
+  Light: 'उज्यालो',
+  Dark: 'अँध्यारो',
 };

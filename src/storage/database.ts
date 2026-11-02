@@ -6,6 +6,7 @@ import * as migration4 from './migrations/004_player_roster';
 import * as migration5 from './migrations/005_preferences';
 import * as migration6 from './migrations/006_auto_titles';
 import * as migration7 from './migrations/007_player_colors';
+import * as migration8 from './migrations/008_repair_player_colors';
 export interface MatchConnection {
   execAsync(sql: string): Promise<void>;
   runAsync(
@@ -36,6 +37,7 @@ const migrations = [
   migration5,
   migration6,
   migration7,
+  migration8,
 ];
 export async function migrateDatabase(database: MatchDatabase) {
   await database.execAsync(

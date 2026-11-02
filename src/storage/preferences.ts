@@ -5,12 +5,14 @@ export interface Preferences {
   numerals: Numerals;
   calendar: 'ad' | 'bs';
   keepAwake: boolean;
+  theme: 'system' | 'light' | 'dark';
 }
 export const defaultPreferences: Preferences = {
   language: 'en',
   numerals: 'latin',
   calendar: 'ad',
   keepAwake: true,
+  theme: 'system',
 };
 export async function readPreferences(
   database: MatchConnection,
@@ -28,6 +30,10 @@ export async function readPreferences(
     numerals: values.numerals === 'devanagari' ? 'devanagari' : 'latin',
     calendar: values.calendar === 'bs' ? 'bs' : 'ad',
     keepAwake: values.keepAwake !== '0',
+    theme:
+      values.theme === 'light' || values.theme === 'dark'
+        ? values.theme
+        : 'system',
   };
 }
 export async function writePreference<K extends keyof Preferences>(
