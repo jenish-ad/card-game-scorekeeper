@@ -1,3 +1,4 @@
+import { nextPlayerColor } from './playerColors';
 import { AppError, type ErrorCode } from '../../errors';
 import type { MatchConnection, MatchDatabase } from '../../storage/database';
 import {
@@ -16,6 +17,7 @@ export interface SavedPlayer {
   id: number;
   name: string;
   seat: number;
+  colorIndex?: number;
   active: boolean;
 }
 export interface SavedRound {
@@ -84,10 +86,16 @@ export async function createMatch(
     );
     matchId = result.lastInsertRowId;
     for (const [seat, name] of validation.playerNames.entries()) {
-      await transaction.runAsync(
+      const inserted = await transaction.runAsync(
         'INSERT INTO players (match_id, name, seat) VALUES (?, ?, ?)',
         matchId,
         name,
+        seat,
+      );
+      await transaction.runAsync(
+        'INSERT INTO player_colors(player_id, match_id, color_index) VALUES (?, ?, ?)',
+        inserted.lastInsertRowId,
+        matchId,
         seat,
       );
     }
@@ -112,7 +120,7 @@ export async function getMatch(
     parseSavedJson(String(match.settings_json), 'ENTER_VALID_MATCH_SETTINGS'),
   );
   const playerRows = await database.getAllAsync<unknown>(
-    'SELECT * FROM players WHERE match_id = ? ORDER BY seat',
+    'SELECT p.*, c.color_index FROM players p LEFT JOIN player_colors c ON c.player_id = p.id WHERE p.match_id = ? ORDER BY p.seat',
     id,
   );
   const players = playerRows.map((row) => {
@@ -128,6 +136,7 @@ export async function getMatch(
       id: positiveId(player.id),
       name: player.name,
       seat: Number(player.seat),
+      colorIndex: Number(player.color_index ?? 0),
       active: player.active === 1,
     };
   });
@@ -247,12 +256,18 @@ export async function addPlayer(
     ]);
     if (!validation.ok) throw validation.error;
     const seat = Math.max(...match.players.map((player) => player.seat)) + 1;
-    await transaction.runAsync(
+    const inserted = await transaction.runAsync(
       'INSERT INTO players (match_id, name, seat, active, joined_at) VALUES (?, ?, ?, 1, ?)',
       matchId,
       name.trim(),
       seat,
       new Date().toISOString(),
+    );
+    await transaction.runAsync(
+      'INSERT INTO player_colors(player_id, match_id, color_index) VALUES (?, ?, ?)',
+      inserted.lastInsertRowId,
+      matchId,
+      nextPlayerColor(await colorHistory(transaction, matchId)),
     );
   });
 }
@@ -267,6 +282,19 @@ export async function setPlayerActive(
     const match = await requireActiveMatch(transaction, matchId);
     const player = match.players.find((entry) => entry.id === playerId);
     if (!player) throw new AppError('THIS_PLAYER_DOES_NOT_BELONG_TO_THE_MATCH');
+    if (
+      active &&
+      !player.active &&
+      match.players.some(
+        (other) => other.active && other.colorIndex === player.colorIndex,
+      )
+    ) {
+      await transaction.runAsync(
+        'UPDATE player_colors SET color_index = ? WHERE player_id = ?',
+        nextPlayerColor(await colorHistory(transaction, matchId)),
+        playerId,
+      );
+    }
     const played = match.rounds.some((round) =>
       round.input.players.some((entry) => entry.playerId === playerId),
     );
@@ -290,6 +318,20 @@ export async function setPlayerActive(
       );
     }
   });
+}
+
+async function colorHistory(database: MatchConnection, matchId: number) {
+  const rows = await database.getAllAsync<{
+    color_index: number;
+    active: number;
+  }>(
+    'SELECT c.color_index, COALESCE(p.active, 0) AS active FROM player_colors c LEFT JOIN players p ON p.id = c.player_id WHERE c.match_id = ? ORDER BY c.player_id',
+    matchId,
+  );
+  return rows.map((row) => ({
+    colorIndex: row.color_index,
+    active: row.active === 1,
+  }));
 }
 
 async function requireActiveMatch(database: MatchConnection, matchId: number) {

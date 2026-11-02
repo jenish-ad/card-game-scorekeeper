@@ -147,10 +147,10 @@ export const nepaliDarkTheme: AppTheme = {
   ...darkTheme,
   fonts: devanagariFonts,
 };
-export function playerColor(seat: number, dark: boolean) {
+export function playerColor(colorIndex: number, dark: boolean) {
   const swatch =
     playerPalette[
-      ((seat % playerPalette.length) + playerPalette.length) %
+      ((colorIndex % playerPalette.length) + playerPalette.length) %
         playerPalette.length
     ];
   return {

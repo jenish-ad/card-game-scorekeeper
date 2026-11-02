@@ -1,6 +1,6 @@
 import Animated, { LinearTransition } from 'react-native-reanimated';
 import { devanagariFonts } from '../theme';
-import { useReducedMotion } from './useReducedMotion';
+import { useMotionEnabled } from './useReducedMotion';
 import { t, n } from '../i18n';
 import { LinearGradient } from 'expo-linear-gradient';
 import { roundTableLayout } from './roundTableLayout';
@@ -33,7 +33,7 @@ export function RoundTable({
     ),
   );
   const theme = useTheme();
-  const reduced = useReducedMotion();
+  const reduced = !useMotionEnabled();
   const styles = useStyles();
   const { fontScale } = useWindowDimensions();
   const rowHeight = Math.ceil(48 * Math.max(1, fontScale));

@@ -23,7 +23,7 @@ import { devanagariFonts } from '../theme';
 import { useTheme } from '../useTheme';
 import { useStyles } from './Screen';
 import { Button } from './Primitives';
-import { useReducedMotion } from './useReducedMotion';
+import { useMotionEnabled } from './useReducedMotion';
 
 export type ConfirmOptions = {
   title: string;
@@ -90,7 +90,7 @@ export function ConfirmDialog({
   const running = useRef(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const reduced = useReducedMotion();
+  const reduced = !useMotionEnabled();
   function cancel() {
     if (!running.current) onClose(false);
   }

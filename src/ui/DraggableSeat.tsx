@@ -84,7 +84,7 @@ export function DraggableSeat({
       >
         <Icon name="reorder-two" size={18} color={theme.colors.mutedText} />
       </View>
-      <PlayerAvatar name={name} seat={seat - 1} size={36} />
+      <PlayerAvatar name={name} colorIndex={seat - 1} size={36} />
       {children}
     </Animated.View>
   );

@@ -1,5 +1,6 @@
-import Svg, { G, Rect, Text as SvgText, Path } from 'react-native-svg';
+import Svg, { G, Rect, Path } from 'react-native-svg';
 import { useTheme } from '../useTheme';
+import { K_PATH, Q_PATH, DIAMOND_PATH, HEART_PATH } from './kqPaths';
 export function KQMark({ size = 44 }: { size?: number }) {
   const theme = useTheme();
   return (
@@ -13,16 +14,8 @@ export function KQMark({ size = 44 }: { size?: number }) {
           rx="8"
           fill={theme.colors.ink}
         />
-        <SvgText
-          x="18"
-          y="35"
-          fontSize="23"
-          fontWeight="800"
-          fill={theme.colors.onInk}
-        >
-          K
-        </SvgText>
-        <Path d="M28 45l7 7-7 7-7-7z" fill={theme.colors.onInk} />
+        <Path d={K_PATH} fill={theme.colors.onInk} />
+        <Path d={DIAMOND_PATH} fill={theme.colors.onInk} />
       </G>
       <G transform="rotate(12 52 42)">
         <Rect
@@ -33,10 +26,8 @@ export function KQMark({ size = 44 }: { size?: number }) {
           rx="8"
           fill={theme.colors.gold}
         />
-        <SvgText x="40" y="42" fontSize="23" fontWeight="800" fill="#17161B">
-          Q
-        </SvgText>
-        <Path d="M46 52l4 4 4-4 4 4-8 8-8-8z" fill="#17161B" />
+        <Path d={Q_PATH} fill="#17161B" />
+        <Path d={HEART_PATH} fill="#17161B" />
       </G>
     </Svg>
   );

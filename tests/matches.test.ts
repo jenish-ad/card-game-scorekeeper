@@ -192,7 +192,7 @@ test('migrations are repeatable, preserve records and reject newer schemas', asy
     const id = await createMatch(database, ['Sita', 'Ram']);
     await migrateDatabase(database);
     assert.equal((await getMatch(database, id))?.players[0].name, 'Sita');
-    await database.execAsync('PRAGMA user_version = 7');
+    await database.execAsync('PRAGMA user_version = 8');
     await assert.rejects(migrateDatabase(database), /newer app/);
     assert.equal(
       (
@@ -200,7 +200,7 @@ test('migrations are repeatable, preserve records and reject newer schemas', asy
           'PRAGMA user_version',
         )
       )?.user_version,
-      7,
+      8,
     );
   } finally {
     database.sqlite.close();
@@ -816,7 +816,7 @@ test('[9] v6 clears only exact historical auto titles and preserves custom title
     await database.execAsync('PRAGMA user_version = 5;');
     await migrateDatabase(database);
     expect(await database.getFirstAsync('PRAGMA user_version')).toEqual({
-      user_version: 6,
+      user_version: 7,
     });
     for (const [index, id] of ids.entries()) {
       const match = requireMatch(await getMatch(database, id));
@@ -940,6 +940,102 @@ test('[11] preference configuration precedes publication and queued writes merge
       language: 'ne',
       calendar: 'bs',
     });
+  } finally {
+    database.sqlite.close();
+  }
+});
+test('player colors persist across seat gaps, departures, reloads and palette reuse', async () => {
+  const database = new TestDatabase();
+  try {
+    await migrateDatabase(database);
+    const id = await createMatch(database, ['A', 'B', 'C']);
+    await addPlayer(database, id, 'D');
+    await addPlayer(database, id, 'E');
+    let match = requireMatch(await getMatch(database, id));
+    const original = new Map(
+      match.players.map((player) => [player.id, player.colorIndex]),
+    );
+    await saveRound(database, id, {
+      winnerId: match.players[0].id,
+      dubleeWin: false,
+      players: match.players.map((player) => ({
+        playerId: player.id,
+        seen: true,
+        maal: 0,
+      })),
+    });
+    await setPlayerActive(database, id, match.players[1].id, false);
+    await addPlayer(database, id, 'F');
+    match = requireMatch(await getMatch(database, id));
+    expect(
+      match.players.find((player) => player.name === 'F')?.colorIndex,
+    ).toBe(5);
+    await saveRound(database, id, {
+      winnerId: match.players[0].id,
+      dubleeWin: false,
+      players: match.players
+        .filter((player) => player.active)
+        .map((player) => ({ playerId: player.id, seen: true, maal: 0 })),
+    });
+    await setPlayerActive(
+      database,
+      id,
+      match.players.find((player) => player.name === 'C')!.id,
+      false,
+    );
+    await addPlayer(database, id, 'G');
+    match = requireMatch(await getMatch(database, id));
+    const active = match.players.filter((player) => player.active);
+    expect(new Set(active.map((player) => player.colorIndex)).size).toBe(
+      active.length,
+    );
+    expect([1, 2]).toContain(
+      match.players.find((player) => player.name === 'G')?.colorIndex,
+    );
+    await database.runAsync(
+      'UPDATE players SET seat = 20 WHERE match_id = ? AND name = ?',
+      id,
+      'A',
+    );
+    await migrateDatabase(database);
+    match = requireMatch(await getMatch(database, id));
+    for (const player of match.players)
+      if (original.has(player.id))
+        expect(player.colorIndex).toBe(original.get(player.id));
+  } finally {
+    database.sqlite.close();
+  }
+});
+test('unused colors remember players removed before playing', async () => {
+  const database = new TestDatabase();
+  try {
+    await migrateDatabase(database);
+    const id = await createMatch(database, ['A', 'B', 'C']);
+    for (const [removed, added, color] of [
+      ['C', 'D', 3],
+      ['D', 'E', 4],
+      ['E', 'F', 5],
+      ['F', 'G', 2],
+    ] as const) {
+      let match = requireMatch(await getMatch(database, id));
+      await setPlayerActive(
+        database,
+        id,
+        match.players.find((player) => player.name === removed)!.id,
+        false,
+      );
+      await addPlayer(database, id, added);
+      match = requireMatch(await getMatch(database, id));
+      expect(
+        match.players.find((player) => player.name === added)?.colorIndex,
+      ).toBe(color);
+      expect(
+        match.players.find((player) => player.name === 'A')?.colorIndex,
+      ).toBe(0);
+      expect(
+        match.players.find((player) => player.name === 'B')?.colorIndex,
+      ).toBe(1);
+    }
   } finally {
     database.sqlite.close();
   }

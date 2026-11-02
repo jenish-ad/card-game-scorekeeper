@@ -4,7 +4,7 @@ import { devanagariFonts } from '../theme';
 import { Icon, type IconName } from './Icon';
 import { useStyles } from './Screen';
 import { feedback } from './feedback';
-import { useReducedMotion } from './useReducedMotion';
+import { useMotionEnabled } from './useReducedMotion';
 import { PlayerAvatar } from './PlayerAvatar';
 import { ScoreText } from './ScoreText';
 export { formatScore, scoreLabel } from './ScoreText';
@@ -31,7 +31,7 @@ export function Button({
 }) {
   const theme = useTheme();
   const styles = useStyles();
-  const reduced = useReducedMotion();
+  const reduced = !useMotionEnabled();
   const color = ghost
     ? destructive
       ? theme.colors.scoreLoss
@@ -97,13 +97,13 @@ export function Button({
 export function Avatar({
   name,
   size = 36,
-  seat = 1,
+  colorIndex = 0,
 }: {
   name: string;
   size?: 24 | 28 | 36 | 44;
-  seat?: number;
+  colorIndex?: number;
 }) {
-  return <PlayerAvatar name={name} size={size} seat={seat} />;
+  return <PlayerAvatar name={name} size={size} colorIndex={colorIndex} />;
 }
 export function Score({
   value,

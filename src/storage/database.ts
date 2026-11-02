@@ -1,3 +1,4 @@
+import { nextPlayerColor } from '../features/marriage/playerColors';
 import { legacyAutoTitles } from './autoTitles';
 import { AppError } from '../errors';
 export interface MatchConnection {
@@ -30,7 +31,7 @@ export async function migrateDatabase(database: MatchDatabase) {
     const row = await transaction.getFirstAsync<{ user_version: number }>(
       'PRAGMA user_version',
     );
-    if (!row || !Number.isInteger(row.user_version) || row.user_version > 6) {
+    if (!row || !Number.isInteger(row.user_version) || row.user_version > 7) {
       throw new AppError(
         'THIS_DATABASE_NEEDS_A_NEWER_APP_VERSION_NO_SAVED_MATCHES_WERE_CHANGED',
       );
@@ -103,6 +104,37 @@ export async function migrateDatabase(database: MatchDatabase) {
           );
       }
       await transaction.execAsync('PRAGMA user_version = 6;');
+    }
+    if (row.user_version < 7) {
+      await transaction.execAsync(
+        'CREATE TABLE IF NOT EXISTS player_colors (player_id INTEGER PRIMARY KEY, match_id INTEGER NOT NULL REFERENCES matches(id) ON DELETE CASCADE, color_index INTEGER NOT NULL CHECK(color_index BETWEEN 0 AND 5));',
+      );
+      const players = await transaction.getAllAsync<{
+        id: number;
+        match_id: number;
+        active: number;
+        color_index: number | null;
+      }>(
+        'SELECT p.id, p.match_id, p.active, c.color_index FROM players p LEFT JOIN player_colors c ON c.player_id = p.id ORDER BY p.id',
+      );
+      const assigned = new Map<
+        number,
+        { colorIndex: number; active: boolean }[]
+      >();
+      for (const player of players) {
+        const previous = assigned.get(player.match_id) ?? [];
+        const colorIndex = player.color_index ?? nextPlayerColor(previous);
+        if (player.color_index === null)
+          await transaction.runAsync(
+            'INSERT INTO player_colors(player_id, match_id, color_index) VALUES (?, ?, ?)',
+            player.id,
+            player.match_id,
+            colorIndex,
+          );
+        previous.push({ colorIndex, active: player.active === 1 });
+        assigned.set(player.match_id, previous);
+      }
+      await transaction.execAsync('PRAGMA user_version = 7;');
     }
   });
 }

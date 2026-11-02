@@ -6,19 +6,19 @@ import { playerInitials } from './playerText';
 import { t } from '../i18n';
 export function PlayerAvatar({
   name,
-  seat = 0,
+  colorIndex = 0,
   size = 36,
   leader = false,
   left = false,
 }: {
   name: string;
-  seat?: number;
+  colorIndex?: number;
   size?: 24 | 28 | 36 | 44;
   leader?: boolean;
   left?: boolean;
 }) {
   const theme = useTheme();
-  const palette = playerColor(seat, theme.dark);
+  const palette = playerColor(colorIndex, theme.dark);
   return (
     <View
       accessible

@@ -6,9 +6,9 @@ An offline Android and iPhone scorekeeper for the Nepali card game Marriage. Cre
 
 Android release screenshots at the default font scale.
 
-| Home                          | Round entry                                       | Standings                                           |
-| ----------------------------- | ------------------------------------------------- | --------------------------------------------------- |
-| ![Home](docs/images/home.png) | ![Five-player round](docs/images/round-entry.png) | ![Standings and totals](docs/images/scoreboard.png) |
+| Home                          | Round entry                                 | Scoreboard                                | Scoreboard (dark)                                   |
+| ----------------------------- | ------------------------------------------- | ----------------------------------------- | --------------------------------------------------- |
+| ![Home](docs/images/home.png) | ![Round entry](docs/images/round-entry.png) | ![Scoreboard](docs/images/scoreboard.png) | ![Dark scoreboard](docs/images/scoreboard-dark.png) |
 
 ## Features
 

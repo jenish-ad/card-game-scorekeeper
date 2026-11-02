@@ -9,12 +9,12 @@ import { useTheme } from '../useTheme';
 import { PlayerAvatar } from './PlayerAvatar';
 import { ScoreText } from './ScoreText';
 import { Card } from './Card';
-import { useReducedMotion } from './useReducedMotion';
+import { useMotionEnabled } from './useReducedMotion';
 import { useStyles } from './Screen';
 export function StandingsBoard({ match }: { match: SavedMatch }) {
   const styles = useStyles();
   const theme = useTheme();
-  const reduced = useReducedMotion();
+  const reduced = !useMotionEnabled();
   const { rows } = matchStandings(match);
   return (
     <Card style={{ gap: 0 }}>
@@ -50,7 +50,7 @@ export function StandingsBoard({ match }: { match: SavedMatch }) {
           <Text style={[styles.caption, { width: 14 }]}>{n(row.rank)}</Text>
           <PlayerAvatar
             name={row.player.name}
-            seat={row.player.seat}
+            colorIndex={row.player.colorIndex ?? 0}
             size={36}
             leader={row.rank === 1 && match.rounds.length > 0}
             left={!row.player.active}
@@ -62,7 +62,7 @@ export function StandingsBoard({ match }: { match: SavedMatch }) {
             )}
           </View>
           <View style={{ alignItems: 'flex-end', minWidth: 80 }}>
-            <ScoreText value={row.total} size="lg" />
+            <ScoreText animate value={row.total} size="lg" />
             {match.settings.moneyRate !== null && (
               <Text
                 numberOfLines={1}

@@ -1,6 +1,7 @@
+import { useMotionEnabled } from './useReducedMotion';
 import { t } from '../i18n';
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo, Animated, Text } from 'react-native';
+import { Animated, Text } from 'react-native';
 import { useTheme } from '../useTheme';
 import { Icon } from './Icon';
 import { useStyles } from './Screen';
@@ -13,12 +14,13 @@ export function SavedRoundNotice({
   onDismiss: () => void;
 }) {
   const theme = useTheme();
+  const reduceMotion = !useMotionEnabled();
   const styles = useStyles();
   const [opacity] = useState(() => new Animated.Value(1));
   useEffect(() => {
     let cancelled = false;
     let animation: Animated.CompositeAnimation | undefined;
-    void AccessibilityInfo.isReduceMotionEnabled().then((reduceMotion) => {
+    {
       if (cancelled) return;
       animation = Animated.sequence([
         Animated.delay(2200),
@@ -31,12 +33,12 @@ export function SavedRoundNotice({
       animation.start(({ finished }) => {
         if (finished && !cancelled) onDismiss();
       });
-    });
+    }
     return () => {
       cancelled = true;
       animation?.stop();
     };
-  }, [opacity, onDismiss, theme.motion.enter]);
+  }, [opacity, onDismiss, theme.motion.enter, reduceMotion]);
   return (
     <Animated.View
       accessibilityLiveRegion="polite"

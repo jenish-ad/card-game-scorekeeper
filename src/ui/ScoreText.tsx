@@ -1,10 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
-import { Text } from 'react-native';
-import {
+import { MotionContext } from './MotionProvider';
+import { useContext, useEffect, useRef } from 'react';
+import Animated, {
   cancelAnimation,
-  Easing,
-  runOnJS,
-  useAnimatedReaction,
+  useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
@@ -26,57 +24,55 @@ export function ScoreText({
   size = 'md',
   neutral = false,
   label,
+  animate = false,
 }: {
   value: number;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   neutral?: boolean;
   label?: string;
+  animate?: boolean;
 }) {
   const theme = useTheme();
   const reduced = useReducedMotion();
-  const progress = useSharedValue(value);
-  const [display, setDisplay] = useState(value);
-  const first = useRef(true);
-  useAnimatedReaction(
-    () => Math.round(progress.get()),
-    (next, previous) => {
-      if (next !== previous) runOnJS(setDisplay)(next);
-    },
-  );
+  const { loaded } = useContext(MotionContext);
+  const previous = useRef(value);
+  const progress = useSharedValue(1);
+  const motionStyle = useAnimatedStyle(() => ({
+    opacity: 0.6 + 0.4 * progress.get(),
+    transform: [{ translateY: (1 - progress.get()) * 4 }],
+  }));
   useEffect(() => {
+    const changed = previous.current !== value;
+    previous.current = value;
     cancelAnimation(progress);
-    if (reduced) {
-      progress.set(value);
-    } else {
-      if (first.current) {
-        progress.set(0);
-        first.current = false;
-      }
-      progress.set(
-        withTiming(value, { duration: 400, easing: Easing.out(Easing.cubic) }),
-      );
-    }
+    if (changed && animate && loaded && !reduced) {
+      progress.set(0);
+      progress.set(withTiming(1, { duration: 240 }));
+    } else progress.set(1);
     return () => cancelAnimation(progress);
-  }, [value, reduced, progress]);
+  }, [value, animate, loaded, reduced, progress]);
   return (
-    <Text
+    <Animated.Text
       accessibilityLabel={
         label ?? `${formatScore(value)}, ${scoreLabel(value)}`
       }
-      style={{
-        fontFamily: theme.fonts.heavy,
-        fontVariant: ['tabular-nums'],
-        fontSize: { sm: 14, md: 20, lg: 26, xl: 34 }[size],
-        color: neutral
-          ? theme.colors.ink
-          : value > 0
-            ? theme.colors.scoreGain
-            : value < 0
-              ? theme.colors.scoreLoss
-              : theme.colors.mutedText,
-      }}
+      style={[
+        motionStyle,
+        {
+          fontFamily: theme.fonts.heavy,
+          fontVariant: ['tabular-nums'],
+          fontSize: { sm: 14, md: 20, lg: 26, xl: 34 }[size],
+          color: neutral
+            ? theme.colors.ink
+            : value > 0
+              ? theme.colors.scoreGain
+              : value < 0
+                ? theme.colors.scoreLoss
+                : theme.colors.mutedText,
+        },
+      ]}
     >
-      {label ?? formatScore(reduced ? value : display)}
-    </Text>
+      {label ?? formatScore(value)}
+    </Animated.Text>
   );
 }

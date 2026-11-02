@@ -66,7 +66,7 @@ export default function SettleScreen() {
                   match.players.find((player) => player.id === transfer.from)
                     ?.name ?? ''
                 }
-                seat={
+                colorIndex={
                   match.players.find((player) => player.id === transfer.from)
                     ?.seat
                 }
@@ -84,7 +84,7 @@ export default function SettleScreen() {
                   match.players.find((player) => player.id === transfer.to)
                     ?.name ?? ''
                 }
-                seat={
+                colorIndex={
                   match.players.find((player) => player.id === transfer.to)
                     ?.seat
                 }

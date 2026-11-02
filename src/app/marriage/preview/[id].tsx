@@ -148,7 +148,7 @@ export default function RoundDetailsScreen() {
         return (
           <View key={player.id} style={styles.card}>
             <View style={styles.row}>
-              <Avatar name={player.name} seat={player.seat} />
+              <Avatar name={player.name} colorIndex={player.colorIndex ?? 0} />
               <View style={styles.flexible}>
                 <Text style={styles.label}>
                   {player.name}

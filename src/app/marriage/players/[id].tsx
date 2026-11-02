@@ -42,7 +42,7 @@ export default function PlayersScreen() {
           <View key={player.id} style={styles.ruledRow}>
             <PlayerAvatar
               name={player.name}
-              seat={player.seat}
+              colorIndex={player.colorIndex ?? 0}
               size={36}
               left={!player.active}
             />

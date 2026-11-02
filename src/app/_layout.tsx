@@ -1,3 +1,4 @@
+import { MotionProvider } from '../ui/MotionProvider';
 import { ConfirmProvider } from '../ui/ConfirmDialog';
 import { t } from '../i18n';
 import { useEffect, type PropsWithChildren } from 'react';
@@ -34,15 +35,17 @@ import { useTheme } from '../useTheme';
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <AndroidKeyboardProvider>
-        <MatchStorageProvider>
-          <PreferencesProvider>
-            <AppLayout />
-          </PreferencesProvider>
-        </MatchStorageProvider>
-      </AndroidKeyboardProvider>
-    </SafeAreaProvider>
+    <MotionProvider>
+      <SafeAreaProvider>
+        <AndroidKeyboardProvider>
+          <MatchStorageProvider>
+            <PreferencesProvider>
+              <AppLayout />
+            </PreferencesProvider>
+          </MatchStorageProvider>
+        </AndroidKeyboardProvider>
+      </SafeAreaProvider>
+    </MotionProvider>
   );
 }
 function AppLayout() {

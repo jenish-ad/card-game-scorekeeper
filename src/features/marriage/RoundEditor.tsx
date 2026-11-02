@@ -5,7 +5,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SegmentedControl } from '../../ui/SegmentedControl';
 import { PlayerAvatar } from '../../ui/PlayerAvatar';
-import { useReducedMotion } from '../../ui/useReducedMotion';
+import { useMotionEnabled } from '../../ui/useReducedMotion';
 import { feedback } from '../../ui/feedback';
 import { latinDigits } from '../../i18n/numbers';
 import { t, translateError } from '../../i18n';
@@ -45,7 +45,7 @@ export function RoundEditor({
   round?: SavedRound;
 }) {
   const theme = useTheme();
-  const reduced = useReducedMotion();
+  const reduced = !useMotionEnabled();
   const styles = useStyles();
   const router = useRouter();
   const database = useMatchDatabase();
@@ -161,7 +161,7 @@ export function RoundEditor({
                 >
                   <PlayerAvatar
                     name={player.name}
-                    seat={player.seat}
+                    colorIndex={player.colorIndex ?? 0}
                     size={24}
                   />
                   <Score
@@ -264,7 +264,7 @@ export function RoundEditor({
                 >
                   <PlayerAvatar
                     name={player.name}
-                    seat={player.seat}
+                    colorIndex={player.colorIndex ?? 0}
                     size={44}
                   />
                 </View>
@@ -329,7 +329,7 @@ export function RoundEditor({
                 >
                   <PlayerAvatar
                     name={player.name}
-                    seat={player.seat}
+                    colorIndex={player.colorIndex ?? 0}
                     size={36}
                   />
                   <Text

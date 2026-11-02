@@ -10,7 +10,7 @@ import { ScoreText } from './ScoreText';
 import { Button } from './Primitives';
 import { Card } from './Card';
 import { useStyles } from './Screen';
-import { useReducedMotion } from './useReducedMotion';
+import { useMotionEnabled } from './useReducedMotion';
 export function MatchCard({
   match,
   expanded = false,
@@ -22,7 +22,7 @@ export function MatchCard({
 }) {
   const styles = useStyles();
   const router = useRouter();
-  const reduced = useReducedMotion();
+  const reduced = !useMotionEnabled();
   const { rows, leaders } = matchStandings(match);
   const leader = leaders[0];
   const open = () => router.push(`/marriage/match/${match.id}`);
@@ -41,7 +41,7 @@ export function MatchCard({
           >
             <PlayerAvatar
               name={row.player.name}
-              seat={row.player.seat}
+              colorIndex={row.player.colorIndex ?? 0}
               size={28}
               leader={leaders.some((item) => item.player.id === row.player.id)}
               left={!row.player.active}
@@ -80,7 +80,7 @@ export function MatchCard({
         {leader && (
           <PlayerAvatar
             name={leader.player.name}
-            seat={leader.player.seat}
+            colorIndex={leader.player.colorIndex ?? 0}
             size={28}
           />
         )}
