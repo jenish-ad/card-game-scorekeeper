@@ -1,5 +1,5 @@
 import { latinDigits } from '../../i18n/numbers';
-import { t } from '../../i18n';
+import { t, translateError } from '../../i18n';
 import { MatchKeepAwake } from '../../ui/MatchKeepAwake';
 import { useRef, useState, type ComponentRef } from 'react';
 import { useRouter } from 'expo-router';
@@ -112,8 +112,8 @@ export function RoundEditor({
           savedToken: savedRoundToken(),
         },
       });
-    } catch {
-      setError(t('Could not save the round; try again.'));
+    } catch (error) {
+      setError(translateError(error, 'Could not save the round; try again.'));
       setSaving(false);
     }
   }

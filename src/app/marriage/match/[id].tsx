@@ -1,4 +1,5 @@
-import { t, n } from '../../../i18n';
+import { displayMatchTitle, resultSummary } from '../../../i18n/matchText';
+import { t, n, translateError } from '../../../i18n';
 import { MatchKeepAwake } from '../../../ui/MatchKeepAwake';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -7,7 +8,7 @@ import {
   deleteRound,
   setMatchFinished,
 } from '../../../features/marriage/matches';
-import { resultSummary } from '../../../features/marriage/settlement';
+
 import { useMatches } from '../../../features/marriage/useMatches';
 import { useRoundDraft } from '../../../features/marriage/RoundDraftProvider';
 import { useMatchDatabase } from '../../../storage/MatchStorageProvider';
@@ -57,8 +58,10 @@ export default function ScoreboardScreen() {
       await operation();
       setDraft(null);
       reload();
-    } catch {
-      setWriteError(t('Could not update the match; try again.'));
+    } catch (error) {
+      setWriteError(
+        translateError(error, 'Could not update the match; try again.'),
+      );
     } finally {
       setBusy(false);
     }
@@ -128,8 +131,14 @@ export default function ScoreboardScreen() {
               canUndo={!match.finishedAt && match.rounds.length > 0}
               busy={busy}
               share={() => {
-                void Share.share({ message: resultSummary(match) }).catch(() =>
-                  setWriteError(t('Could not share the result; try again.')),
+                void Share.share({ message: resultSummary(match) }).catch(
+                  (error: unknown) =>
+                    setWriteError(
+                      translateError(
+                        error,
+                        'Could not share the result; try again.',
+                      ),
+                    ),
                 );
               }}
               changeStatus={changeStatus}
@@ -146,7 +155,7 @@ export default function ScoreboardScreen() {
           onDismiss={dismissNotice}
         />
       )}
-      <Text style={styles.title}>{match.title}</Text>
+      <Text style={styles.title}>{displayMatchTitle(match)}</Text>
       <Text style={styles.caption}>
         {[
           `${n(match.players.length)} ${t('players')}`,

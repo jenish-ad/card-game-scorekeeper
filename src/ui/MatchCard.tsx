@@ -1,3 +1,4 @@
+import { displayMatchTitle } from '../i18n/matchText';
 import { formatDate } from '../i18n/dates';
 import { t, n } from '../i18n';
 import { useRouter } from 'expo-router';
@@ -21,11 +22,11 @@ export function MatchCard({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${expanded ? t('Resume') : t('Open')} ${match.title}`}
+      accessibilityLabel={`${expanded ? t('Resume') : t('Open')} ${displayMatchTitle(match)}`}
       onPress={() => router.push(`/marriage/match/${match.id}`)}
       style={styles.card}
     >
-      <Text style={styles.subtitle}>{match.title}</Text>
+      <Text style={styles.subtitle}>{displayMatchTitle(match)}</Text>
       <Text style={styles.caption}>
         {formatDate(new Date(match.createdAt))}
       </Text>

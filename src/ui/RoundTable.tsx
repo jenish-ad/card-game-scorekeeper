@@ -53,10 +53,11 @@ export function RoundTable({
           <View key={player.id} style={[local.cell, rowSize, column]}>
             <Text
               numberOfLines={1}
+              ellipsizeMode="tail"
               accessibilityLabel={player.name}
               style={styles.label}
             >
-              {player.name.slice(0, 6)}
+              {player.name}
             </Text>
           </View>
         ))}

@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import { Text, View } from 'react-native';
-import { t } from '../../i18n';
+import { t, translateError } from '../../i18n';
 import { formatNumber, latinDigits } from '../../i18n/numbers';
 import type { TranslationKey } from '../../i18n/en';
 import { usePreferences } from '../../storage/PreferencesContext';
@@ -17,17 +16,16 @@ const paragraphs: TranslationKey[] = [
 ];
 export default function RulesScreen() {
   const styles = useStyles();
-  const { preferences, update } = usePreferences();
-  const [error, setError] = useState(false);
+  const { preferences, update, preferenceError, clearPreferenceError } =
+    usePreferences();
   async function change<K extends keyof Preferences>(
     key: K,
     value: Preferences[K],
   ) {
     try {
       await update(key, value);
-      setError(false);
     } catch {
-      setError(true);
+      // The context retains the error while leaving the app and preference intact.
     }
   }
   return (
@@ -84,7 +82,18 @@ export default function RulesScreen() {
             onPress={() => void change('calendar', 'bs')}
           />
         </View>
-        {error && <Text style={styles.error}>{t('preferencesError')}</Text>}
+        {preferenceError !== null && (
+          <View>
+            <Text style={styles.error}>
+              {translateError(preferenceError, 'preferencesError')}
+            </Text>
+            <Button
+              secondary
+              label={t('Done')}
+              onPress={clearPreferenceError}
+            />
+          </View>
+        )}
       </View>
       <Text style={styles.subtitle}>{t('Scoring')}</Text>
       {paragraphs.map((key) => (

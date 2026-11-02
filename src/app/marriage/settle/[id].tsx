@@ -1,13 +1,10 @@
+import { displayMatchTitle, formatMoney } from '../../../i18n/matchText';
 import { t } from '../../../i18n';
 import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Text } from 'react-native';
 import { useMatches } from '../../../features/marriage/useMatches';
 import { matchTotals } from '../../../features/marriage/matches';
-import {
-  formatMoney,
-  moneyAmount,
-  settleUp,
-} from '../../../features/marriage/settlement';
+import { moneyAmount, settleUp } from '../../../features/marriage/settlement';
 import { Button } from '../../../ui/Primitives';
 import { Screen, useStyles } from '../../../ui/Screen';
 export default function SettleScreen() {
@@ -45,7 +42,7 @@ export default function SettleScreen() {
   return (
     <Screen>
       <Text style={styles.title}>{t('Settle up')}</Text>
-      <Text style={styles.body}>{match.title}</Text>
+      <Text style={styles.body}>{displayMatchTitle(match)}</Text>
       {!match.finishedAt && (
         <Text style={styles.caption}>
           {t('Based on current totals; this match is still active.')}

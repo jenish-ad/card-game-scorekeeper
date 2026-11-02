@@ -1,4 +1,4 @@
-import { t } from '../../../i18n';
+import { t, translateError } from '../../../i18n';
 import { useState } from 'react';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { Alert, Text, TextInput, View } from 'react-native';
@@ -23,9 +23,7 @@ export default function PlayersScreen() {
       setName('');
       reload();
     } catch (error) {
-      setFailure(
-        error instanceof Error ? error.message : t('Could not update players.'),
-      );
+      setFailure(translateError(error, 'Could not update players.'));
     } finally {
       setBusy(false);
     }
@@ -34,9 +32,8 @@ export default function PlayersScreen() {
     <Screen>
       <Stack.Screen options={{ title: t('Players') }} />
       {match?.players
-        .toSorted(
-          (a, b) => Number(b.active) - Number(a.active) || a.seat - b.seat,
-        )
+        .slice()
+        .sort((a, b) => Number(b.active) - Number(a.active) || a.seat - b.seat)
         .map((player) => (
           <View key={player.id} style={styles.spread}>
             <View style={styles.flexible}>

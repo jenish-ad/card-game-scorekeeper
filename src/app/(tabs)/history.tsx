@@ -1,3 +1,4 @@
+import { UnavailableMatchCard } from '../../ui/UnavailableMatchCard';
 import { t } from '../../i18n';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
@@ -17,7 +18,7 @@ export default function HistoryScreen() {
   const theme = useTheme();
   const styles = useStyles();
   const router = useRouter();
-  const { matches, loading, error, reload } = useMatches();
+  const { matches, unavailable, loading, error, reload } = useMatches();
   const [filter, setFilter] = useState<'all' | 'active' | 'finished'>('all');
   const filtered = matches.filter(
     (match) =>
@@ -74,7 +75,7 @@ export default function HistoryScreen() {
         </>
       ) : filtered.length ? (
         filtered.map((match) => <MatchCard key={match.id} match={match} />)
-      ) : (
+      ) : unavailable.length ? null : (
         <Text style={styles.body}>
           {filter === 'all'
             ? t('No matches yet.')
@@ -87,6 +88,9 @@ export default function HistoryScreen() {
         label={t('New match')}
         onPress={() => router.push('/marriage/setup')}
       />
+      {unavailable.map((entry) => (
+        <UnavailableMatchCard key={entry.id} />
+      ))}
     </Screen>
   );
 }

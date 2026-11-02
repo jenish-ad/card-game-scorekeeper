@@ -3,6 +3,8 @@ import { defaultPreferences, type Preferences } from './preferences';
 export const PreferencesContext = createContext({
   preferences: defaultPreferences,
   keepAwake: true,
+  preferenceError: null as unknown | null,
+  clearPreferenceError: () => {},
   setKeepAwake: (_value: boolean) => {},
   update: async <K extends keyof Preferences>(
     _key: K,

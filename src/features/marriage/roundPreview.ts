@@ -1,5 +1,5 @@
 import { latinDigits } from '../../i18n/numbers';
-import { t } from '../../i18n';
+import { t, translateError } from '../../i18n';
 import { scoreRound } from './scoring';
 import type {
   FoulRoundInput,
@@ -14,8 +14,7 @@ export function foulPreview(input: FoulRoundInput) {
   } catch (error) {
     return {
       ok: false as const,
-      message:
-        error instanceof Error ? error.message : t('Check the round inputs.'),
+      message: translateError(error, 'Check the round inputs.'),
     };
   }
 }
@@ -52,10 +51,7 @@ export function roundPreview(
   } catch (failure) {
     return {
       ok: false,
-      message:
-        failure instanceof Error
-          ? failure.message
-          : t('Check the round inputs.'),
+      message: translateError(failure, 'Check the round inputs.'),
     };
   }
 }

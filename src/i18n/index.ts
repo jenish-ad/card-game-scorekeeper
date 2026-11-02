@@ -1,6 +1,7 @@
+import { AppError } from '../errors';
 import { en, type TranslationKey } from './en';
 import { ne } from './ne';
-import { formatNumber, latinDigits } from './numbers';
+import { formatNumber, formatDigits } from './numbers';
 import { defaultPreferences, type Preferences } from '../storage/preferences';
 
 let current: Preferences = { ...defaultPreferences };
@@ -31,8 +32,7 @@ export function t(
       name: string | undefined,
       literal: string | undefined,
     ) => {
-      if (literal !== undefined)
-        return formatNumber(latinDigits(literal), current.numerals);
+      if (literal !== undefined) return formatDigits(literal, current.numerals);
       if (name === undefined) return placeholder;
       const value = params[name];
       return value === undefined
@@ -42,4 +42,12 @@ export function t(
           : value;
     },
   );
+}
+
+export function translateError(
+  error: unknown,
+  fallback: TranslationKey = 'Check the round inputs.',
+): string {
+  if (error instanceof AppError) return t(error.code, error.params);
+  return error instanceof Error ? error.message : t(fallback);
 }

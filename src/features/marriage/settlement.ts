@@ -1,17 +1,10 @@
-import { formatDate } from '../../i18n/dates';
-import { t, n } from '../../i18n';
-import { matchStandings } from './standings';
-import type { SavedMatch } from './matches';
+import { AppError } from '../../errors';
 
 export function moneyAmount(points: number, rate: number): number {
   const amount = points * Math.round(rate * 100);
   if (!Number.isSafeInteger(amount))
-    throw new Error(t('The Rs amount is too large; use a lower rate.'));
+    throw new AppError('THE_RS_AMOUNT_IS_TOO_LARGE_USE_A_LOWER_RATE');
   return amount;
-}
-export function formatMoney(paisa: number): string {
-  const amount = Math.abs(paisa) / 100;
-  return `${paisa < 0 ? '\u2212' : ''}${t('Rs')} ${n(Number.isInteger(amount) ? amount : amount.toFixed(2))}`;
 }
 export interface Transfer {
   from: number;
@@ -27,7 +20,7 @@ export function settleUp(
     balances.some((entry) => !Number.isSafeInteger(entry.paisa)) ||
     balances.reduce((sum, entry) => sum + entry.paisa, 0) !== 0
   )
-    throw new Error(t('Balances must total 0.'));
+    throw new AppError('BALANCES_MUST_TOTAL_0');
   const debtors = balances
     .filter((entry) => entry.paisa < 0)
     .map((entry) => ({ id: entry.playerId, remaining: -entry.paisa }));
@@ -49,17 +42,4 @@ export function settleUp(
     if (creditor.remaining === 0) creditors.shift();
   }
   return transfers;
-}
-export function resultSummary(match: SavedMatch): string {
-  const { rows } = matchStandings(match);
-  const rate = match.settings.moneyRate;
-  return [
-    match.title,
-    formatDate(new Date(match.createdAt)),
-    match.finishedAt ? t('Final standings') : t('Current standings'),
-    ...rows.map(
-      (row) =>
-        `${n(row.rank)}. ${row.player.name}: ${row.total > 0 ? '+' : ''}${n(row.total)}${rate === null ? '' : ` (${formatMoney(moneyAmount(row.total, rate))})`}`,
-    ),
-  ].join('\n');
 }

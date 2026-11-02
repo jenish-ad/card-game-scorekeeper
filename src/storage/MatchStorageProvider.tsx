@@ -1,4 +1,4 @@
-import { t } from '../i18n';
+import { t, translateError } from '../i18n';
 import {
   createContext,
   useContext,
@@ -42,10 +42,13 @@ export function MatchStorageProvider({ children }: PropsWithChildren) {
       .then((connection) => {
         if (!cancelled) setDatabase(connection);
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (!cancelled)
           setError(
-            t('Could not open saved matches; check device storage and retry.'),
+            translateError(
+              error,
+              'Could not open saved matches; check device storage and retry.',
+            ),
           );
       });
     return () => {

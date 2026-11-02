@@ -298,4 +298,68 @@ export const ne: Dictionary = {
   invalidDate: 'अमान्य ईस्वी मिति।',
   dateRange: 'मिति उपलब्ध विक्रम संवत् सीमाभन्दा बाहिर छ।',
   finishType: 'फिनिस',
+  ENTER_VALID_MATCH_SETTINGS: 'खेलका मान्य सेटिङ राख्नुहोस्।',
+  ENTER_FEES_AS_WHOLE_NUMBERS_OF_0_OR_MORE:
+    'शुल्क ० वा बढी पूर्णाङ्कमा लेख्नुहोस्।',
+  ENTER_A_VALID_FOUL_MODE_AND_WHOLE_NUMBER_PENALTY_OF_0_OR_MORE:
+    'मान्य फाउल प्रकार र ० वा बढी पूर्णाङ्क जरिवाना राख्नुहोस्।',
+  ENTER_A_POSITIVE_RS_RATE_WITH_UP_TO_TWO_DECIMAL_PLACES:
+    'शून्यभन्दा ठूलो रुपैयाँ दर दुई दशमलवसम्म लेख्नुहोस्।',
+  UPDATE_THE_APP_TO_OPEN_THIS_MATCH: 'यो खेल खोल्न एप अद्यावधिक गर्नुहोस्।',
+  CHOOSE_2_TO_5_PLAYERS: '२ देखि ५ खेलाडी छान्नुहोस्।',
+  CHOOSE_ONE_WINNER_FROM_THE_ROUND_S_DISTINCT_PLAYERS:
+    'राउन्डका फरक खेलाडीमध्ये एक विजेता छान्नुहोस्।',
+  ENTER_MAAL_AS_A_WHOLE_NUMBER_OF_0_OR_MORE:
+    'माल ० वा बढी पूर्णाङ्कमा लेख्नुहोस्।',
+  THE_WINNER_MUST_BE_SEEN: 'विजेता सिन हुनुपर्छ।',
+  MAAL_TOTALS_ARE_TOO_LARGE_TO_CALCULATE_SAFELY:
+    'मालको जम्मा सुरक्षित गणनाका लागि धेरै ठूलो छ।',
+  CHOOSE_AN_OFFENDER_FROM_THE_ROUND_S_DISTINCT_PARTICIPANTS:
+    'राउन्डका फरक सहभागीमध्ये फाउल गर्ने खेलाडी छान्नुहोस्।',
+  SAVED_FOUL_PENALTY_OR_MODE_IS_INVALID:
+    'सुरक्षित फाउल जरिवाना वा प्रकार अमान्य छ।',
+  FOUL_PENALTY_IS_TOO_LARGE_TO_CALCULATE_SAFELY:
+    'फाउल जरिवाना सुरक्षित गणनाका लागि धेरै ठूलो छ।',
+  SAVED_ROUND_INPUTS_ARE_INVALID: 'सुरक्षित राउन्डको विवरण अमान्य छ।',
+  SAVED_PLAYER_ROUND_INPUTS_ARE_INVALID:
+    'खेलाडीको सुरक्षित राउन्ड विवरण अमान्य छ।',
+  SAVED_ROUND_KIND_IS_INVALID: 'सुरक्षित राउन्डको प्रकार अमान्य छ।',
+  SAVED_MATCH_RECORD_IS_INVALID: 'सुरक्षित खेलको विवरण अमान्य छ।',
+  SAVED_MATCH_OR_PLAYER_ID_IS_INVALID:
+    'सुरक्षित खेल वा खेलाडीको आईडी अमान्य छ।',
+  SAVED_MATCH_DATE_IS_INVALID: 'सुरक्षित खेलको मिति अमान्य छ।',
+  ENTER_A_MATCH_TITLE_OF_1_TO_80_CHARACTERS:
+    'खेलको शीर्षक १ देखि ८० अक्षरसम्म राख्नुहोस्।',
+  SAVED_PLAYER_NAMES_OR_SEATING_ORDER_ARE_INVALID:
+    'सुरक्षित खेलाडीका नाम वा बस्ने क्रम अमान्य छ।',
+  EVERY_PLAYER_IN_THE_ROUND_MUST_BELONG_TO_THIS_MATCH:
+    'राउन्डका हरेक खेलाडी यही खेलका हुनुपर्छ।',
+  KEEP_THE_ORIGINAL_PARTICIPANTS_WHEN_EDITING_A_ROUND:
+    'राउन्ड सच्याउँदा सुरुका सहभागीहरू नै राख्नुहोस्।',
+  NEW_ROUNDS_MAY_ONLY_INCLUDE_ACTIVE_PLAYERS:
+    'नयाँ राउन्डमा चालु खेलाडी मात्र राख्न सकिन्छ।',
+  THIS_PLAYER_DOES_NOT_BELONG_TO_THE_MATCH: 'यो खेलाडी यस खेलमा छैन।',
+  THIS_MATCH_NO_LONGER_EXISTS: 'यो खेल अब छैन।',
+  REOPEN_THE_MATCH_BEFORE_CHANGING_ITS_ROUNDS:
+    'राउन्ड बदल्नुअघि खेल फेरि खोल्नुहोस्।',
+  THIS_ROUND_NO_LONGER_EXISTS_RELOAD_THE_MATCH:
+    'यो राउन्ड अब छैन। खेल फेरि लोड गर्नुहोस्।',
+  MATCH_TOTALS_ARE_TOO_LARGE_TO_CALCULATE_SAFELY:
+    'खेलको जम्मा अङ्क सुरक्षित गणनाका लागि धेरै ठूलो छ।',
+  THE_RS_AMOUNT_IS_TOO_LARGE_USE_A_LOWER_RATE:
+    'रकम धेरै ठूलो छ; दर घटाउनुहोस्।',
+  BALANCES_MUST_TOTAL_0: 'सबै बाँकी रकमको जम्मा ० हुनुपर्छ।',
+  INVALID_DATE: 'अमान्य ईस्वी मिति।',
+  DATE_OUT_OF_RANGE: 'मिति उपलब्ध विक्रम संवत् सीमाभन्दा बाहिर छ।',
+  THIS_DATABASE_NEEDS_A_NEWER_APP_VERSION_NO_SAVED_MATCHES_WERE_CHANGED:
+    'यो डाटाबेस खोल्न नयाँ एप चाहिन्छ। सुरक्षित खेलहरू परिवर्तन भएका छैनन्।',
+  PLAYER_NAME_REQUIRED:
+    'हरेक खेलाडीको नाम लेख्नुहोस् वा खाली खेलाडी हटाउनुहोस्।',
+  PLAYER_NAME_TOO_LONG: 'खेलाडीको नाम ४० अक्षर वा कम राख्नुहोस्।',
+  PLAYER_NAME_DUPLICATE: 'स्कोर छुट्याउन हरेक खेलाडीको नाम फरक राख्नुहोस्।',
+  ROSTER_FULL: 'टेबलमा ५ खेलाडी छन्। पहिले कसैलाई हटाउनुहोस्।',
+  ROSTER_MINIMUM: 'खेलमा कम्तीमा २ खेलाडी रहनुपर्छ।',
+  PLAYER_DEPARTED:
+    '{name} ले यो खेल छोडेका छन्। फेरि सामेल हुने विकल्प प्रयोग गर्नुहोस्।',
+  unavailableMatch: 'यो संस्करणमा यो खेल खोल्न सकिँदैन',
 };

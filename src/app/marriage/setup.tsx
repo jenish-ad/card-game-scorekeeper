@@ -1,4 +1,6 @@
-import { t, n } from '../../i18n';
+import { latinDigits } from '../../i18n/numbers';
+import { parseSetupSettings } from '../../features/marriage/setupSettings';
+import { t, n, translateError } from '../../i18n';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Pressable, Text, TextInput, View } from 'react-native';
@@ -8,10 +10,7 @@ import { DraggableSeat } from '../../ui/DraggableSeat';
 import { defaultMatchTitle } from '../../features/marriage/matchTitle';
 import { validatePlayerNames } from '../../features/marriage/playerNames';
 import { createMatch } from '../../features/marriage/matches';
-import {
-  parseSettings,
-  currentRuleVersion,
-} from '../../features/marriage/scoring';
+import { currentRuleVersion } from '../../features/marriage/scoring';
 import { useMatchDatabase } from '../../storage/MatchStorageProvider';
 import { useTheme } from '../../useTheme';
 import { Button } from '../../ui/Primitives';
@@ -34,7 +33,7 @@ export default function MatchSetupScreen() {
   );
   const [moneyEnabled, setMoneyEnabled] = useState(false);
   const [moneyRate, setMoneyRate] = useState('1');
-  const [title, setTitle] = useState(defaultMatchTitle());
+  const [title, setTitle] = useState('');
   const [players, setPlayers] = useState([
     { id: '1', name: '' },
     { id: '2', name: '' },
@@ -48,35 +47,23 @@ export default function MatchSetupScreen() {
     setError(null);
     try {
       const names = validatePlayerNames(players.map((player) => player.name));
-      if (!names.ok) throw new Error(names.message);
-      if (!title.trim() || title.trim().length > 80)
-        throw new Error(t('Enter a match title of 1 to 80 characters.'));
-      const settings = parseSettings({
+      if (!names.ok) throw names.error;
+      const settings = parseSetupSettings(
+        fees,
         foulMode,
-        foulPenalty: /^\d+$/.test(fees.foulPenalty)
-          ? Number(fees.foulPenalty)
-          : NaN,
-        seenFee: /^\d+$/.test(fees.seenFee) ? Number(fees.seenFee) : NaN,
-        unseenFee: /^\d+$/.test(fees.unseenFee) ? Number(fees.unseenFee) : NaN,
-        dubleeExtra: /^\d+$/.test(fees.dubleeExtra)
-          ? Number(fees.dubleeExtra)
-          : NaN,
-        moneyRate: moneyEnabled ? Number(moneyRate) : null,
-      });
+        moneyEnabled,
+        moneyRate,
+      );
       const id = await createMatch(
         database,
         players.map((player) => player.name),
         title,
         currentRuleVersion,
         settings,
-      ).catch(() => {
-        throw new Error(t('Could not save match; try again.'));
-      });
+      );
       router.replace(`/marriage/match/${id}`);
     } catch (failure) {
-      setError(
-        failure instanceof Error ? failure.message : t('Could not save match.'),
-      );
+      setError(translateError(failure, 'Could not save match.'));
       setSaving(false);
     }
   }
@@ -107,7 +94,7 @@ export default function MatchSetupScreen() {
         <Text style={styles.label}>{t('Match title')}</Text>
         <TextInput
           accessibilityLabel={t('Match title')}
-          placeholder={t('Match title')}
+          placeholder={defaultMatchTitle()}
           placeholderTextColor={theme.colors.textMuted}
           style={styles.input}
           value={title}
@@ -225,7 +212,8 @@ export default function MatchSetupScreen() {
                 selectTextOnFocus
                 style={[styles.input, { width: 80 }]}
                 value={fees[key]}
-                onChangeText={(value) => {
+                onChangeText={(raw) => {
+                  const value = latinDigits(raw);
                   if (/^\d*$/.test(value))
                     setFees((current) => ({ ...current, [key]: value }));
                 }}
@@ -265,7 +253,7 @@ export default function MatchSetupScreen() {
                 selectTextOnFocus
                 style={[styles.input, { width: 100 }]}
                 value={moneyRate}
-                onChangeText={setMoneyRate}
+                onChangeText={(value) => setMoneyRate(latinDigits(value))}
               />
             </View>
           )}

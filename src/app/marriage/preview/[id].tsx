@@ -1,4 +1,4 @@
-import { t, n } from '../../../i18n';
+import { t, n, translateError } from '../../../i18n';
 import { MatchKeepAwake } from '../../../ui/MatchKeepAwake';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -69,9 +69,14 @@ export default function RoundDetailsScreen() {
                 setDraft(null);
                 router.dismissTo(`/marriage/match/${match.id}`);
               })
-              .catch(() => {
+              .catch((error: unknown) => {
                 setBusy(false);
-                setWriteError(t('Could not delete the round; try again.'));
+                setWriteError(
+                  translateError(
+                    error,
+                    'Could not delete the round; try again.',
+                  ),
+                );
               });
           },
         },

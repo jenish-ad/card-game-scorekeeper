@@ -1,10 +1,6 @@
 import { expect, test } from '@jest/globals';
-import {
-  formatMoney,
-  moneyAmount,
-  resultSummary,
-  settleUp,
-} from '../src/features/marriage/settlement';
+import { moneyAmount, settleUp } from '../src/features/marriage/settlement';
+import { formatMoney, resultSummary } from '../src/i18n/matchText';
 import {
   currentRuleVersion,
   defaultSettings,

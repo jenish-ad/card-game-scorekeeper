@@ -1,3 +1,4 @@
+import { playerInitials } from './playerText';
 import { t, n } from '../i18n';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../useTheme';
@@ -58,13 +59,7 @@ export function Avatar({ name, size = 38 }: { name: string; size?: number }) {
   const theme = useTheme();
   const styles = useStyles();
   const local = createStyles(theme);
-  const initials = name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.slice(0, 1))
-    .join('')
-    .toUpperCase();
+  const initials = playerInitials(name);
   return (
     <View
       accessible={false}

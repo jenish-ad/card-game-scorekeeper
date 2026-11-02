@@ -1,4 +1,5 @@
-import { t } from '../i18n';
+import { legacyAutoTitles } from './autoTitles';
+import { AppError } from '../errors';
 export interface MatchConnection {
   execAsync(sql: string): Promise<void>;
   runAsync(
@@ -29,11 +30,9 @@ export async function migrateDatabase(database: MatchDatabase) {
     const row = await transaction.getFirstAsync<{ user_version: number }>(
       'PRAGMA user_version',
     );
-    if (!row || !Number.isInteger(row.user_version) || row.user_version > 5) {
-      throw new Error(
-        t(
-          'This database needs a newer app version. No saved matches were changed.',
-        ),
+    if (!row || !Number.isInteger(row.user_version) || row.user_version > 6) {
+      throw new AppError(
+        'THIS_DATABASE_NEEDS_A_NEWER_APP_VERSION_NO_SAVED_MATCHES_WERE_CHANGED',
       );
     }
     if (row.user_version === 0) {
@@ -89,6 +88,21 @@ export async function migrateDatabase(database: MatchDatabase) {
       await transaction.execAsync(
         'CREATE TABLE app_preferences (key TEXT PRIMARY KEY, value TEXT NOT NULL); PRAGMA user_version = 5;',
       );
+    }
+    if (row.user_version < 6) {
+      const matches = await transaction.getAllAsync<{
+        id: number;
+        title: string;
+        created_at: string;
+      }>('SELECT id, title, created_at FROM matches');
+      for (const match of matches) {
+        if (legacyAutoTitles(match.created_at).has(match.title))
+          await transaction.runAsync(
+            "UPDATE matches SET title = '' WHERE id = ?",
+            match.id,
+          );
+      }
+      await transaction.execAsync('PRAGMA user_version = 6;');
     }
   });
 }

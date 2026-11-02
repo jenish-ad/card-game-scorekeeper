@@ -1,4 +1,4 @@
-import { t } from './index';
+import { AppError } from '../errors';
 // Published calendar facts from amitgaru/nepali-datetime, calendar_bs.csv:
 // https://github.com/amitgaru/nepali-datetime/blob/master/nepali_datetime/data/calendar_bs.csv
 // Anchor: BS 2000-01-01 = AD 1943-04-14. Future month lengths may be revised
@@ -114,10 +114,10 @@ export function adToBs(year: number, month: number, day: number) {
     date.getUTCMonth() !== month - 1 ||
     date.getUTCDate() !== day
   )
-    throw new Error(t('invalidDate'));
+    throw new AppError('INVALID_DATE');
   let remaining = (utc - Date.UTC(1943, 3, 14)) / 86400000;
   if (!Number.isInteger(remaining) || remaining < 0)
-    throw new Error(t('dateRange'));
+    throw new AppError('DATE_OUT_OF_RANGE');
   for (let y = 0; y < bsMonthLengths.length; y++) {
     const months = bsMonthLengths[y]!;
     for (let m = 0; m < 12; m++) {
@@ -127,5 +127,5 @@ export function adToBs(year: number, month: number, day: number) {
       remaining -= length;
     }
   }
-  throw new Error(t('dateRange'));
+  throw new AppError('DATE_OUT_OF_RANGE');
 }

@@ -1,4 +1,4 @@
-import { t } from '../../i18n';
+import { AppError } from '../../errors';
 export const currentRuleVersion = 'marriage-v1';
 
 export interface MatchSettings {
@@ -19,12 +19,12 @@ export const defaultSettings: Readonly<MatchSettings> = {
 };
 export function parseSettings(value: unknown): MatchSettings {
   if (typeof value !== 'object' || value === null)
-    throw new Error(t('Enter valid match settings.'));
+    throw new AppError('ENTER_VALID_MATCH_SETTINGS');
   const settings = value as Record<string, unknown>;
   for (const key of ['seenFee', 'unseenFee', 'dubleeExtra']) {
     const fee = settings[key];
     if (typeof fee !== 'number' || !Number.isSafeInteger(fee) || fee < 0)
-      throw new Error(t('Enter fees as whole numbers of 0 or more.'));
+      throw new AppError('ENTER_FEES_AS_WHOLE_NUMBERS_OF_0_OR_MORE');
   }
   const foulMode = settings.foulMode ?? 'perPlayer';
   const foulPenalty = settings.foulPenalty ?? 10;
@@ -34,8 +34,8 @@ export function parseSettings(value: unknown): MatchSettings {
     !Number.isSafeInteger(foulPenalty) ||
     foulPenalty < 0
   )
-    throw new Error(
-      t('Enter a valid foul mode and whole-number penalty of 0 or more.'),
+    throw new AppError(
+      'ENTER_A_VALID_FOUL_MODE_AND_WHOLE_NUMBER_PENALTY_OF_0_OR_MORE',
     );
   const rate = settings.moneyRate;
   if (
@@ -46,8 +46,8 @@ export function parseSettings(value: unknown): MatchSettings {
       !Number.isSafeInteger(Math.round(rate * 100)) ||
       Math.abs(rate * 100 - Math.round(rate * 100)) > 0.000001)
   )
-    throw new Error(
-      t('Enter a positive Rs rate with up to two decimal places.'),
+    throw new AppError(
+      'ENTER_A_POSITIVE_RS_RATE_WITH_UP_TO_TWO_DECIMAL_PLACES',
     );
   return {
     foulMode: foulMode as MatchSettings['foulMode'],
@@ -64,7 +64,7 @@ export function scoreRound(
   settings: MatchSettings = defaultSettings,
 ): PlayerScore[] {
   if (ruleVersion !== currentRuleVersion)
-    throw new Error(t('Update the app to open this match.'));
+    throw new AppError('UPDATE_THE_APP_TO_OPEN_THIS_MATCH');
   return calculateMarriageRound(input, settings);
 }
 
@@ -90,7 +90,7 @@ export interface PlayerScore {
 
 export function validateMarriagePlayerCount(count: number) {
   if (!Number.isInteger(count) || count < 2 || count > 5) {
-    throw new Error(t('Choose 2 to 5 players.'));
+    throw new AppError('CHOOSE_2_TO_5_PLAYERS');
   }
 }
 
@@ -105,7 +105,7 @@ export function calculateMarriageRound(
   validateMarriagePlayerCount(input.players.length);
   const ids = new Set(input.players.map((player) => player.playerId));
   if (ids.size !== input.players.length || !ids.has(input.winnerId)) {
-    throw new Error(t('Choose one winner from the round’s distinct players.'));
+    throw new AppError('CHOOSE_ONE_WINNER_FROM_THE_ROUND_S_DISTINCT_PLAYERS');
   }
   for (const player of input.players) {
     if (
@@ -115,14 +115,14 @@ export function calculateMarriageRound(
       player.maal < 0 ||
       typeof player.seen !== 'boolean'
     ) {
-      throw new Error(t('Enter maal as a whole number of 0 or more.'));
+      throw new AppError('ENTER_MAAL_AS_A_WHOLE_NUMBER_OF_0_OR_MORE');
     }
   }
   if (
     typeof input.dubleeWin !== 'boolean' ||
     !input.players.find((player) => player.playerId === input.winnerId)?.seen
   ) {
-    throw new Error(t('The winner must be Seen.'));
+    throw new AppError('THE_WINNER_MUST_BE_SEEN');
   }
   const totalMaal = input.players.reduce(
     (sum, player) => sum + (player.seen ? player.maal : 0),
@@ -140,7 +140,7 @@ export function calculateMarriageRound(
     !Number.isSafeInteger(totalMaal) ||
     totalMaal > safeTotal
   ) {
-    throw new Error(t('Maal totals are too large to calculate safely.'));
+    throw new AppError('MAAL_TOTALS_ARE_TOO_LARGE_TO_CALCULATE_SAFELY');
   }
   let winnerPoints = 0;
   const scores = input.players.map((player) => {
@@ -163,7 +163,7 @@ export function calculateMarriageRound(
     !Number.isSafeInteger(totalMaal) ||
     result.some((score) => !Number.isSafeInteger(score.points))
   ) {
-    throw new Error(t('Maal totals are too large to calculate safely.'));
+    throw new AppError('MAAL_TOTALS_ARE_TOO_LARGE_TO_CALCULATE_SAFELY');
   }
   return result;
 }
@@ -176,8 +176,8 @@ export function calculateFoulRound(input: FoulRoundInput): PlayerScore[] {
     ids.some((id) => !Number.isSafeInteger(id) || id < 1) ||
     !ids.includes(input.offenderId)
   )
-    throw new Error(
-      t('Choose an offender from the round’s distinct participants.'),
+    throw new AppError(
+      'CHOOSE_AN_OFFENDER_FROM_THE_ROUND_S_DISTINCT_PARTICIPANTS',
     );
   const { penalty, mode } = input;
   if (
@@ -186,11 +186,11 @@ export function calculateFoulRound(input: FoulRoundInput): PlayerScore[] {
     penalty < 0 ||
     !['perPlayer', 'fixedTotal'].includes(String(mode))
   )
-    throw new Error(t('Saved foul penalty or mode is invalid.'));
+    throw new AppError('SAVED_FOUL_PENALTY_OR_MODE_IS_INVALID');
   const others = ids.filter((id) => id !== input.offenderId);
   const total = mode === 'perPlayer' ? penalty * others.length : penalty;
   if (!Number.isSafeInteger(total))
-    throw new Error(t('Foul penalty is too large to calculate safely.'));
+    throw new AppError('FOUL_PENALTY_IS_TOO_LARGE_TO_CALCULATE_SAFELY');
   return ids.map((playerId) => ({
     playerId,
     points:
@@ -208,7 +208,7 @@ export function parseRoundInput(value: unknown): MarriageRoundInput {
     if (value.kind === 'foul') {
       const foul = value as FoulRoundInput;
       if (!Array.isArray(foul.players))
-        throw new Error(t('Saved round inputs are invalid.'));
+        throw new AppError('SAVED_ROUND_INPUTS_ARE_INVALID');
       const input: FoulRoundInput = {
         kind: 'foul',
         offenderId: foul.offenderId,
@@ -219,7 +219,7 @@ export function parseRoundInput(value: unknown): MarriageRoundInput {
             !('playerId' in player) ||
             typeof player.playerId !== 'number'
           )
-            throw new Error(t('Saved player round inputs are invalid.'));
+            throw new AppError('SAVED_PLAYER_ROUND_INPUTS_ARE_INVALID');
           return { playerId: player.playerId };
         }),
         penalty: foul.penalty,
@@ -229,7 +229,7 @@ export function parseRoundInput(value: unknown): MarriageRoundInput {
       return input;
     }
     if (value.kind !== 'normal')
-      throw new Error(t('Saved round kind is invalid.'));
+      throw new AppError('SAVED_ROUND_KIND_IS_INVALID');
   }
   if (
     typeof value !== 'object' ||
@@ -241,7 +241,7 @@ export function parseRoundInput(value: unknown): MarriageRoundInput {
     !('dubleeWin' in value) ||
     typeof value.dubleeWin !== 'boolean'
   ) {
-    throw new Error(t('Saved round inputs are invalid.'));
+    throw new AppError('SAVED_ROUND_INPUTS_ARE_INVALID');
   }
   const players = value.players.map((player: unknown) => {
     if (
@@ -254,7 +254,7 @@ export function parseRoundInput(value: unknown): MarriageRoundInput {
       !('seen' in player) ||
       typeof player.seen !== 'boolean'
     ) {
-      throw new Error(t('Saved player round inputs are invalid.'));
+      throw new AppError('SAVED_PLAYER_ROUND_INPUTS_ARE_INVALID');
     }
     return { playerId: player.playerId, maal: player.maal, seen: player.seen };
   });
