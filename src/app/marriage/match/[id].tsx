@@ -149,6 +149,11 @@ export default function ScoreboardScreen() {
           match.finishedAt ? t('Finished') : t('Active'),
         ].join(' / ')}
       </Text>
+      {match.settings.moneyRate !== null && (
+        <Text style={styles.caption}>
+          {t('Rs per point')}: {n(match.settings.moneyRate)}
+        </Text>
+      )}
       <StandingsBoard match={match} />
       <Text style={styles.label}>{t('Rounds')}</Text>
       {match.rounds.length ? (

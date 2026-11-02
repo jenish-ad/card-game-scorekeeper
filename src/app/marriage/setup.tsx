@@ -104,6 +104,31 @@ export default function MatchSetupScreen() {
           maxLength={80}
         />
       </View>
+      <View style={styles.card}>
+        <Text style={styles.label}>{t('Money rate')}</Text>
+        <SegmentedControl
+          label={t('Money rate')}
+          value={moneyEnabled}
+          onChange={setMoneyEnabled}
+          options={[
+            { value: false, label: t('Off') },
+            { value: true, label: t('On') },
+          ]}
+        />
+        {moneyEnabled && (
+          <View style={styles.spread}>
+            <Text style={styles.label}>{t('Rs per point')}</Text>
+            <TextInput
+              accessibilityLabel={t('Rs per point')}
+              keyboardType="decimal-pad"
+              selectTextOnFocus
+              style={[styles.input, { width: 100 }]}
+              value={moneyRate}
+              onChangeText={(value) => setMoneyRate(latinDigits(value))}
+            />
+          </View>
+        )}
+      </View>
       <View style={styles.spread}>
         <Text style={styles.label}>{t('Players & seating')}</Text>
         <Text style={styles.body}>
@@ -240,29 +265,6 @@ export default function MatchSetupScreen() {
               { value: 'fixedTotal', label: t('Total') },
             ]}
           />
-          <Text style={styles.label}>{t('Money rate')}</Text>
-          <SegmentedControl
-            label={t('Money rate')}
-            value={moneyEnabled}
-            onChange={setMoneyEnabled}
-            options={[
-              { value: false, label: t('Off') },
-              { value: true, label: t('On') },
-            ]}
-          />
-          {moneyEnabled && (
-            <View style={styles.spread}>
-              <Text style={styles.label}>{t('Rs per point')}</Text>
-              <TextInput
-                accessibilityLabel={t('Rs per point')}
-                keyboardType="decimal-pad"
-                selectTextOnFocus
-                style={[styles.input, { width: 100 }]}
-                value={moneyRate}
-                onChangeText={(value) => setMoneyRate(latinDigits(value))}
-              />
-            </View>
-          )}
         </View>
       )}
       {error && (
