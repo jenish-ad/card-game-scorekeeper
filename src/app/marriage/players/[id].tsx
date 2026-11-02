@@ -1,7 +1,8 @@
+import { useConfirm } from '../../../ui/ConfirmDialog';
 import { t, translateError } from '../../../i18n';
 import { useState } from 'react';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { Alert, Text, TextInput, View } from 'react-native';
+import { Text, TextInput, View } from 'react-native';
 import { addPlayer, setPlayerActive } from '../../../features/marriage/matches';
 import { useMatches } from '../../../features/marriage/useMatches';
 import { useMatchDatabase } from '../../../storage/MatchStorageProvider';
@@ -12,6 +13,7 @@ export default function PlayersScreen() {
   const { match, reload, error } = useMatches(Number(id));
   const database = useMatchDatabase();
   const styles = useStyles();
+  const confirm = useConfirm();
   const [name, setName] = useState('');
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -48,24 +50,30 @@ export default function PlayersScreen() {
               disabled={busy || Boolean(match.finishedAt)}
               onPress={() => {
                 const update = () =>
-                  void change(() =>
-                    setPlayerActive(
-                      database,
-                      match.id,
-                      player.id,
-                      !player.active,
-                    ),
+                  setPlayerActive(
+                    database,
+                    match.id,
+                    player.id,
+                    !player.active,
                   );
-                if (player.active)
-                  Alert.alert(t('Remove player?'), player.name, [
-                    { text: t('Cancel'), style: 'cancel' },
-                    {
-                      text: t('Remove'),
-                      style: 'destructive',
-                      onPress: update,
+                if (player.active) {
+                  void confirm({
+                    title: t('Remove {name}?', { name: player.name }),
+                    body: match.rounds.some((round) =>
+                      round.input.players.some(
+                        (entry) => entry.playerId === player.id,
+                      ),
+                    )
+                      ? t('Their past rounds and points stay in the match.')
+                      : t("They haven't played yet and will be removed."),
+                    confirmLabel: t('Remove'),
+                    destructive: true,
+                    action: async () => {
+                      await update();
+                      reload();
                     },
-                  ]);
-                else update();
+                  });
+                } else void change(update);
               }}
             />
           </View>

@@ -1,8 +1,8 @@
-import { t, n, translateError } from '../../../i18n';
+import { useConfirm } from '../../../ui/ConfirmDialog';
+import { t, n } from '../../../i18n';
 import { MatchKeepAwake } from '../../../ui/MatchKeepAwake';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
-import { ActivityIndicator, Alert, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { deleteRound } from '../../../features/marriage/matches';
 import { useRoundDraft } from '../../../features/marriage/RoundDraftProvider';
 import { useMatches } from '../../../features/marriage/useMatches';
@@ -12,6 +12,7 @@ import { Avatar, Button, Score, formatScore } from '../../../ui/Primitives';
 import { Screen, useStyles } from '../../../ui/Screen';
 export default function RoundDetailsScreen() {
   const styles = useStyles();
+  const confirm = useConfirm();
   const params = useLocalSearchParams<{
     id: string;
     roundId?: string;
@@ -21,8 +22,6 @@ export default function RoundDetailsScreen() {
   const database = useMatchDatabase();
   const { match, loading, error, reload } = useMatches(Number(params.id));
   const { draft, setDraft } = useRoundDraft();
-  const [busy, setBusy] = useState(false);
-  const [writeError, setWriteError] = useState<string | null>(null);
   if (loading)
     return (
       <Screen>
@@ -53,36 +52,22 @@ export default function RoundDetailsScreen() {
           0,
         );
   function confirmDelete() {
-    if (!match || !saved || busy) return;
-    Alert.alert(
-      t('Delete round?'),
-      t('Delete this round and recalculate totals?'),
-      [
-        { text: t('Cancel'), style: 'cancel' },
-        {
-          text: t('Delete'),
-          style: 'destructive',
-          onPress: () => {
-            setBusy(true);
-            void deleteRound(database, match.id, saved.id)
-              .then(() => {
-                setDraft(null);
-                router.dismissTo(`/marriage/match/${match.id}`);
-              })
-              .catch((error: unknown) => {
-                setBusy(false);
-                setWriteError(
-                  translateError(
-                    error,
-                    'Could not delete the round; try again.',
-                  ),
-                );
-              });
-          },
-        },
-      ],
-    );
+    if (!match || !saved) return;
+    void confirm({
+      title: t('Delete round {n}?', {
+        n: match.rounds.findIndex((round) => round.id === saved.id) + 1,
+      }),
+      body: t('Totals will be recalculated.'),
+      confirmLabel: t('Delete'),
+      destructive: true,
+      action: async () => {
+        await deleteRound(database, match.id, saved.id);
+        setDraft(null);
+        router.dismissTo(`/marriage/match/${match.id}`);
+      },
+    });
   }
+
   return (
     <Screen
       footer={
@@ -93,7 +78,6 @@ export default function RoundDetailsScreen() {
             <Button
               secondary
               label={t('Edit round')}
-              disabled={busy}
               onPress={() => {
                 setDraft(null);
                 router.push({
@@ -106,7 +90,6 @@ export default function RoundDetailsScreen() {
               secondary
               destructive
               label={t('Delete round')}
-              disabled={busy}
               onPress={confirmDelete}
             />
           </>
@@ -192,11 +175,6 @@ export default function RoundDetailsScreen() {
         {t('Round total:')}{' '}
         {n(scores.reduce((sum, score) => sum + score.points, 0))}
       </Text>
-      {writeError && (
-        <Text accessibilityRole="alert" style={styles.error}>
-          {writeError}
-        </Text>
-      )}
     </Screen>
   );
 }

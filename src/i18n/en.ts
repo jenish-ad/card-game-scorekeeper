@@ -359,6 +359,19 @@ export const en = {
   ROSTER_MINIMUM: 'At least 2 players must stay in the match.',
   PLAYER_DEPARTED: '{name} left this match. Use Rejoin instead.',
   unavailableMatch: "This match can't be opened in this version",
+  'It moves back to active matches so you can add or edit rounds.':
+    'It moves back to active matches so you can add or edit rounds.',
+  'Final standings are saved to History. You can reopen it later.':
+    'Final standings are saved to History. You can reopen it later.',
+  'Round {n} will be deleted and totals recalculated.':
+    'Round {n} will be deleted and totals recalculated.',
+  'Delete round {n}?': 'Delete round {n}?',
+  'Totals will be recalculated.': 'Totals will be recalculated.',
+  'Remove {name}?': 'Remove {name}?',
+  'Their past rounds and points stay in the match.':
+    'Their past rounds and points stay in the match.',
+  "They haven't played yet and will be removed.":
+    "They haven't played yet and will be removed.",
 } as const;
 export type TranslationKey = keyof typeof en;
 export type Dictionary = { [K in TranslationKey]: string };

@@ -1,3 +1,4 @@
+import { ConfirmProvider } from '../ui/ConfirmDialog';
 import { t } from '../i18n';
 import { useEffect, type PropsWithChildren } from 'react';
 import { deactivateKeepAwake, ExpoKeepAwakeTag } from 'expo-keep-awake';
@@ -76,44 +77,46 @@ function AppLayout() {
         </Text>
       )}
 
-      <RoundDraftProvider>
-        <Stack
-          screenOptions={{
-            headerTintColor: theme.colors.primary,
-            headerStyle: { backgroundColor: theme.colors.bg },
-            headerShadowVisible: false,
-            headerTitleAlign: Platform.OS === 'ios' ? 'center' : 'left',
-            headerTitleStyle: {
-              fontFamily: theme.fonts.bold,
-              fontSize: 14,
-            },
-            headerBackTitle: t('Back'),
-            contentStyle: { backgroundColor: theme.colors.bg },
-          }}
-        >
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="marriage/setup"
-            options={{ title: t('New match') }}
-          />
-          <Stack.Screen
-            name="marriage/match/[id]"
-            options={{ title: t('Scoreboard') }}
-          />
-          <Stack.Screen
-            name="marriage/round/[id]"
-            options={{ title: t('Add round') }}
-          />
-          <Stack.Screen
-            name="marriage/preview/[id]"
-            options={{ title: t('Round details') }}
-          />
-          <Stack.Screen
-            name="marriage/settle/[id]"
-            options={{ title: t('Settle up') }}
-          />
-        </Stack>
-      </RoundDraftProvider>
+      <ConfirmProvider>
+        <RoundDraftProvider>
+          <Stack
+            screenOptions={{
+              headerTintColor: theme.colors.primary,
+              headerStyle: { backgroundColor: theme.colors.bg },
+              headerShadowVisible: false,
+              headerTitleAlign: Platform.OS === 'ios' ? 'center' : 'left',
+              headerTitleStyle: {
+                fontFamily: theme.fonts.bold,
+                fontSize: 14,
+              },
+              headerBackTitle: t('Back'),
+              contentStyle: { backgroundColor: theme.colors.bg },
+            }}
+          >
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="marriage/setup"
+              options={{ title: t('New match') }}
+            />
+            <Stack.Screen
+              name="marriage/match/[id]"
+              options={{ title: t('Scoreboard') }}
+            />
+            <Stack.Screen
+              name="marriage/round/[id]"
+              options={{ title: t('Add round') }}
+            />
+            <Stack.Screen
+              name="marriage/preview/[id]"
+              options={{ title: t('Round details') }}
+            />
+            <Stack.Screen
+              name="marriage/settle/[id]"
+              options={{ title: t('Settle up') }}
+            />
+          </Stack>
+        </RoundDraftProvider>
+      </ConfirmProvider>
     </View>
   );
 }

@@ -1,9 +1,10 @@
+import { useConfirm } from '../../../ui/ConfirmDialog';
 import { displayMatchTitle, resultSummary } from '../../../i18n/matchText';
 import { t, n, translateError } from '../../../i18n';
 import { MatchKeepAwake } from '../../../ui/MatchKeepAwake';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Share, Text } from 'react-native';
+import { ActivityIndicator, Share, Text } from 'react-native';
 import {
   deleteRound,
   setMatchFinished,
@@ -20,6 +21,7 @@ import { SavedRoundNotice } from '../../../ui/SavedRoundNotice';
 import { Screen, useStyles } from '../../../ui/Screen';
 export default function ScoreboardScreen() {
   const styles = useStyles();
+  const confirm = useConfirm();
   const { id, savedRound, savedToken } = useLocalSearchParams<{
     id: string;
     savedRound?: string;
@@ -58,53 +60,37 @@ export default function ScoreboardScreen() {
       await operation();
       setDraft(null);
       reload();
-    } catch (error) {
-      setWriteError(
-        translateError(error, 'Could not update the match; try again.'),
-      );
     } finally {
       setBusy(false);
     }
   }
   function changeStatus() {
     if (!match) return;
-    Alert.alert(
-      match.finishedAt ? t('Reopen match?') : t('Finish match?'),
-      match.finishedAt
-        ? t('Allow changes to rounds?')
-        : t('Move this match to history?'),
-      [
-        { text: t('Cancel'), style: 'cancel' },
-        {
-          text: match.finishedAt ? t('Reopen') : t('Finish'),
-          onPress: () =>
-            void mutate(() =>
-              setMatchFinished(database, match.id, !match.finishedAt),
-            ),
-        },
-      ],
-    );
+    void confirm({
+      title: match.finishedAt ? t('Reopen match?') : t('Finish match?'),
+      body: match.finishedAt
+        ? t('It moves back to active matches so you can add or edit rounds.')
+        : t('Final standings are saved to History. You can reopen it later.'),
+      confirmLabel: match.finishedAt ? t('Reopen') : t('Finish'),
+      action: () =>
+        mutate(() => setMatchFinished(database, match.id, !match.finishedAt)),
+    });
   }
   function undo() {
     if (!match) return;
     const last = match.rounds.at(-1);
     if (!last) return;
-    Alert.alert(
-      t('Undo last round?'),
-      t('Delete round {p0} and recalculate totals?', {
-        p0: match.rounds.length,
+    void confirm({
+      title: t('Undo last round?'),
+      body: t('Round {n} will be deleted and totals recalculated.', {
+        n: match.rounds.length,
       }),
-      [
-        { text: t('Cancel'), style: 'cancel' },
-        {
-          text: t('Undo'),
-          style: 'destructive',
-          onPress: () =>
-            void mutate(() => deleteRound(database, match.id, last.id)),
-        },
-      ],
-    );
+      confirmLabel: t('Undo'),
+      destructive: true,
+      action: () => mutate(() => deleteRound(database, match.id, last.id)),
+    });
   }
+
   return (
     <Screen
       footer={

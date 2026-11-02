@@ -362,4 +362,17 @@ export const ne: Dictionary = {
   PLAYER_DEPARTED:
     '{name} ले यो खेल छोडेका छन्। फेरि सामेल हुने विकल्प प्रयोग गर्नुहोस्।',
   unavailableMatch: 'यो संस्करणमा यो खेल खोल्न सकिँदैन',
+  'It moves back to active matches so you can add or edit rounds.':
+    'यो चालु खेलहरूमा फर्कन्छ ताकि तपाईं राउन्ड थप्न वा सच्याउन सक्नुहोस्।',
+  'Final standings are saved to History. You can reopen it later.':
+    'अन्तिम नतिजा इतिहासमा सुरक्षित हुन्छ। तपाईं पछि फेरि खोल्न सक्नुहुन्छ।',
+  'Round {n} will be deleted and totals recalculated.':
+    'राउन्ड {n} मेटिनेछ र जम्मा अङ्क फेरि गणना गरिनेछ।',
+  'Delete round {n}?': 'राउन्ड {n} मेट्ने?',
+  'Totals will be recalculated.': 'जम्मा अङ्क फेरि गणना गरिनेछ।',
+  'Remove {name}?': '{name} लाई हटाउने?',
+  'Their past rounds and points stay in the match.':
+    'उहाँका अघिल्ला राउन्ड र अङ्क खेलमै रहन्छन्।',
+  "They haven't played yet and will be removed.":
+    'उहाँले अहिलेसम्म खेल्नुभएको छैन र उहाँलाई हटाइनेछ।',
 };
