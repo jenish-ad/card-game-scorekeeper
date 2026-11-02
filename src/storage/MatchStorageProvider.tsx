@@ -1,4 +1,4 @@
-import { t, translateError } from '../i18n';
+import { t, translateError } from '@/i18n';
 import {
   createContext,
   useContext,
@@ -8,8 +8,8 @@ import {
 } from 'react';
 import { openDatabaseAsync } from 'expo-sqlite';
 import { ActivityIndicator, Pressable, Text } from 'react-native';
-import { Screen, useStyles } from '../ui/Screen';
-import { migrateDatabase, type MatchDatabase } from './database';
+import { Screen, useStyles } from '@/ui/Screen';
+import { migrateDatabase, type MatchDatabase } from '@/storage/database';
 
 const StorageContext = createContext<MatchDatabase | null>(null);
 let openingDatabase: Promise<MatchDatabase> | undefined;

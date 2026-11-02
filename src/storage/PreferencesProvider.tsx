@@ -6,13 +6,13 @@ import {
 } from 'react';
 import { getLocales } from 'expo-localization';
 import { ActivityIndicator, Text } from 'react-native';
-import { useMatchDatabase } from './MatchStorageProvider';
-import { PreferencesContext } from './PreferencesContext';
-import { PreferenceStore } from './preferences';
-import { configureI18n, t, translateError } from '../i18n';
-import { Screen, useStyles } from '../ui/Screen';
-import { Button } from '../ui/Primitives';
-export { usePreferences } from './PreferencesContext';
+import { useMatchDatabase } from '@/storage/MatchStorageProvider';
+import { PreferencesContext } from '@/storage/PreferencesContext';
+import { PreferenceStore } from '@/storage/preferences';
+import { configureI18n, t, translateError } from '@/i18n';
+import { Screen, useStyles } from '@/ui/Screen';
+import { Button } from '@/ui/Button';
+export { usePreferences } from '@/storage/PreferencesContext';
 export function PreferencesProvider({ children }: PropsWithChildren) {
   const database = useMatchDatabase();
   const styles = useStyles();

@@ -1,6 +1,6 @@
-import { MotionProvider } from '../ui/MotionProvider';
-import { ConfirmProvider } from '../ui/ConfirmDialog';
-import { t } from '../i18n';
+import { MotionProvider } from '@/theme/MotionProvider';
+import { ConfirmProvider } from '@/ui/ConfirmDialog';
+import { t } from '@/i18n';
 import { useEffect, type PropsWithChildren } from 'react';
 import { deactivateKeepAwake, ExpoKeepAwakeTag } from 'expo-keep-awake';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -23,15 +23,15 @@ import {
   Manrope_600SemiBold,
   Manrope_800ExtraBold,
 } from '@expo-google-fonts/manrope';
-import { PreferencesProvider } from '../storage/PreferencesProvider';
-import { MatchStorageProvider } from '../storage/MatchStorageProvider';
-import { RoundDraftProvider } from '../features/marriage/RoundDraftProvider';
+import { PreferencesProvider } from '@/storage/PreferencesProvider';
+import { MatchStorageProvider } from '@/storage/MatchStorageProvider';
+import { RoundDraftProvider } from '@/features/marriage/data/RoundDraftProvider';
 import { Mukta_500Medium } from '@expo-google-fonts/mukta/500Medium';
 import { Mukta_800ExtraBold } from '@expo-google-fonts/mukta/800ExtraBold';
 import { Mukta_400Regular } from '@expo-google-fonts/mukta/400Regular';
 import { Mukta_600SemiBold } from '@expo-google-fonts/mukta/600SemiBold';
 import { Mukta_700Bold } from '@expo-google-fonts/mukta/700Bold';
-import { useTheme } from '../useTheme';
+import { useTheme } from '@/theme/useTheme';
 
 export default function RootLayout() {
   return (

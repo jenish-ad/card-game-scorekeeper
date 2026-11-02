@@ -1,5 +1,5 @@
 import Svg, { Path } from 'react-native-svg';
-import { useTheme } from '../useTheme';
+import { useTheme } from '@/theme/useTheme';
 export function Crown({
   selected = true,
   size = 20,

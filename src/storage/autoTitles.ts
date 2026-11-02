@@ -1,7 +1,7 @@
-import { en } from '../i18n/en';
-import { ne } from '../i18n/ne';
-import { adToBs } from '../i18n/bikramSambat';
-import { formatNumber } from '../i18n/numbers';
+import { en } from '@/i18n/locales/en';
+import { ne } from '@/i18n/locales/ne';
+import { adToBs } from '@/i18n/calendar/bikramSambat';
+import { formatNumber } from '@/i18n/numbers';
 
 // Reproduce historical generated titles without consulting mutable app preferences.
 export function legacyAutoTitles(createdAt: string): Set<string> {

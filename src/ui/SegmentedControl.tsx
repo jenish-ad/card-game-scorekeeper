@@ -1,7 +1,7 @@
 import { Pressable, Text, View } from 'react-native';
-import { useTheme } from '../useTheme';
-import { devanagariFonts } from '../theme';
-import { feedback } from './feedback';
+import { useTheme } from '@/theme/useTheme';
+import { devanagariFonts } from '@/theme/tokens';
+import { feedback } from '@/lib/feedback';
 export function SegmentedControl<T extends string | boolean>({
   value,
   options,

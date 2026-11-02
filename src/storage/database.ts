@@ -1,6 +1,11 @@
-import { nextPlayerColor } from '../features/marriage/playerColors';
-import { legacyAutoTitles } from './autoTitles';
-import { AppError } from '../errors';
+import { AppError } from '@/lib/errors';
+import * as migration1 from './migrations/001_initial';
+import * as migration2 from './migrations/002_match_titles';
+import * as migration3 from './migrations/003_match_settings';
+import * as migration4 from './migrations/004_player_roster';
+import * as migration5 from './migrations/005_preferences';
+import * as migration6 from './migrations/006_auto_titles';
+import * as migration7 from './migrations/007_player_colors';
 export interface MatchConnection {
   execAsync(sql: string): Promise<void>;
   runAsync(
@@ -23,118 +28,35 @@ export interface MatchDatabase extends MatchConnection {
   ): Promise<void>;
 }
 
+const migrations = [
+  migration1,
+  migration2,
+  migration3,
+  migration4,
+  migration5,
+  migration6,
+  migration7,
+];
 export async function migrateDatabase(database: MatchDatabase) {
   await database.execAsync(
     'PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;',
   );
-  await database.withExclusiveTransactionAsync(async (transaction) => {
-    const row = await transaction.getFirstAsync<{ user_version: number }>(
+  await database.withExclusiveTransactionAsync(async (db) => {
+    const row = await db.getFirstAsync<{ user_version: number }>(
       'PRAGMA user_version',
     );
-    if (!row || !Number.isInteger(row.user_version) || row.user_version > 7) {
+    if (
+      !row ||
+      !Number.isInteger(row.user_version) ||
+      row.user_version > migrations.length
+    )
       throw new AppError(
         'THIS_DATABASE_NEEDS_A_NEWER_APP_VERSION_NO_SAVED_MATCHES_WERE_CHANGED',
       );
-    }
-    if (row.user_version === 0) {
-      await transaction.execAsync(`
-        CREATE TABLE matches (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          game TEXT NOT NULL CHECK (game = 'marriage'),
-          rule_version TEXT NOT NULL,
-          created_at TEXT NOT NULL,
-          finished_at TEXT
-        );
-        CREATE TABLE players (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          match_id INTEGER NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
-          name TEXT NOT NULL CHECK (length(trim(name)) BETWEEN 1 AND 40),
-          seat INTEGER NOT NULL CHECK (seat >= 0),
-          UNIQUE(match_id, seat)
-        );
-        CREATE TABLE rounds (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          match_id INTEGER NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
-          rule_version TEXT NOT NULL,
-          inputs_json TEXT NOT NULL,
-          created_at TEXT NOT NULL
-        );
-        CREATE INDEX players_by_match ON players(match_id, seat);
-        CREATE INDEX rounds_by_match ON rounds(match_id, id);
-        PRAGMA user_version = 1;
-      `);
-    }
-    if (row.user_version < 2) {
-      await transaction.execAsync(
-        "ALTER TABLE matches ADD COLUMN title TEXT NOT NULL DEFAULT ''; PRAGMA user_version = 2;",
-      );
-    }
-    if (row.user_version < 3) {
-      // Preserve canonical inputs while adopting the single unreleased scoring definition.
-      await transaction.execAsync(`
-        ALTER TABLE matches ADD COLUMN settings_json TEXT NOT NULL DEFAULT '{"seenFee":3,"unseenFee":10,"dubleeExtra":5,"moneyRate":null}';
-        UPDATE matches SET rule_version = 'marriage-v1' WHERE rule_version IN ('pagat-base-v1', 'pagat-base-v1-seen-maal');
-        UPDATE rounds SET rule_version = 'marriage-v1' WHERE rule_version IN ('pagat-base-v1', 'pagat-base-v1-seen-maal');
-        PRAGMA user_version = 3;
-      `);
-    }
-    if (row.user_version < 4) {
-      await transaction.execAsync(`
-        ALTER TABLE players ADD COLUMN active INTEGER NOT NULL DEFAULT 1;
-        ALTER TABLE players ADD COLUMN joined_at TEXT;
-        PRAGMA user_version = 4;
-      `);
-    }
-    if (row.user_version < 5) {
-      await transaction.execAsync(
-        'CREATE TABLE app_preferences (key TEXT PRIMARY KEY, value TEXT NOT NULL); PRAGMA user_version = 5;',
-      );
-    }
-    if (row.user_version < 6) {
-      const matches = await transaction.getAllAsync<{
-        id: number;
-        title: string;
-        created_at: string;
-      }>('SELECT id, title, created_at FROM matches');
-      for (const match of matches) {
-        if (legacyAutoTitles(match.created_at).has(match.title))
-          await transaction.runAsync(
-            "UPDATE matches SET title = '' WHERE id = ?",
-            match.id,
-          );
+    for (const migration of migrations)
+      if (row.user_version < migration.version) {
+        await migration.up(db);
+        await db.execAsync(`PRAGMA user_version = ${migration.version};`);
       }
-      await transaction.execAsync('PRAGMA user_version = 6;');
-    }
-    if (row.user_version < 7) {
-      await transaction.execAsync(
-        'CREATE TABLE IF NOT EXISTS player_colors (player_id INTEGER PRIMARY KEY, match_id INTEGER NOT NULL REFERENCES matches(id) ON DELETE CASCADE, color_index INTEGER NOT NULL CHECK(color_index BETWEEN 0 AND 5));',
-      );
-      const players = await transaction.getAllAsync<{
-        id: number;
-        match_id: number;
-        active: number;
-        color_index: number | null;
-      }>(
-        'SELECT p.id, p.match_id, p.active, c.color_index FROM players p LEFT JOIN player_colors c ON c.player_id = p.id ORDER BY p.id',
-      );
-      const assigned = new Map<
-        number,
-        { colorIndex: number; active: boolean }[]
-      >();
-      for (const player of players) {
-        const previous = assigned.get(player.match_id) ?? [];
-        const colorIndex = player.color_index ?? nextPlayerColor(previous);
-        if (player.color_index === null)
-          await transaction.runAsync(
-            'INSERT INTO player_colors(player_id, match_id, color_index) VALUES (?, ?, ?)',
-            player.id,
-            player.match_id,
-            colorIndex,
-          );
-        previous.push({ colorIndex, active: player.active === 1 });
-        assigned.set(player.match_id, previous);
-      }
-      await transaction.execAsync('PRAGMA user_version = 7;');
-    }
   });
 }

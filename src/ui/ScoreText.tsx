@@ -1,4 +1,4 @@
-import { MotionContext } from './MotionProvider';
+import { MotionContext } from '@/theme/MotionProvider';
 import { useContext, useEffect, useRef } from 'react';
 import Animated, {
   cancelAnimation,
@@ -6,9 +6,9 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { t, n } from '../i18n';
-import { useTheme } from '../useTheme';
-import { useReducedMotion } from './useReducedMotion';
+import { t, n } from '@/i18n';
+import { useTheme } from '@/theme/useTheme';
+import { useReducedMotion } from '@/theme/useReducedMotion';
 export function formatScore(value: number) {
   return n(value > 0 ? `+${value}` : value);
 }

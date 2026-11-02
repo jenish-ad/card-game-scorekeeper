@@ -4,7 +4,7 @@
     "slug": "marriage-scorekeeper",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icons/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": false,
@@ -13,9 +13,9 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#F3F1EC",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "foregroundImage": "./assets/icons/android-icon-foreground.png",
+        "backgroundImage": "./assets/icons/android-icon-background.png",
+        "monochromeImage": "./assets/icons/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.griffin.marriagescore"

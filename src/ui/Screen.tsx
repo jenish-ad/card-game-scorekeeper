@@ -18,8 +18,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { type AppTheme } from '../theme';
-import { useTheme } from '../useTheme';
+import { type AppTheme } from '@/theme/tokens';
+import { useTheme } from '@/theme/useTheme';
 
 export function Screen({
   children,

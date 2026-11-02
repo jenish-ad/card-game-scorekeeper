@@ -1,8 +1,8 @@
-import { adToBs } from './bikramSambat';
-import { currentPreferences, t } from './index';
-import type { TranslationKey } from './en';
-import { formatNumber } from './numbers';
-import type { Preferences } from '../storage/preferences';
+import { adToBs } from '@/i18n/calendar/bikramSambat';
+import { currentPreferences, t } from '@/i18n';
+import type { TranslationKey } from '@/i18n/locales/en';
+import { formatNumber } from '@/i18n/numbers';
+import type { Preferences } from '@/storage/preferences';
 
 export function formatDate(
   date: Date,

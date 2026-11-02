@@ -1,5 +1,5 @@
-import type { MatchConnection } from './database';
-import type { Numerals } from '../i18n/numbers';
+import type { MatchConnection } from '@/storage/database';
+import type { Numerals } from '@/i18n/numbers';
 export interface Preferences {
   language: 'en' | 'ne';
   numerals: Numerals;

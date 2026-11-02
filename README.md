@@ -20,11 +20,13 @@ Android release screenshots at the default font scale.
 
 ## Scoring
 
-Only Seen players' maal counts. For each opponent, multiply their counted maal by the number of players, subtract the total Seen maal, then subtract the finish fee. Default fees are 3 for Seen and 10 for Unseen players. A Dublee finish adds 5 per opponent. The winner must be Seen and receives the opposite of the opponents' combined points, so every round totals zero. Fees are editable when creating a match and apply only to that match.
+Seen-only maal and per-match finish fees determine normal and Dublee scores; foul rounds use their saved penalty and mode. Every round balances to zero. Optional Rs-per-point amounts use whole paisa. See [worked scoring examples](docs/SCORING.md) for formulas, validation and settlement.
 
-For example, Sita wins with 5 maal (Seen), Ram has 2 maal (Seen), and Hari is Unseen. Total Seen maal is 7. Ram scores `3 x 2 - 7 - 3 = -4`; Hari scores `0 - 7 - 10 = -17`; Sita scores `+21`. With a Dublee finish, the scores are Ram `-9`, Hari `-22`, Sita `+31`.
+## Project structure
 
-The app uses entered maal totals; it does not inspect cards or determine meld eligibility. A winner can have a negative net score. With a money rate, amounts use exact paisa; settlement greedily matches the largest remaining debtor and creditor.
+Routes live in `src/app`; Marriage domain rules, persistence, components and screens live in `src/features/marriage`. Shared design-system components are in `src/ui`, tokens and motion in `src/theme`, localization in `src/i18n`, migrations/providers in `src/storage`, and general helpers in `src/lib`. Source imports use `@/`.
+
+See [architecture, data flow and SQLite schema](docs/ARCHITECTURE.md), [development notes](docs/DEVELOPMENT.md), [calendar details](docs/CALENDAR.md), and [translation review](docs/TRANSLATIONS.md).
 
 ## Tech stack
 
@@ -32,7 +34,7 @@ Expo SDK 58, Expo Router, React Native 0.88, React 19.3, strict TypeScript, expo
 
 ## Setup
 
-Use Node **22.22.0** and npm. Android development needs the Android SDK and a compatible JDK; iPhone development needs macOS and Xcode.
+Use Node **>=22.22 <23** and npm. Android development needs the Android SDK and a compatible JDK; iPhone development needs macOS and Xcode.
 
 ```sh
 npm ci
@@ -46,11 +48,16 @@ Use a development client. Rebuild it after changing native dependencies or app i
 
 ```sh
 npm run check
+npm run test:coverage
 npx expo install --check
 npm run bundle:check
 ```
 
-Checks cover formatting, lint, strict types, scoring, settings, SQLite migrations and transactional persistence, standings, settlement, sharing text and theme contrast. Bundle exports check Android and iOS JavaScript, not native device behavior. See [development notes](docs/DEVELOPMENT.md) for storage and visual verification.
+Checks cover formatting, architecture import rules, strict types, scoring, settings, SQLite migrations and transactional persistence, standings, settlement, sharing text and theme contrast. Coverage enforces at least 90% lines and branches for the domain and calendar layers. Bundle exports check Android and iOS JavaScript, not native device behavior. See [development notes](docs/DEVELOPMENT.md) for storage and visual verification.
+
+## Contribution tooling
+
+`npm ci` installs Husky hooks through `prepare`. Pre-commit runs lint-staged (Prettier and ESLint fixes on staged source); commit-msg checks Conventional Commits. Use `npm run lint:fix` and `npm run format` for local fixes. VS Code extension recommendations and format-on-save settings are included. Fill in the placeholder repository URL in `package.json`.
 
 ## Sharing source
 

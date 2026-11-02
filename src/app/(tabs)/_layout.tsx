@@ -1,9 +1,9 @@
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { t } from '../../i18n';
+import { t } from '@/i18n';
 import { Tabs } from 'expo-router';
-import { useTheme } from '../../useTheme';
-import { Icon } from '../../ui/Icon';
+import { useTheme } from '@/theme/useTheme';
+import { Icon } from '@/ui/Icon';
 
 export default function TabLayout() {
   const theme = useTheme();

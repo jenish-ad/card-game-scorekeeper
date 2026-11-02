@@ -1,7 +1,7 @@
 import { useState, type ComponentProps } from 'react';
 import { TextInput } from 'react-native';
-import { useTheme } from '../useTheme';
-import { useStyles } from './Screen';
+import { useTheme } from '@/theme/useTheme';
+import { useStyles } from '@/ui/Screen';
 export function TextField({
   style,
   onFocus,

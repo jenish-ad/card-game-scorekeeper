@@ -1,8 +1,8 @@
-import { t, n } from './index';
-import { formatDate } from './dates';
-import { matchStandings } from '../features/marriage/standings';
-import { moneyAmount } from '../features/marriage/settlement';
-import type { SavedMatch } from '../features/marriage/matches';
+import { t, n } from '@/i18n';
+import { formatDate } from '@/i18n/dates';
+import { matchStandings } from '@/features/marriage/domain/standings';
+import { moneyAmount } from '@/features/marriage/domain/settlement';
+import type { SavedMatch } from '@/features/marriage/data/matches';
 export function displayMatchTitle(
   match: Pick<SavedMatch, 'title' | 'createdAt'>,
 ) {

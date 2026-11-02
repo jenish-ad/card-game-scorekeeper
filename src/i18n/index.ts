@@ -1,8 +1,8 @@
-import { AppError } from '../errors';
-import { en, type TranslationKey } from './en';
-import { ne } from './ne';
-import { formatNumber, formatDigits } from './numbers';
-import { defaultPreferences, type Preferences } from '../storage/preferences';
+import { AppError } from '@/lib/errors';
+import { en, type TranslationKey } from '@/i18n/locales/en';
+import { ne } from '@/i18n/locales/ne';
+import { formatNumber, formatDigits } from '@/i18n/numbers';
+import { defaultPreferences, type Preferences } from '@/storage/preferences';
 
 let current: Preferences = { ...defaultPreferences };
 export function configureI18n(preferences: Preferences) {

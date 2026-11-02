@@ -18,12 +18,12 @@ import {
   Text,
   View,
 } from 'react-native';
-import { t, translateError } from '../i18n';
-import { devanagariFonts } from '../theme';
-import { useTheme } from '../useTheme';
-import { useStyles } from './Screen';
-import { Button } from './Primitives';
-import { useMotionEnabled } from './useReducedMotion';
+import { t, translateError } from '@/i18n';
+import { devanagariFonts } from '@/theme/tokens';
+import { useTheme } from '@/theme/useTheme';
+import { useStyles } from '@/ui/Screen';
+import { Button } from '@/ui/Button';
+import { useMotionEnabled } from '@/theme/useReducedMotion';
 
 export type ConfirmOptions = {
   title: string;

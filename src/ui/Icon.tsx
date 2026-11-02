@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentProps } from 'react';
-import { useTheme } from '../useTheme';
+import { useTheme } from '@/theme/useTheme';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 export function Icon({

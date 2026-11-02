@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { defaultPreferences, type Preferences } from './preferences';
+import { defaultPreferences, type Preferences } from '@/storage/preferences';
 export const PreferencesContext = createContext({
   preferences: defaultPreferences,
   keepAwake: true,

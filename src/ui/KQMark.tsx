@@ -1,6 +1,6 @@
 import Svg, { G, Rect, Path } from 'react-native-svg';
-import { useTheme } from '../useTheme';
-import { K_PATH, Q_PATH, DIAMOND_PATH, HEART_PATH } from './kqPaths';
+import { useTheme } from '@/theme/useTheme';
+import { K_PATH, Q_PATH, DIAMOND_PATH, HEART_PATH } from '@/ui/kqPaths';
 export function KQMark({ size = 44 }: { size?: number }) {
   const theme = useTheme();
   return (

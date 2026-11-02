@@ -1,9 +1,9 @@
-import { Crown } from './Crown';
+import { Crown } from '@/ui/Crown';
 import { View, Text } from 'react-native';
-import { playerColor, devanagariFonts } from '../theme';
-import { useTheme } from '../useTheme';
-import { playerInitials } from './playerText';
-import { t } from '../i18n';
+import { playerColor, devanagariFonts } from '@/theme/tokens';
+import { useTheme } from '@/theme/useTheme';
+import { playerInitials } from '@/ui/playerText';
+import { t } from '@/i18n';
 export function PlayerAvatar({
   name,
   colorIndex = 0,

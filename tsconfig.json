@@ -3,7 +3,10 @@
   "compilerOptions": {
     "strict": true,
     "jsx": "react-jsx",
-    "types": ["react", "react-native", "node"]
+    "types": ["react", "react-native", "node"],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "tests/**/*.ts"]
 }
