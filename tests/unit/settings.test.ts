@@ -9,7 +9,7 @@ import {
   defaultSettings,
   parseSettings,
 } from '@/features/marriage/domain/scoring';
-import { defaultMatchTitle } from '@/features/marriage/components/matchTitle';
+import { defaultMatchTitle } from '@/i18n/matchText';
 const input = {
   winnerId: 1,
   dubleeWin: true,

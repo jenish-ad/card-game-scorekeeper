@@ -11,7 +11,6 @@ export interface Transfer {
   to: number;
   paisa: number;
 }
-// Match the largest remaining debtor and creditor, clearing at least one each time.
 export function settleUp(
   balances: readonly { playerId: number; paisa: number }[],
 ): Transfer[] {

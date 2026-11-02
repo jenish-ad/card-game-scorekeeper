@@ -1,6 +1,10 @@
 import { useConfirm } from '@/ui/ConfirmDialog';
-import { displayMatchTitle, resultSummary } from '@/i18n/matchText';
-import { t, n, translateError } from '@/i18n';
+import {
+  displayMatchTitle,
+  resultSummary,
+  matchSubtitle,
+} from '@/i18n/matchText';
+import { t, translateError } from '@/i18n';
 import { MatchKeepAwake } from '@/features/marriage/components/MatchKeepAwake';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -129,6 +133,13 @@ export default function ScoreboardScreen() {
               }}
               changeStatus={changeStatus}
               undo={undo}
+              recordFoul={() => {
+                setDraft(null);
+                router.push({
+                  pathname: '/marriage/round/[id]',
+                  params: { id: match.id, foul: '1' },
+                });
+              }}
               players={() => router.push(`/marriage/players/${match.id}`)}
             />
           ),
@@ -142,18 +153,7 @@ export default function ScoreboardScreen() {
         />
       )}
       <Text style={styles.title}>{displayMatchTitle(match)}</Text>
-      <Text style={styles.caption}>
-        {[
-          `${n(match.players.length)} ${t('players')}`,
-          t('roundCount', { count: match.rounds.length }),
-          match.finishedAt ? t('Finished') : t('Active'),
-        ].join(' / ')}
-      </Text>
-      {match.settings.moneyRate !== null && (
-        <Text style={styles.caption}>
-          {t('Rs per point')}: {n(match.settings.moneyRate)}
-        </Text>
-      )}
+      <Text style={styles.caption}>{matchSubtitle(match)}</Text>
       <StandingsBoard match={match} />
       <Text style={styles.label}>{t('Rounds')}</Text>
       {match.rounds.length ? (

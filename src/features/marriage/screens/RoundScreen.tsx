@@ -8,9 +8,10 @@ import { Screen, useStyles } from '@/ui/Screen';
 
 export default function AddRoundScreen() {
   const styles = useStyles();
-  const { id, roundId } = useLocalSearchParams<{
+  const { id, roundId, foul } = useLocalSearchParams<{
     id: string;
     roundId?: string;
+    foul?: string;
   }>();
   const { match, loading, error, reload } = useMatches(Number(id));
   const router = useRouter();
@@ -54,6 +55,7 @@ export default function AddRoundScreen() {
         key={`${match.id}-${roundId ?? 'new'}`}
         match={match}
         round={round}
+        initialFoul={foul === '1'}
       />
     </>
   );

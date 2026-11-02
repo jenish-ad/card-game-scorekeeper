@@ -8,7 +8,8 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.griffin.marriagescore"
+      "bundleIdentifier": "com.griffin.marriagescore",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +19,8 @@
         "monochromeImage": "./assets/icons/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.griffin.marriagescore"
+      "package": "com.griffin.marriagescore",
+      "versionCode": 1
     },
     "plugins": ["expo-router", "expo-sqlite", "expo-localization"],
     "scheme": "marriage-scorekeeper",

@@ -21,6 +21,7 @@ export function ScoreboardActions({
   changeStatus,
   undo,
   players,
+  recordFoul,
 }: {
   finished: boolean;
   canUndo: boolean;
@@ -29,6 +30,7 @@ export function ScoreboardActions({
   changeStatus: () => void;
   undo: () => void;
   players: () => void;
+  recordFoul: () => void;
 }) {
   const theme = useTheme();
   const styles = useStyles();
@@ -41,17 +43,22 @@ export function ScoreboardActions({
           options: [
             statusLabel,
             t('Undo last round'),
+            t('Record foul'),
             t('Players'),
             t('Cancel'),
           ],
-          cancelButtonIndex: 3,
+          cancelButtonIndex: 4,
           destructiveButtonIndex: canUndo ? 1 : undefined,
-          disabledButtonIndices: canUndo ? [] : [1],
+          disabledButtonIndices: [
+            ...(canUndo ? [] : [1]),
+            ...(finished ? [2] : []),
+          ],
         },
         (index) => {
           if (index === 0) changeStatus();
           else if (index === 1 && canUndo) undo();
-          else if (index === 2) players();
+          else if (index === 2 && !finished) recordFoul();
+          else if (index === 3) players();
         },
       );
     } else setOpen(true);
@@ -117,6 +124,13 @@ export function ScoreboardActions({
               label={t('Undo last round')}
               disabled={!canUndo}
               onPress={() => choose(undo)}
+            />
+            <Button
+              secondary
+              icon="warning-outline"
+              label={t('Record foul')}
+              disabled={finished}
+              onPress={() => choose(recordFoul)}
             />
             <Button
               secondary

@@ -1,5 +1,6 @@
 import type { Dictionary } from '@/i18n/locales/en';
 export const ne: Dictionary = {
+  'Rs {rate} per point': 'प्रति अङ्क रु. {rate}',
   Loading: 'लोड हुँदैछ',
   'Could not load fonts; restart the app.': 'फन्ट लोड भएन; एप फेरि खोल्नुहोस्।',
   Back: 'पछाडि',
@@ -85,7 +86,7 @@ export const ne: Dictionary = {
   'Start match': 'खेल सुरु गर्नुहोस्',
   'Match title': 'खेलको शीर्षक',
   'Players & seating': 'खेलाडी र बस्ने क्रम',
-  'of 5': '/ ५',
+  'of 5': '५ मध्ये',
   'Drag a handle to reorder players.':
     'खेलाडीको क्रम बदल्न ह्यान्डल तान्नुहोस्।',
   'Play order:': 'खेल्ने क्रम:',
@@ -194,8 +195,6 @@ export const ne: Dictionary = {
   Undo: 'हटाउनुहोस्',
   'Could not share the result; try again.':
     'नतिजा साझा भएन; फेरि प्रयास गर्नुहोस्।',
-  'players /': 'खेलाडी /',
-  'rounds /': 'राउन्ड /',
   Rounds: 'राउन्डहरू',
   'Add a round to start scoring.': 'स्कोर सुरु गर्न राउन्ड थप्नुहोस्।',
   'Could not update players.': 'खेलाडीहरू अद्यावधिक भएनन्।',
@@ -220,7 +219,7 @@ export const ne: Dictionary = {
   'in total': 'जम्मा',
   ' (Foul)': ' (फाउल)',
   ' (Winner)': ' (विजेता)',
-  'maal /': 'माल /',
+  'maal ·': 'माल ·',
   'Round total:': 'राउन्डको जम्मा:',
   'Back to Scoreboard': 'स्कोरबोर्डमा फर्कनुहोस्',
   'Round not found.': 'राउन्ड भेटिएन।',
@@ -254,7 +253,7 @@ export const ne: Dictionary = {
   'Add player · {p0} seats left': 'खेलाडी थप्नुहोस् · {p0} स्थान बाँकी',
   'Round {p0}': 'राउन्ड {p0}',
   '{p0} fouled: pays {p1} {p2}': '{p0} ले फाउल गरे: {p2} {p1} तिर्छ',
-  '{p0} finish / Total Seen maal: {p1}': '{p0} फिनिस / जम्मा सिन माल: {p1}',
+  '{p0} finish · Total Seen maal: {p1}': '{p0} फिनिस · जम्मा सिन माल: {p1}',
   "Opposite of the other players' combined points: {p0}":
     'अन्य खेलाडीको जम्मा अङ्कको उल्टो: {p0}',
   'No matches yet.': 'अहिलेसम्म खेल छैन।',

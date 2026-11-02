@@ -9,7 +9,7 @@ import { Pressable, Text, View } from 'react-native';
 import { Icon } from '@/ui/Icon';
 import { feedback } from '@/lib/feedback';
 import { DraggableSeat } from '@/features/marriage/components/DraggableSeat';
-import { defaultMatchTitle } from '../components/matchTitle';
+import { defaultMatchTitle } from '@/i18n/matchText';
 import { validatePlayerNames } from '@/features/marriage/domain/playerNames';
 import { createMatch } from '@/features/marriage/data/matches';
 import { currentRuleVersion } from '@/features/marriage/domain/scoring';

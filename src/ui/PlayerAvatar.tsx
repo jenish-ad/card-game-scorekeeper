@@ -41,7 +41,7 @@ export function PlayerAvatar({
             fontFamily: /[\u0900-\u097f]/.test(name)
               ? devanagariFonts.bold
               : theme.fonts.bold,
-            fontSize: size * 0.36,
+            fontSize: Math.max(12, size * 0.42),
           }}
           numberOfLines={1}
         >
@@ -52,17 +52,17 @@ export function PlayerAvatar({
         <View
           style={{
             position: 'absolute',
-            top: -8,
-            right: -5,
+            top: -9,
+            right: -8,
             backgroundColor: theme.colors.goldTint,
             borderRadius: 10,
-            width: 20,
-            height: 20,
+            width: 16,
+            height: 16,
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Crown size={14} />
+          <Crown size={12} />
         </View>
       )}
     </View>

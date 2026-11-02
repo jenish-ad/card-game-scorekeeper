@@ -1,5 +1,5 @@
-import { roundPreview } from '@/features/marriage/components/roundPreview';
-import { defaultMatchTitle } from '@/features/marriage/components/matchTitle';
+import { localizedRoundPreview } from '@/features/marriage/components/localizedRoundPreview';
+import { defaultMatchTitle } from '@/i18n/matchText';
 import { formatDate } from '@/i18n/dates';
 import { afterEach, expect, test } from '@jest/globals';
 import { AppError, errorMessages } from '@/lib/errors';
@@ -111,7 +111,7 @@ test('pure-domain extraction preserves localized preview errors and date titles'
     numerals: 'devanagari',
     calendar: 'bs',
   });
-  const preview = roundPreview([], null, false, 'marriage-v1');
+  const preview = localizedRoundPreview([], null, false, 'marriage-v1');
   expect(preview.ok).toBe(false);
   if (!preview.ok)
     expect(preview.message).toBe(

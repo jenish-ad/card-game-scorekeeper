@@ -1,72 +1,49 @@
 # Marriage Scorekeeper
 
-An offline Android and iPhone scorekeeper for the Nepali card game Marriage. Create a match, enter each round's maal, Seen status and winner, and review standings recomputed from saved inputs. Matches stay on the device with no account or backend.
+An offline Android and iPhone scorekeeper for the Nepali card game Marriage, made to keep round scores and settlements in one place.
+
+[Placeholder: rewrite why I built this in my own words.]
+
+Built with AI coding assistants; game rules, design decisions, testing and review by the author.
 
 ## Screenshots
 
-Android release screenshots at the default font scale.
+| Home                          | Round entry                                 | Scoreboard                                | Scoreboard (dark)                                   | Home (Nepali)                           |
+| ----------------------------- | ------------------------------------------- | ----------------------------------------- | --------------------------------------------------- | --------------------------------------- |
+| ![Home](docs/images/home.png) | ![Round entry](docs/images/round-entry.png) | ![Scoreboard](docs/images/scoreboard.png) | ![Dark scoreboard](docs/images/scoreboard-dark.png) | ![Nepali Home](docs/images/home-ne.png) |
 
-| Home                          | Round entry                                 | Scoreboard                                | Scoreboard (dark)                                   |
-| ----------------------------- | ------------------------------------------- | ----------------------------------------- | --------------------------------------------------- |
-| ![Home](docs/images/home.png) | ![Round entry](docs/images/round-entry.png) | ![Scoreboard](docs/images/scoreboard.png) | ![Dark scoreboard](docs/images/scoreboard-dark.png) |
+## What it does
 
-## Features
+Track two to five players, normal/Dublee finishes, fouls, changing rosters and rupee settlements. Edit rounds and share results. SQLite keeps matches offline. Supports English/Nepali, Devanagari digits, BS dates and dark mode.
 
-- Two to five players, ordered seating and date-based match titles.
-- Direct numeric round entry, live points, optional calculation details, editing and undo.
-- Per-match finish fees and working normal and Dublee finishes.
-- Optional Rs per point, settlement transfers and plain-text result sharing.
-- Local SQLite storage, history, finish/reopen controls and automatic dark mode.
+See [scoring rules and examples](docs/SCORING.md) and [translation notes](docs/TRANSLATIONS.md).
 
-## Scoring
+## Known limitations
 
-Seen-only maal and per-match finish fees determine normal and Dublee scores; foul rounds use their saved penalty and mode. Every round balances to zero. Optional Rs-per-point amounts use whole paisa. See [worked scoring examples](docs/SCORING.md) for formulas, validation and settlement.
+- Single device.
+- No backup yet.
+- The BS calendar table needs yearly updates.
+- Rules are configurable but table-specific.
 
-## Project structure
+## Development
 
-Routes live in `src/app`; Marriage domain rules, persistence, components and screens live in `src/features/marriage`. Shared design-system components are in `src/ui`, tokens and motion in `src/theme`, localization in `src/i18n`, migrations/providers in `src/storage`, and general helpers in `src/lib`. Source imports use `@/`.
-
-See [architecture, data flow and SQLite schema](docs/ARCHITECTURE.md), [development notes](docs/DEVELOPMENT.md), [calendar details](docs/CALENDAR.md), and [translation review](docs/TRANSLATIONS.md).
-
-## Tech stack
-
-Expo SDK 58, Expo Router, React Native 0.88, React 19.3, strict TypeScript, expo-sqlite, and locally bundled Manrope/Mukta fonts. Supports changing rosters, foul rounds, optional screen wake locks, Nepali text, Devanagari digits and BS dates.
-
-## Setup
-
-Use Node **>=22.22 <23** and npm. Android development needs the Android SDK and a compatible JDK; iPhone development needs macOS and Xcode.
+Use Node **>=22.22 <23** and npm. Android needs the Android SDK and a compatible JDK; local iPhone builds need macOS and Xcode.
 
 ```sh
 npm ci
-npm start
 npm run android
+# Later sessions with the installed development client:
+npm start
 ```
 
-Use a development client. Rebuild it after changing native dependencies or app identifiers. `npm run ios` builds locally on macOS. An installed standalone build works offline; a development client needs Metro.
+Use `npm run ios` on macOS. Rebuild the client after native changes; it needs Metro.
 
-## Testing
+`npm run check` runs formatting, lint, types and tests. Also available: `format`, `lint:fix`, `test:coverage` (90% domain/calendar coverage), `bundle:check` (Android/iOS exports), and `npx expo install --check`. Native behavior needs device testing.
 
-```sh
-npm run check
-npm run test:coverage
-npx expo install --check
-npm run bundle:check
-```
+Routes: `src/app`; game rules/data/views: `src/features/marriage`; shared UI/theme/translations/storage/helpers: `src/{ui,theme,i18n,storage,lib}`; tests: `tests/{unit,integration,support}`. `@/` means `src/`. Totals derive from saved inputs; migrations must preserve historical data.
 
-Checks cover formatting, architecture import rules, strict types, scoring, settings, SQLite migrations and transactional persistence, standings, settlement, sharing text and theme contrast. Coverage enforces at least 90% lines and branches for the domain and calendar layers. Bundle exports check Android and iOS JavaScript, not native device behavior. See [development notes](docs/DEVELOPMENT.md) for storage and visual verification.
-
-## Contribution tooling
-
-`npm ci` installs Husky hooks through `prepare`. Pre-commit runs lint-staged (Prettier and ESLint fixes on staged source); commit-msg checks Conventional Commits. Use `npm run lint:fix` and `npm run format` for local fixes. VS Code extension recommendations and format-on-save settings are included. Fill in the placeholder repository URL in `package.json`.
-
-## Sharing source
-
-```sh
-git archive --format=zip -o marriage-scorekeeper.zip HEAD
-```
-
-This exports the committed revision, including docs and documentation images. Dependencies, caches, generated builds, temporary captures and logs are excluded.
+The offline BS table (`src/i18n/calendar/bikramSambat.ts`) uses [amitgaru/nepali-datetime's published month lengths](https://github.com/amitgaru/nepali-datetime/blob/master/nepali_datetime/data/calendar_bs.csv) (BS 2000?2100; anchor 2000-01-01 = AD 1943-04-14). Hamro Patro cross-checks exist; full official verification for 2075?2085 remains incomplete. Review future month lengths yearly; unsupported dates use AD.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT ? see [LICENSE](LICENSE).

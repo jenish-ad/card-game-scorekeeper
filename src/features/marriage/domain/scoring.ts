@@ -128,7 +128,6 @@ export function calculateMarriageRound(
     (sum, player) => sum + (player.seen ? player.maal : 0),
     0,
   );
-  // Keep intermediate multiplication and accumulated payments exact as well.
   const maximumFinishPayments =
     input.players.length *
     (Math.max(fees.seenFee, fees.unseenFee) + fees.dubleeExtra);

@@ -1,4 +1,4 @@
-import { foulPreview } from '@/features/marriage/components/roundPreview';
+import { localizedFoulPreview } from '@/features/marriage/components/localizedRoundPreview';
 import { test, expect } from '@jest/globals';
 import {
   calculateFoulRound,
@@ -57,7 +57,7 @@ test('legacy settings and normal round JSON fill defaults without changing input
 
 test('unsafe foul totals and malformed stored participants reject without crashing previews', () => {
   expect(
-    foulPreview({
+    localizedFoulPreview({
       kind: 'foul',
       offenderId: 1,
       players: [1, 2, 3].map((playerId) => ({ playerId })),

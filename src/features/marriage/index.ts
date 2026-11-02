@@ -1,4 +1,3 @@
-// Public route and provider entry points. Internal modules import their specific layers.
 export { default as HomeScreen } from './screens/HomeScreen';
 export { default as HistoryScreen } from './screens/HistoryScreen';
 export { default as SettingsScreen } from './screens/SettingsScreen';

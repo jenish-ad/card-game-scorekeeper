@@ -5,7 +5,7 @@ import {
 } from '@/features/marriage/domain/scoring';
 import type { SavedMatch } from '@/features/marriage/data/matches';
 import { matchStandings } from '@/features/marriage/domain/standings';
-import { roundPreview } from '@/features/marriage/components/roundPreview';
+import { localizedRoundPreview } from '@/features/marriage/components/localizedRoundPreview';
 
 function table(winners: number[]): SavedMatch {
   const players = [
@@ -75,20 +75,22 @@ test('live preview agrees with saved scoring and rejects incomplete or undefined
     { playerId: 2, maal: '2', seen: true },
     { playerId: 3, maal: '0', seen: false },
   ];
-  const result = roundPreview(entries, 1, false, currentRuleVersion);
+  const result = localizedRoundPreview(entries, 1, false, currentRuleVersion);
   expect(result.ok && result.scores.map((score) => score.points)).toEqual([
     21, -4, -17,
   ]);
-  expect(roundPreview(entries, null, false, currentRuleVersion).ok).toBe(false);
   expect(
-    roundPreview(
+    localizedRoundPreview(entries, null, false, currentRuleVersion).ok,
+  ).toBe(false);
+  expect(
+    localizedRoundPreview(
       entries.map((entry) => ({ ...entry, maal: '' })),
       1,
       false,
       currentRuleVersion,
     ).ok,
   ).toBe(false);
-  const dublee = roundPreview(entries, 1, true, currentRuleVersion);
+  const dublee = localizedRoundPreview(entries, 1, true, currentRuleVersion);
   expect(dublee.ok && dublee.scores.map((score) => score.points)).toEqual([
     31, -9, -22,
   ]);

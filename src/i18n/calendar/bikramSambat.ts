@@ -2,7 +2,7 @@ import { AppError } from '@/lib/errors';
 // Published calendar facts from amitgaru/nepali-datetime, calendar_bs.csv:
 // https://github.com/amitgaru/nepali-datetime/blob/master/nepali_datetime/data/calendar_bs.csv
 // Anchor: BS 2000-01-01 = AD 1943-04-14. Future month lengths may be revised
-// by Nepal Panchanga Nirnayak Bikas Samiti; see docs/CALENDAR.md for verification.
+// by Nepal Panchanga Nirnayak Bikas Samiti; see README.md#development for verification.
 export const bsMonthLengths: readonly (readonly number[])[] = [
   [30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 31], // 2000
   [31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30], // 2001

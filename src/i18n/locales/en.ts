@@ -1,4 +1,5 @@
 export const en = {
+  'Rs {rate} per point': 'Rs {rate} per point',
   Loading: 'Loading',
   'Could not load fonts; restart the app.':
     'Could not load fonts; restart the app.',
@@ -192,8 +193,6 @@ export const en = {
   Undo: 'Undo',
   'Could not share the result; try again.':
     'Could not share the result; try again.',
-  'players /': 'players /',
-  'rounds /': 'rounds /',
   Rounds: 'Rounds',
   'Add a round to start scoring.': 'Add a round to start scoring.',
   'Could not update players.': 'Could not update players.',
@@ -218,7 +217,7 @@ export const en = {
   'in total': 'in total',
   ' (Foul)': ' (Foul)',
   ' (Winner)': ' (Winner)',
-  'maal /': 'maal /',
+  'maal ·': 'maal ·',
   'Round total:': 'Round total:',
   'Back to Scoreboard': 'Back to Scoreboard',
   'Round not found.': 'Round not found.',
@@ -251,7 +250,7 @@ export const en = {
   'Add player · {p0} seats left': 'Add player · {p0} seats left',
   'Round {p0}': 'Round {p0}',
   '{p0} fouled: pays {p1} {p2}': '{p0} fouled: pays {p1} {p2}',
-  '{p0} finish / Total Seen maal: {p1}': '{p0} finish / Total Seen maal: {p1}',
+  '{p0} finish · Total Seen maal: {p1}': '{p0} finish · Total Seen maal: {p1}',
   "Opposite of the other players' combined points: {p0}":
     "Opposite of the other players' combined points: {p0}",
   'No matches yet.': 'No matches yet.',

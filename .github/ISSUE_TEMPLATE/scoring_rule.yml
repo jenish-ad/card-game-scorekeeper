@@ -1,0 +1,24 @@
+name: Scoring rule
+description: Describe a table rule with a worked example.
+labels: [scoring]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Rule name
+    validations:
+      required: true
+  - type: textarea
+    id: rule
+    attributes:
+      label: How your table plays it
+      description: Include Seen/Unseen, winner, fees, participant count and foul mode when relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Worked example
+      description: Give inputs and every player's expected points, with the zero-sum total.
+    validations:
+      required: true

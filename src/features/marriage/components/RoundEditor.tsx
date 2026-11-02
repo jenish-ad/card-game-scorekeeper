@@ -35,7 +35,10 @@ import { Screen, useStyles } from '@/ui/Screen';
 import { useMatchDatabase } from '@/storage/MatchStorageProvider';
 import { useRoundDraft } from '@/features/marriage/data/RoundDraftProvider';
 import { type FoulRoundInput } from '@/features/marriage/domain/scoring';
-import { foulPreview, roundPreview } from './roundPreview';
+import {
+  localizedFoulPreview,
+  localizedRoundPreview,
+} from './localizedRoundPreview';
 import {
   saveRound,
   type SavedMatch,
@@ -45,9 +48,11 @@ import {
 export function RoundEditor({
   match,
   round,
+  initialFoul = false,
 }: {
   match: SavedMatch;
   round?: SavedRound;
+  initialFoul?: boolean;
 }) {
   const theme = useTheme();
   const reduced = !useMotionEnabled();
@@ -64,7 +69,9 @@ export function RoundEditor({
       ? round.input.players.some((entry) => entry.playerId === player.id)
       : player.active,
   );
-  const [foul, setFoul] = useState(initial?.kind === 'foul');
+  const [foul, setFoul] = useState(
+    initial?.kind === 'foul' || (!initial && initialFoul),
+  );
   const [offenderId, setOffenderId] = useState<number | null>(
     initial?.kind === 'foul' ? initial.offenderId : null,
   );
@@ -92,7 +99,7 @@ export function RoundEditor({
   const number = round
     ? match.rounds.findIndex((entry) => entry.id === round.id) + 1
     : match.rounds.length + 1;
-  const normalPreview = roundPreview(
+  const normalPreview = localizedRoundPreview(
     players,
     winnerId,
     dubleeWin,
@@ -110,7 +117,7 @@ export function RoundEditor({
   const preview = foul
     ? offenderId === null
       ? { ok: false as const, message: t('Choose the player who fouled.') }
-      : foulPreview(foulInput)
+      : localizedFoulPreview(foulInput)
     : normalPreview;
   async function save() {
     if (saving || !preview.ok) return;
@@ -215,11 +222,6 @@ export function RoundEditor({
         </InputAccessoryView>
       )}
       <Text style={styles.subtitle}>{t('Round {p0}', { p0: number })}</Text>
-      <Button
-        secondary
-        label={foul ? t('Normal round') : t('Record foul')}
-        onPress={() => setFoul(!foul)}
-      />
       {foul ? (
         <View style={local.players}>
           <Text style={styles.body}>
@@ -458,17 +460,25 @@ export function RoundEditor({
           </View>
         </>
       )}
-      <Pressable
-        accessibilityRole="link"
-        disabled={!preview.ok}
-        onPress={details}
-        style={local.details}
-      >
-        <Text style={[styles.label, { color: theme.colors.ink }]}>
-          {t('Details')}
-        </Text>
-        <Icon name="chevron-forward" size={18} />
-      </Pressable>
+      <View style={styles.spread}>
+        <Pressable
+          accessibilityRole="link"
+          disabled={!preview.ok}
+          onPress={details}
+          style={local.details}
+        >
+          <Text style={[styles.label, { color: theme.colors.ink }]}>
+            {t('Details')}
+          </Text>
+          <Icon name="chevron-forward" size={18} />
+        </Pressable>
+        <Button
+          ghost
+          icon={foul ? 'arrow-undo-outline' : 'warning-outline'}
+          label={foul ? t('Normal round') : t('Record foul')}
+          onPress={() => setFoul(!foul)}
+        />
+      </View>
       {error && (
         <Text accessibilityRole="alert" style={styles.error}>
           {error}

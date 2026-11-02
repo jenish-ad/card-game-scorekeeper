@@ -1,7 +1,7 @@
 import type { MatchConnection } from '../database';
 import { nextPlayerColor } from '@/lib/playerColors';
 export const version = 7;
-export async function up(db: MatchConnection) {
+async function backfillPlayerColors(db: MatchConnection) {
   await db.execAsync(
     'CREATE TABLE IF NOT EXISTS player_colors (player_id INTEGER PRIMARY KEY, match_id INTEGER NOT NULL REFERENCES matches(id) ON DELETE CASCADE, color_index INTEGER NOT NULL CHECK(color_index BETWEEN 0 AND 5));',
   );
@@ -28,3 +28,5 @@ export async function up(db: MatchConnection) {
     assigned.set(player.match_id, previous);
   }
 }
+
+export { backfillPlayerColors as up };

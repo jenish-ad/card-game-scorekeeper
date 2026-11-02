@@ -21,9 +21,7 @@ export function formatDate(
         preferences.language,
       );
       return `${month} ${formatNumber(bs.day, preferences.numerals)}, ${formatNumber(bs.year, preferences.numerals)}${preferences.language === 'en' ? ' BS' : ''}`;
-    } catch {
-      // Dates outside the embedded table remain readable in AD.
-    }
+    } catch {}
   }
   const text =
     preferences.language === 'ne'

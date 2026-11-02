@@ -1,0 +1,83 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:coverage
+      - run: npx expo install --check
+      - run: npm run bundle:check
+      - name: Extract matching changelog notes
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const tag = process.env.RELEASE_TAG;
+          if (!/^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(tag)) throw new Error('Expected a semantic version tag');
+          const version = tag.slice(1);
+          const text = fs.readFileSync('CHANGELOG.md', 'utf8');
+          const headings = [...text.matchAll(/^## \[([^\]]+)\].*$/gm)];
+          const index = headings.findIndex(heading => heading[1].replace(/^v/, '') === version);
+          if (index < 0) throw new Error(`No CHANGELOG section for ${tag}`);
+          const start = headings[index].index + headings[index][0].length;
+          const end = headings[index + 1]?.index ?? text.length;
+          const notes = text.slice(start, end).trim();
+          if (!notes) throw new Error('Release notes must not be empty');
+          fs.writeFileSync(path.join(process.env.RUNNER_TEMP, 'release-notes.md'), `${notes}\n`);
+          NODE
+      - name: Build preview APK when Expo credentials are configured
+        if: env.EXPO_TOKEN != ''
+        run: npx --yes eas-cli build --platform android --profile preview --non-interactive --wait --json > "$RUNNER_TEMP/eas-build.json"
+      - name: Download APK and calculate SHA-256
+        if: env.EXPO_TOKEN != ''
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const { Readable } = require('node:stream');
+          const { pipeline } = require('node:stream/promises');
+          (async () => {
+            const result = JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'eas-build.json'), 'utf8'));
+            const build = Array.isArray(result) ? result[0] : result;
+            const url = build?.artifacts?.buildUrl;
+            if (!url || !url.startsWith('https://')) throw new Error('Missing EAS APK artifact URL');
+            const response = await fetch(url);
+            if (!response.ok || !response.body) throw new Error(`APK download failed: ${response.status}`);
+            const name = `marriage-scorekeeper-${process.env.RELEASE_TAG}.apk`;
+            await pipeline(Readable.fromWeb(response.body), fs.createWriteStream(path.join(process.env.RUNNER_TEMP, name)));
+          })().catch(error => { console.error(error); process.exitCode = 1; });
+          NODE
+          cd "$RUNNER_TEMP"
+          sha256sum "marriage-scorekeeper-${RELEASE_TAG}.apk" > "marriage-scorekeeper-${RELEASE_TAG}.apk.sha256"
+      - name: Create or update the GitHub Release
+        shell: bash
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" --notes-file "$RUNNER_TEMP/release-notes.md"
+          else
+            gh release create "$RELEASE_TAG" --verify-tag --title "$RELEASE_TAG" --notes-file "$RUNNER_TEMP/release-notes.md"
+          fi
+      - name: Attach APK and SHA-256
+        if: env.EXPO_TOKEN != ''
+        run: gh release upload "$RELEASE_TAG" "$RUNNER_TEMP/marriage-scorekeeper-${RELEASE_TAG}.apk" "$RUNNER_TEMP/marriage-scorekeeper-${RELEASE_TAG}.apk.sha256" --clobber

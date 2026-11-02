@@ -64,4 +64,4 @@ For example, +100 points at Rs 2.50 per point equals **Rs 250**. Settlement gree
 
 For totals Sita +21, Ram −4 and Hari −17 at Rs 1.25 per point, Hari pays Sita **Rs 21.25**, and Ram pays Sita **Rs 5.00**. All money calculations use safe whole paisa.
 
-See [architecture and migration details](ARCHITECTURE.md), [development checks](DEVELOPMENT.md), and [translation review](TRANSLATIONS.md).
+See [development notes](../README.md#development) and [translation review](TRANSLATIONS.md).

@@ -1,6 +1,6 @@
 import type { MatchConnection } from '../database';
 export const version = 1;
-export async function up(db: MatchConnection) {
+async function createInitialSchema(db: MatchConnection) {
   await db.execAsync(`
         CREATE TABLE matches (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,3 +27,5 @@ export async function up(db: MatchConnection) {
         CREATE INDEX rounds_by_match ON rounds(match_id, id);
       `);
 }
+
+export { createInitialSchema as up };

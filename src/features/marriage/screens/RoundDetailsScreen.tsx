@@ -118,7 +118,7 @@ export default function RoundDetailsScreen() {
                   ? t('to each player')
                   : t('in total'),
             })
-          : t('{p0} finish / Total Seen maal: {p1}', {
+          : t('{p0} finish · Total Seen maal: {p1}', {
               p0: input.dubleeWin ? t('Dublee') : t('Normal'),
               p1: totalMaal,
             })}
@@ -158,7 +158,7 @@ export default function RoundDetailsScreen() {
                   {winner ? t(' (Winner)') : ''}
                 </Text>
                 <Text style={styles.caption}>
-                  {n(counted)} {t('maal /')}{' '}
+                  {n(counted)} {t('maal ·')}{' '}
                   {entry.seen ? t('Seen') : t('Unseen')}
                 </Text>
               </View>

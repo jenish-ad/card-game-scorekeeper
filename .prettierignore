@@ -1,6 +1,1 @@
-node_modules
-.expo
-dist
 package-lock.json
-android
-ios

@@ -18,7 +18,6 @@ export function useMatches(id?: number) {
   const [revision, setRevision] = useState(0);
   useFocusEffect(
     useCallback(() => {
-      // A retry explicitly refreshes the database read, even without a focus change.
       void revision;
       let cancelled = false;
       setLoading(true);

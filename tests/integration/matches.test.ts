@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmdirSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { TestDatabase } from './helpers/database';
+import { TestDatabase } from '../support/database';
 import {
   currentRuleVersion,
   defaultSettings,

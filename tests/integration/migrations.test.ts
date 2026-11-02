@@ -1,5 +1,5 @@
 import { expect, test } from '@jest/globals';
-import { TestDatabase } from './helpers/database';
+import { TestDatabase } from '../support/database';
 import { migrateDatabase } from '@/storage/database';
 import * as initial from '@/storage/migrations/001_initial';
 

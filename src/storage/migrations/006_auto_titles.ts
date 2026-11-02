@@ -1,7 +1,7 @@
 import type { MatchConnection } from '../database';
 import { legacyAutoTitles } from '../autoTitles';
 export const version = 6;
-export async function up(db: MatchConnection) {
+async function clearLegacyAutoTitles(db: MatchConnection) {
   const matches = await db.getAllAsync<{
     id: number;
     title: string;
@@ -12,3 +12,5 @@ export async function up(db: MatchConnection) {
       await db.runAsync("UPDATE matches SET title = '' WHERE id = ?", match.id);
   }
 }
+
+export { clearLegacyAutoTitles as up };

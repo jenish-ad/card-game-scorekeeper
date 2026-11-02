@@ -1,0 +1,53 @@
+name: Bug report
+description: Report a reproducible problem in the app.
+labels: [bug]
+body:
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      placeholder: Pixel 8, iPhone 15, or emulator model
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS version
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+    validations:
+      required: true
+  - type: input
+    id: language
+    attributes:
+      label: Language and numeral settings
+      placeholder: English / Latin, or Nepali / Devanagari
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot or recording
+      description: Attach an image if useful. Remove personal match data first.
