@@ -2,7 +2,7 @@
 
 An offline Android and iPhone scorekeeper for the Nepali card game Marriage, made to keep round scores and settlements in one place.
 
-[Placeholder: rewrite why I built this in my own words.]
+We play Marriage at home during Dashain and Tihar, and someone always ends up keeping score on paper and arguing over the maal math. I built this so the scoring, fouls and final settlement are done right on one phone, without anyone recounting at 1 AM.
 
 Built with AI coding assistants; game rules, design decisions, testing and review by the author.
 
@@ -42,8 +42,8 @@ Use `npm run ios` on macOS. Rebuild the client after native changes; it needs Me
 
 Routes: `src/app`; game rules/data/views: `src/features/marriage`; shared UI/theme/translations/storage/helpers: `src/{ui,theme,i18n,storage,lib}`; tests: `tests/{unit,integration,support}`. `@/` means `src/`. Totals derive from saved inputs; migrations must preserve historical data.
 
-The offline BS table (`src/i18n/calendar/bikramSambat.ts`) uses [amitgaru/nepali-datetime's published month lengths](https://github.com/amitgaru/nepali-datetime/blob/master/nepali_datetime/data/calendar_bs.csv) (BS 2000?2100; anchor 2000-01-01 = AD 1943-04-14). Hamro Patro cross-checks exist; full official verification for 2075?2085 remains incomplete. Review future month lengths yearly; unsupported dates use AD.
+The offline BS table (`src/i18n/calendar/bikramSambat.ts`) uses [amitgaru/nepali-datetime's published month lengths](https://github.com/amitgaru/nepali-datetime/blob/master/nepali_datetime/data/calendar_bs.csv) (BS 2000–2100; anchor 2000-01-01 = AD 1943-04-14). Hamro Patro cross-checks exist; full official verification for 2075–2085 remains incomplete. Review future month lengths yearly; unsupported dates use AD.
 
 ## License
 
-MIT ? see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).

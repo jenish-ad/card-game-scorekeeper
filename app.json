@@ -9,7 +9,8 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.griffin.marriagescore",
-      "buildNumber": "1"
+      "buildNumber": "1",
+      "infoPlist": {}
     },
     "android": {
       "adaptiveIcon": {
@@ -22,8 +23,26 @@
       "package": "com.griffin.marriagescore",
       "versionCode": 1
     },
-    "plugins": ["expo-router", "expo-sqlite", "expo-localization"],
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-localization"
+    ],
     "scheme": "marriage-scorekeeper",
-    "platforms": ["android", "ios"]
+    "platforms": [
+      "android",
+      "ios"
+    ],
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "acf8b5a4-bdcd-4eb9-bb14-1c0223c0479c"
+      }
+    },
+    "owner": "jenish-ad"
   }
 }
