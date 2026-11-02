@@ -379,6 +379,38 @@ export const en = {
   System: 'System',
   Light: 'Light',
   Dark: 'Dark',
+  'Points per round': 'Points per round',
+  'Won the round': 'Won the round',
+  Fouled: 'Fouled',
+  'See all': 'See all',
+  Live: 'Live',
+  'Started {time}': 'started {time}',
+  'Resume match': 'Resume match',
+  'Rs/pt': 'Rs/pt',
+  Payer: 'Pays',
+  Recipient: 'Receives',
+  'Changes hands': 'Changes hands',
+  'Net for each player': 'Net for each player',
+  '{name} gets': '{name} gets',
+  '{name} pays': '{name} pays',
+  '{name} is settled': '{name} is settled',
+  Payments: 'Payments',
+  '{count} to clear everything': '{count} to clear everything',
+  '{points} points': '{points} points',
+  'Round: {round} · Point: {point}': 'Round: {round} · Point: {point}',
+  'Saved on this phone': 'Saved on this phone',
+  'Shows as': 'Shows as',
+  '{score} on {date}': '{score} on {date}',
+  'Keep screen on': 'Keep screen on',
+  'While a match is open': 'While a match is open',
+  '{matches} matches, {rounds} rounds played':
+    '{matches} matches, {rounds} rounds played',
+  'How a round turns into points': 'How a round turns into points',
+  "Each player who didn't win pays": "Each player who didn't win pays",
+  'Total maal − (your maal × players) + fee':
+    'Total maal − (your maal × players) + fee',
+  'The winner collects it all, so every round adds up to 0.':
+    'The winner collects it all, so every round adds up to 0.',
 } as const;
 export type TranslationKey = keyof typeof en;
 export type Dictionary = { [K in TranslationKey]: string };

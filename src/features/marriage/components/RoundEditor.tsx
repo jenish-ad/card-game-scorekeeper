@@ -4,7 +4,6 @@ import Animated, {
   LinearTransition,
 } from 'react-native-reanimated';
 import { SegmentedControl } from '@/ui/SegmentedControl';
-import { PlayerAvatar } from '@/ui/PlayerAvatar';
 import { useMotionEnabled } from '@/theme/useReducedMotion';
 import { feedback } from '@/lib/feedback';
 import { latinDigits } from '@/i18n/numbers';
@@ -171,11 +170,9 @@ export function RoundEditor({
                     },
                   ]}
                 >
-                  <PlayerAvatar
-                    name={player.name}
-                    colorIndex={player.colorIndex ?? 0}
-                    size={24}
-                  />
+                  <Text style={[styles.label, { fontSize: 16 }]}>
+                    {player.name}
+                  </Text>
                   <Score
                     compact
                     value={
@@ -269,13 +266,10 @@ export function RoundEditor({
                     outlineColor: theme.colors.loss,
                   }}
                 >
-                  <PlayerAvatar
-                    name={player.name}
-                    colorIndex={player.colorIndex ?? 0}
-                    size={44}
-                  />
+                  <Text style={[styles.label, { fontSize: 16 }]}>
+                    {player.name}
+                  </Text>
                 </View>
-                <Text style={styles.label}>{player.name}</Text>
               </Pressable>
             ))}
           </View>
@@ -334,15 +328,11 @@ export function RoundEditor({
                     },
                   ]}
                 >
-                  <PlayerAvatar
-                    name={player.name}
-                    colorIndex={player.colorIndex ?? 0}
-                    size={36}
-                  />
                   <Text
                     style={[
                       styles.label,
                       styles.flexible,
+                      { fontSize: 16 },
                       !entry.seen && { color: theme.colors.mutedText },
                     ]}
                     numberOfLines={1}

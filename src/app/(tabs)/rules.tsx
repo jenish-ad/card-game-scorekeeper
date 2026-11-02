@@ -1,1 +1,1 @@
-export { SettingsScreen as default } from '@/features/marriage';
+export { default } from '@/features/marriage/screens/RulesScreen';

@@ -82,7 +82,7 @@ export function Button({
           style={[
             styles.buttonText,
             { color, flexShrink: 1 },
-            /[\u0900-\u097f]/.test(label) && {
+            /[\u0900-\u0965\u0970-\u097f]/.test(label) && {
               fontFamily: devanagariFonts.semibold,
             },
           ]}

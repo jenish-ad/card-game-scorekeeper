@@ -7,11 +7,13 @@ export function SegmentedControl<T extends string | boolean>({
   options,
   onChange,
   label,
+  filled = false,
 }: {
   value: T;
   options: readonly { value: T; label: string }[];
   onChange: (value: T) => void;
   label: string;
+  filled?: boolean;
 }) {
   const theme = useTheme();
   return (
@@ -46,7 +48,11 @@ export function SegmentedControl<T extends string | boolean>({
               paddingVertical: 8,
               borderRadius: theme.radius.chip,
               backgroundColor:
-                option.value === value ? theme.colors.surface : 'transparent',
+                option.value === value
+                  ? filled
+                    ? theme.colors.ink
+                    : theme.colors.surface
+                  : 'transparent',
               transform: [{ scale: pressed ? 0.98 : 1 }],
             },
             option.value === value && theme.shadows.card,
@@ -54,14 +60,18 @@ export function SegmentedControl<T extends string | boolean>({
         >
           <Text
             style={{
-              fontFamily: /[\u0900-\u097f]/.test(option.label)
+              fontFamily: /[\u0900-\u0965\u0970-\u097f]/.test(option.label)
                 ? devanagariFonts.semibold
                 : theme.fonts.semibold,
-              fontSize: 14,
+              fontSize: /[\u0900-\u097f]/.test(option.label)
+                ? 17
+                : theme.type.label,
               textAlign: 'center',
               color:
                 option.value === value
-                  ? theme.colors.ink
+                  ? filled
+                    ? theme.colors.onInk
+                    : theme.colors.ink
                   : theme.colors.mutedText,
             }}
           >

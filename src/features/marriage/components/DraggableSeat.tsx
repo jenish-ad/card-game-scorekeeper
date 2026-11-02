@@ -3,7 +3,6 @@ import { useMemo, useState, type PropsWithChildren } from 'react';
 import { Animated, PanResponder, View } from 'react-native';
 import { useTheme } from '@/theme/useTheme';
 import { Icon } from '@/ui/Icon';
-import { PlayerAvatar } from '@/ui/PlayerAvatar';
 
 export function DraggableSeat({
   seat,
@@ -84,7 +83,6 @@ export function DraggableSeat({
       >
         <Icon name="reorder-two" size={18} color={theme.colors.mutedText} />
       </View>
-      <PlayerAvatar name={name} colorIndex={seat - 1} size={36} />
       {children}
     </Animated.View>
   );

@@ -4,12 +4,20 @@ All notable changes are documented here following [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+### Changed
+
+- Replace the Home Resume card with a compact live match summary and leader, rounds, players and rate tiles.
+- Separate Rules and Settings into tabs, replacing Players with Settings and keeping New match in the center navigation button.
+- Refresh the app with a green, cream and yellow theme and an illustrated Home header, keeping the existing Resume card.
+- Show players in rows and rounds in columns, with a Maal row, fixed totals, winner circles and foul outlines.
+
 ### Fixed
 
 - Repair older player color tables missing match references without resetting saved matches.
 
 ### Added
 
+- Add a raised New match button and a Players tab to the rounded bottom navigation.
 - Long-press matches in Home or History to open match actions.
 - Saved System, Light and Dark appearance options in Settings.
 - Delete active or finished matches from match actions with a confirmation dialog.

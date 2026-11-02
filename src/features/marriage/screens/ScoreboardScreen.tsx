@@ -1,10 +1,7 @@
 import { useConfirm } from '@/ui/ConfirmDialog';
-import {
-  displayMatchTitle,
-  resultSummary,
-  matchSubtitle,
-} from '@/i18n/matchText';
-import { t, translateError } from '@/i18n';
+import { useTheme } from '@/theme/useTheme';
+import { displayMatchTitle, resultSummary } from '@/i18n/matchText';
+import { t, n, translateError } from '@/i18n';
 import { MatchKeepAwake } from '@/features/marriage/components/MatchKeepAwake';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -20,12 +17,13 @@ import { useRoundDraft } from '@/features/marriage/data/RoundDraftProvider';
 import { useMatchDatabase } from '@/storage/MatchStorageProvider';
 import { ScoreboardActions } from '@/features/marriage/components/ScoreboardActions';
 import { Button } from '@/ui/Button';
-import { StandingsBoard } from '@/features/marriage/components/StandingsBoard';
 import { RoundTable } from '@/features/marriage/components/RoundTable';
+import { PlayerTotalTiles } from '@/features/marriage/components/PlayerTotalTiles';
 import { SavedRoundNotice } from '@/features/marriage/components/SavedRoundNotice';
 import { Screen, useStyles } from '@/ui/Screen';
 export default function ScoreboardScreen() {
   const styles = useStyles();
+  const theme = useTheme();
   const confirm = useConfirm();
   const { id, savedRound, savedToken } = useLocalSearchParams<{
     id: string;
@@ -177,8 +175,28 @@ export default function ScoreboardScreen() {
         />
       )}
       <Text style={styles.title}>{displayMatchTitle(match)}</Text>
-      <Text style={styles.caption}>{matchSubtitle(match)}</Text>
-      <StandingsBoard match={match} />
+      <Text
+        style={[
+          styles.label,
+          {
+            alignSelf: 'flex-start',
+            backgroundColor: theme.colors.gainTint,
+            color: theme.colors.ink,
+            fontFamily: theme.fonts.bold,
+            paddingHorizontal: 14,
+            paddingVertical: 9,
+            borderRadius: 12,
+          },
+        ]}
+      >
+        {t('Round: {round} · Point: {point}', {
+          round: match.rounds.length,
+          point:
+            match.settings.moneyRate === null
+              ? t('Off')
+              : n(match.settings.moneyRate),
+        })}
+      </Text>
       <Text style={styles.label}>{t('Rounds')}</Text>
       {match.rounds.length ? (
         <RoundTable
@@ -200,6 +218,7 @@ export default function ScoreboardScreen() {
           onPress={() => router.push(`/marriage/settle/${match.id}`)}
         />
       )}
+      <PlayerTotalTiles match={match} />
       {writeError && (
         <Text accessibilityRole="alert" style={styles.error}>
           {writeError}

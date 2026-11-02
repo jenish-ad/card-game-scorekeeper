@@ -1,4 +1,3 @@
-import { PlayerAvatar } from '@/ui/PlayerAvatar';
 import { TextField as TextInput } from '@/ui/TextField';
 import { useConfirm } from '@/ui/ConfirmDialog';
 import { t, translateError } from '@/i18n';
@@ -40,14 +39,10 @@ export default function PlayersScreen() {
         .sort((a, b) => Number(b.active) - Number(a.active) || a.seat - b.seat)
         .map((player) => (
           <View key={player.id} style={styles.ruledRow}>
-            <PlayerAvatar
-              name={player.name}
-              colorIndex={player.colorIndex ?? 0}
-              size={36}
-              left={!player.active}
-            />
             <View style={styles.flexible}>
-              <Text style={styles.label}>{player.name}</Text>
+              <Text style={[styles.label, { fontSize: 16 }]}>
+                {player.name}
+              </Text>
               {!player.active && (
                 <Text style={styles.caption}>{t('Left')}</Text>
               )}

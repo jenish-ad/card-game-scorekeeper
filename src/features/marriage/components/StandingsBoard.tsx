@@ -6,7 +6,6 @@ import { matchStandings } from '@/features/marriage/domain/standings';
 import { moneyAmount } from '@/features/marriage/domain/settlement';
 import { formatMoney } from '@/i18n/matchText';
 import { useTheme } from '@/theme/useTheme';
-import { PlayerAvatar } from '@/ui/PlayerAvatar';
 import { ScoreText } from '@/ui/ScoreText';
 import { Card } from '@/ui/Card';
 import { useMotionEnabled } from '@/theme/useReducedMotion';
@@ -48,15 +47,10 @@ export function StandingsBoard({ match }: { match: SavedMatch }) {
             />
           )}
           <Text style={[styles.caption, { width: 14 }]}>{n(row.rank)}</Text>
-          <PlayerAvatar
-            name={row.player.name}
-            colorIndex={row.player.colorIndex ?? 0}
-            size={36}
-            leader={row.rank === 1 && match.rounds.length > 0}
-            left={!row.player.active}
-          />
           <View style={styles.flexible}>
-            <Text style={styles.label}>{row.player.name}</Text>
+            <Text style={[styles.label, { fontSize: 16 }]}>
+              {row.player.name}
+            </Text>
             {!row.player.active && (
               <Text style={styles.caption}>{t('Left')}</Text>
             )}

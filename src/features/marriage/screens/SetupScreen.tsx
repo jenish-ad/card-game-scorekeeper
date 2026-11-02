@@ -12,7 +12,10 @@ import { DraggableSeat } from '@/features/marriage/components/DraggableSeat';
 import { defaultMatchTitle } from '@/i18n/matchText';
 import { validatePlayerNames } from '@/features/marriage/domain/playerNames';
 import { createMatch } from '@/features/marriage/data/matches';
-import { currentRuleVersion } from '@/features/marriage/domain/scoring';
+import {
+  currentRuleVersion,
+  defaultSettings,
+} from '@/features/marriage/domain/scoring';
 import { useMatchDatabase } from '@/storage/MatchStorageProvider';
 import { useTheme } from '@/theme/useTheme';
 import { Button } from '@/ui/Button';
@@ -23,16 +26,6 @@ export default function MatchSetupScreen() {
   const styles = useStyles();
   const database = useMatchDatabase();
   const router = useRouter();
-  const [rulesOpen, setRulesOpen] = useState(false);
-  const [fees, setFees] = useState({
-    seenFee: '3',
-    unseenFee: '10',
-    dubleeExtra: '5',
-    foulPenalty: '10',
-  });
-  const [foulMode, setFoulMode] = useState<'perPlayer' | 'fixedTotal'>(
-    'perPlayer',
-  );
   const [moneyEnabled, setMoneyEnabled] = useState(false);
   const [moneyRate, setMoneyRate] = useState('1');
   const [title, setTitle] = useState('');
@@ -51,8 +44,13 @@ export default function MatchSetupScreen() {
       const names = validatePlayerNames(players.map((player) => player.name));
       if (!names.ok) throw names.error;
       const settings = parseSetupSettings(
-        fees,
-        foulMode,
+        {
+          seenFee: String(defaultSettings.seenFee),
+          unseenFee: String(defaultSettings.unseenFee),
+          dubleeExtra: String(defaultSettings.dubleeExtra),
+          foulPenalty: String(defaultSettings.foulPenalty),
+        },
+        defaultSettings.foulMode,
         moneyEnabled,
         moneyRate,
       );
@@ -154,7 +152,12 @@ export default function MatchSetupScreen() {
                 maxLength={40}
                 style={[
                   styles.input,
-                  { flex: 1, borderWidth: 0, paddingHorizontal: 0 },
+                  {
+                    flex: 1,
+                    borderWidth: 0,
+                    paddingHorizontal: 0,
+                    fontSize: 17,
+                  },
                 ]}
                 onChangeText={(name) =>
                   setPlayers((current) =>
@@ -196,77 +199,6 @@ export default function MatchSetupScreen() {
           setNextId(nextId + 1);
         }}
       />
-      <Text style={styles.body}>
-        {t('Play order:')}{' '}
-        {players
-          .map(
-            (player, index) =>
-              player.name.trim() || t('Player {p0}', { p0: index + 1 }),
-          )
-          .join(' → ')}
-      </Text>
-      <View style={styles.card}>
-        <Button
-          ghost
-          label={rulesOpen ? t('Hide rules') : t('Rules')}
-          icon={rulesOpen ? 'chevron-up' : 'chevron-down'}
-          onPress={() => setRulesOpen(!rulesOpen)}
-        />
-        <Text style={styles.caption}>
-          {t('Seen')} {n(fees.seenFee)} {'\u00b7'} {t('Unseen')}{' '}
-          {n(fees.unseenFee)} {'\u00b7'} {t('Dublee')} +{n(fees.dubleeExtra)}{' '}
-          {'\u00b7'} {t('Foul penalty')} {n(fees.foulPenalty)}/
-          {foulMode === 'perPlayer' ? t('Per player') : t('Total')}
-        </Text>
-      </View>
-      {rulesOpen && (
-        <View style={styles.card}>
-          {(
-            ['seenFee', 'unseenFee', 'dubleeExtra', 'foulPenalty'] as const
-          ).map((key) => (
-            <View key={key} style={styles.spread}>
-              <Text style={styles.label}>
-                {key === 'seenFee'
-                  ? t('Seen fee')
-                  : key === 'unseenFee'
-                    ? t('Unseen fee')
-                    : key === 'foulPenalty'
-                      ? t('Foul penalty')
-                      : t('Dublee extra')}
-              </Text>
-              <TextInput
-                accessibilityLabel={
-                  key === 'seenFee'
-                    ? t('Seen fee')
-                    : key === 'unseenFee'
-                      ? t('Unseen fee')
-                      : key === 'foulPenalty'
-                        ? t('Foul penalty')
-                        : t('Dublee extra')
-                }
-                keyboardType="number-pad"
-                selectTextOnFocus
-                style={[styles.input, { width: 80 }]}
-                value={fees[key]}
-                onChangeText={(raw) => {
-                  const value = latinDigits(raw);
-                  if (/^\d*$/.test(value))
-                    setFees((current) => ({ ...current, [key]: value }));
-                }}
-              />
-            </View>
-          ))}
-          <SegmentedControl
-            label={t('Foul penalty')}
-            value={foulMode}
-            onChange={setFoulMode}
-            options={[
-              { value: 'perPlayer', label: t('Per player') },
-              { value: 'fixedTotal', label: t('Total') },
-            ]}
-          />
-        </View>
-      )}
       {error && (
         <Text accessibilityRole="alert" style={styles.error}>
           {error}

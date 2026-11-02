@@ -1,12 +1,22 @@
 import { expect, test } from '@jest/globals';
 import { roundTableLayout } from '@/features/marriage/components/roundTableLayout';
 import { lightTheme } from '@/theme/tokens';
-test('five players fit on a 360dp screen at default font scale', () => {
+test('four rounds fit on a 360dp screen with fixed player names and totals', () => {
   const width = 360 - lightTheme.spacing.xl * 2;
-  expect(roundTableLayout(width, 5, 1)).toEqual({
-    roundWidth: 40,
-    minimumPlayerWidth: 52,
+  expect(roundTableLayout(width, 4, 1)).toEqual({
+    nameWidth: 80,
+    totalWidth: 56,
+    roundWidth: 46,
     fits: true,
+  });
+});
+
+test('many rounds scroll without shrinking their touch targets', () => {
+  expect(roundTableLayout(320, 20, 1)).toEqual({
+    nameWidth: 80,
+    totalWidth: 56,
+    roundWidth: 44,
+    fits: false,
   });
 });
 test('larger text requires scrolling while a wider container can fit it', () => {

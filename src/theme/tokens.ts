@@ -1,35 +1,40 @@
 export const lightColors = {
-  bg: '#F3F1EC',
+  bg: '#F4F7EF',
   surface: '#FFFFFF',
-  surfaceSunken: '#ECE8E1',
-  ink: '#17161B',
+  surfaceSunken: '#EAF0E3',
+  ink: '#205D2D',
   onInk: '#FFFFFF',
-  text: '#1B1A1F',
-  textMuted: '#6B6870',
-  mutedText: '#65626A',
-  hairline: '#E4DFD7',
-  gain: '#0E7A4B',
-  gainTint: '#E3F2EA',
+  text: '#163821',
+  textMuted: '#607060',
+  mutedText: '#566650',
+  hairline: '#DFE8D8',
+  gain: '#205D2D',
+  gainTint: '#E5F0CB',
   loss: '#C2362F',
   lossTint: '#FBE7E5',
-  gold: '#B8862B',
-  goldTint: '#F7EDD8',
-  focus: '#2F6FDE',
-  scoreGain: '#09663D',
+  gold: '#E7C34D',
+  goldTint: '#FFF3BD',
+  focus: '#205D2D',
+  scoreGain: '#205D2D',
   scoreLoss: '#B02B25',
-  goldText: '#785616',
+  goldText: '#685015',
   onLoss: '#FFFFFF',
+  sky: '#D4ECF6',
+  hillBack: '#C5E2A4',
+  hillMid: '#91C96B',
+  hillFront: '#58A344',
+  sun: '#FFF2B5',
 };
 export const darkColors: typeof lightColors = {
-  bg: '#121114',
-  surface: '#1C1B20',
-  surfaceSunken: '#0D0C0F',
-  ink: '#F2EFE9',
-  onInk: '#17161B',
-  text: '#F2EFE9',
-  textMuted: '#A7A2AB',
-  mutedText: '#A7A2AB',
-  hairline: '#2C2A31',
+  bg: '#101B14',
+  surface: '#192A1E',
+  surfaceSunken: '#132217',
+  ink: '#B8E49B',
+  onInk: '#163821',
+  text: '#EDF4E5',
+  textMuted: '#ACBBA5',
+  mutedText: '#ACBBA5',
+  hairline: '#304532',
   gain: '#5FD39A',
   gainTint: '#15301F',
   loss: '#FF8A80',
@@ -41,6 +46,11 @@ export const darkColors: typeof lightColors = {
   scoreLoss: '#FF8A80',
   goldText: '#E0B65A',
   onLoss: '#17161B',
+  sky: '#203D42',
+  hillBack: '#3E613C',
+  hillMid: '#315632',
+  hillFront: '#24472B',
+  sun: '#E9D48A',
 };
 export const playerPalette = [
   {
@@ -87,17 +97,17 @@ export const playerPalette = [
   },
 ] as const;
 const foundations = {
-  radius: { card: 18, button: 14, input: 12, chip: 999, mark: 6 },
+  radius: { card: 22, button: 999, input: 14, chip: 999, mark: 6 },
   spacing: { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24 },
   fonts: {
     title: 'Manrope_800ExtraBold',
-    body: 'Manrope_500Medium',
+    body: 'Manrope_400Regular',
     medium: 'Manrope_500Medium',
     semibold: 'Manrope_600SemiBold',
     bold: 'Manrope_700Bold',
     heavy: 'Manrope_800ExtraBold',
   },
-  type: { display: 34, h1: 26, h2: 20, body: 16, label: 14, caption: 12 },
+  type: { display: 32, h1: 24, h2: 19, body: 15, label: 14, caption: 12 },
   shadows: {
     card: {
       shadowColor: '#000',
@@ -120,7 +130,8 @@ const foundations = {
 } as const;
 export const lightTheme = { ...foundations, colors: lightColors, dark: false };
 export const darkTheme = { ...foundations, colors: darkColors, dark: true };
-export type AppTheme = Omit<typeof lightTheme, 'fonts' | 'dark'> & {
+export type AppTheme = Omit<typeof lightTheme, 'fonts' | 'dark' | 'type'> & {
+  type: { [K in keyof typeof lightTheme.type]: number };
   dark: boolean;
   fonts: {
     title: string;
@@ -142,10 +153,12 @@ export const devanagariFonts: AppTheme['fonts'] = {
 export const nepaliLightTheme: AppTheme = {
   ...lightTheme,
   fonts: devanagariFonts,
+  type: { display: 36, h1: 28, h2: 23, body: 18, label: 16, caption: 14 },
 };
 export const nepaliDarkTheme: AppTheme = {
   ...darkTheme,
   fonts: devanagariFonts,
+  type: nepaliLightTheme.type,
 };
 export function playerColor(colorIndex: number, dark: boolean) {
   const swatch =

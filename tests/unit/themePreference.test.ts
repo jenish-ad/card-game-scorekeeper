@@ -46,3 +46,23 @@ test.each([
   } as ReturnType<typeof usePreferences>);
   expect(useTheme()).toBe(expected);
 });
+
+test.each([
+  ['light', 'en', 'latin', lightTheme],
+  ['light', 'en', 'devanagari', lightTheme],
+  ['dark', 'en', 'latin', darkTheme],
+  ['dark', 'en', 'devanagari', darkTheme],
+  ['light', 'ne', 'latin', nepaliLightTheme],
+  ['light', 'ne', 'devanagari', nepaliLightTheme],
+  ['dark', 'ne', 'latin', nepaliDarkTheme],
+  ['dark', 'ne', 'devanagari', nepaliDarkTheme],
+] as const)(
+  '%s theme and %s typography stay unchanged with %s numerals',
+  (theme, language, numerals, expected) => {
+    jest.mocked(useColorScheme).mockReturnValue(null);
+    jest.mocked(usePreferences).mockReturnValue({
+      preferences: { ...defaultPreferences, theme, language, numerals },
+    } as ReturnType<typeof usePreferences>);
+    expect(useTheme()).toBe(expected);
+  },
+);

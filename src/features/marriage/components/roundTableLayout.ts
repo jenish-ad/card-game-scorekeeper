@@ -1,15 +1,20 @@
-// Width is the measured table container, after the screen's horizontal padding.
+// Keep names and totals visible while round columns scroll on smaller screens.
 export function roundTableLayout(
   width: number,
-  playerCount: number,
+  roundCount: number,
   fontScale: number,
 ) {
-  const roundWidth = 40;
-  const minimumPlayerWidth = 52 * fontScale;
-  const available = Math.max(0, width - roundWidth - 2);
+  const scale = Math.max(1, fontScale);
+  const nameWidth = Math.ceil(80 * scale);
+  const totalWidth = Math.ceil(56 * scale);
+  const minimumRoundWidth = Math.ceil(44 * scale);
+  const available = Math.max(0, width - nameWidth - totalWidth);
+  const fits = width > 0 && available >= roundCount * minimumRoundWidth;
   return {
-    roundWidth,
-    minimumPlayerWidth,
-    fits: available >= playerCount * minimumPlayerWidth,
+    nameWidth,
+    totalWidth,
+    roundWidth:
+      fits && roundCount > 0 ? available / roundCount : minimumRoundWidth,
+    fits,
   };
 }

@@ -144,10 +144,14 @@ function createStyles(theme: AppTheme) {
       lineHeight: 25,
       color: c.mutedText,
     },
-    label: { fontFamily: theme.fonts.semibold, fontSize: 14, color: c.text },
+    label: {
+      fontFamily: theme.fonts.semibold,
+      fontSize: theme.type.label,
+      color: c.text,
+    },
     eyebrow: {
       fontFamily: theme.fonts.bold,
-      fontSize: 11,
+      fontSize: theme.type.caption - 1,
 
       color: c.mutedText,
     },
@@ -162,7 +166,7 @@ function createStyles(theme: AppTheme) {
     buttonText: {
       color: c.onInk,
       fontFamily: theme.fonts.semibold,
-      fontSize: 14,
+      fontSize: theme.type.label,
       textAlign: 'center',
     },
     input: {
@@ -173,13 +177,13 @@ function createStyles(theme: AppTheme) {
       padding: theme.spacing.md,
       minHeight: theme.touchTarget,
       fontFamily: theme.fonts.medium,
-      fontSize: 15,
+      fontSize: theme.type.body,
       color: c.text,
     },
     error: {
       color: c.scoreLoss,
       fontFamily: theme.fonts.medium,
-      fontSize: 14,
+      fontSize: theme.type.label,
       lineHeight: 22,
     },
     card: {
@@ -200,7 +204,7 @@ function createStyles(theme: AppTheme) {
     flexible: { flex: 1, minWidth: 0 },
     caption: {
       fontFamily: theme.fonts.medium,
-      fontSize: 12,
+      fontSize: theme.type.caption,
       lineHeight: 18,
       color: c.mutedText,
       fontVariant: ['tabular-nums'],

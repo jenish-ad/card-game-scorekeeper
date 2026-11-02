@@ -9,6 +9,7 @@ import Animated, {
 import { t, n } from '@/i18n';
 import { useTheme } from '@/theme/useTheme';
 import { useReducedMotion } from '@/theme/useReducedMotion';
+import { usePreferences } from '@/storage/PreferencesContext';
 export function formatScore(value: number) {
   return n(value > 0 ? `+${value}` : value);
 }
@@ -33,6 +34,7 @@ export function ScoreText({
   animate?: boolean;
 }) {
   const theme = useTheme();
+  const { preferences } = usePreferences();
   const reduced = useReducedMotion();
   const { loaded } = useContext(MotionContext);
   const previous = useRef(value);
@@ -61,7 +63,9 @@ export function ScoreText({
         {
           fontFamily: theme.fonts.heavy,
           fontVariant: ['tabular-nums'],
-          fontSize: { sm: 14, md: 20, lg: 26, xl: 34 }[size],
+          fontSize:
+            { sm: 14, md: 20, lg: 26, xl: 34 }[size] +
+            (preferences.numerals === 'devanagari' ? 3 : 0),
           color: neutral
             ? theme.colors.ink
             : value > 0

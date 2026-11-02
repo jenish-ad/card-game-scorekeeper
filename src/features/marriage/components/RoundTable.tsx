@@ -1,9 +1,4 @@
-import Animated, { LinearTransition } from 'react-native-reanimated';
-import { devanagariFonts } from '@/theme/tokens';
-import { useMotionEnabled } from '@/theme/useReducedMotion';
-import { t, n } from '@/i18n';
-import { LinearGradient } from 'expo-linear-gradient';
-import { roundTableLayout } from '@/features/marriage/components/roundTableLayout';
+import { useRef, useState, type ComponentRef } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -11,15 +6,16 @@ import {
   Text,
   View,
   useWindowDimensions,
-  type ViewStyle,
 } from 'react-native';
-import { useState } from 'react';
-import type { SavedMatch } from '@/features/marriage/data/matches';
-import { matchTotals } from '@/features/marriage/data/matches';
-import { scoreRound } from '@/features/marriage/domain/scoring';
+import { t, n } from '@/i18n';
+import { devanagariFonts } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import { Score } from '@/ui/Score';
 import { useStyles } from '@/ui/Screen';
+import { matchTotals, type SavedMatch } from '@/features/marriage/data/matches';
+import { scoreRound } from '@/features/marriage/domain/scoring';
+import { roundTableLayout } from './roundTableLayout';
+import { usePreferences } from '@/storage/PreferencesContext';
+
 export function RoundTable({
   match,
   openRound,
@@ -27,219 +23,268 @@ export function RoundTable({
   match: SavedMatch;
   openRound: (id: number) => void;
 }) {
+  const theme = useTheme();
+  const { preferences } = usePreferences();
+  const numberStyle = {
+    fontSize: Math.max(
+      theme.type.caption,
+      preferences.numerals === 'devanagari' ? 15 : 12,
+    ),
+  };
+  const styles = useStyles();
+  const { fontScale } = useWindowDimensions();
+  const [width, setWidth] = useState(0);
+  const roundsScroll = useRef<ComponentRef<typeof ScrollView>>(null);
+  const showLatestRound = () =>
+    roundsScroll.current?.scrollToEnd({ animated: false });
+  const { nameWidth, totalWidth, roundWidth, fits } = roundTableLayout(
+    width,
+    match.rounds.length,
+    fontScale,
+  );
+  const height = Math.ceil(44 * Math.max(1, fontScale));
   const players = match.players.filter((player) =>
     match.rounds.some((round) =>
       round.input.players.some((entry) => entry.playerId === player.id),
     ),
   );
-  const theme = useTheme();
-  const reduced = !useMotionEnabled();
-  const styles = useStyles();
-  const { fontScale } = useWindowDimensions();
-  const rowHeight = Math.ceil(48 * Math.max(1, fontScale));
-  const rowSize = { height: rowHeight };
-  const [width, setWidth] = useState(0);
-  const { roundWidth, minimumPlayerWidth, fits } = roundTableLayout(
-    width,
-    players.length,
-    fontScale,
-  );
-  const column: ViewStyle = fits ? { flex: 1 } : { width: minimumPlayerWidth };
   const totals = matchTotals(match);
-  const totalStyle = {
-    backgroundColor: theme.colors.surfaceSunken,
-    borderColor: theme.colors.hairline,
+  const header = {
+    backgroundColor: theme.dark ? theme.colors.gainTint : theme.colors.gain,
   };
-  const columns = (
-    <View style={fits ? local.fill : undefined}>
-      <View style={[local.row, rowSize]}>
-        {players.map((player) => (
-          <View key={player.id} style={[local.cell, rowSize, column]}>
-            <Text
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              accessibilityLabel={`${player.name}${!player.active ? `, ${t('Left')}` : ''}`}
-              style={[
-                styles.label,
-                { textAlign: 'center' },
-                /[\u0900-\u097f]/.test(player.name) && {
-                  fontFamily: devanagariFonts.semibold,
-                },
-              ]}
-            >
-              {player.name}
-            </Text>
-          </View>
-        ))}
-      </View>
+  const headerText = {
+    color: theme.dark ? theme.colors.text : '#FFFFFF',
+    fontFamily: theme.fonts.bold,
+    fontSize: 12,
+  };
+  const cell = [local.cell, { height }];
+  const stripe = (index: number) => ({
+    backgroundColor:
+      index % 2 ? theme.colors.surfaceSunken : theme.colors.surface,
+    borderBottomColor: theme.colors.hairline,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  });
+  const maalStyle = { backgroundColor: theme.colors.gainTint };
+  const rounds = (
+    <View style={local.row}>
       {match.rounds.map((round, index) => {
         const scores = scoreRound(
           round.input,
           match.ruleVersion,
           match.settings,
         );
+        const maal =
+          round.input.kind === 'foul'
+            ? null
+            : round.input.players.reduce(
+                (sum, player) => sum + (player.seen ? player.maal : 0),
+                0,
+              );
         return (
-          <Animated.View
-            key={round.id}
-            layout={reduced ? undefined : LinearTransition.duration(260)}
-          >
+          <View key={round.id} style={{ width: roundWidth }}>
             <Pressable
-              key={round.id}
               accessibilityRole="button"
               accessibilityLabel={t('Round {p0} details', { p0: index + 1 })}
               onPress={() => openRound(round.id)}
-              style={({ pressed }) => [
-                local.row,
-                rowSize,
-                {
-                  backgroundColor: pressed
-                    ? theme.colors.goldTint
-                    : index % 2
-                      ? theme.colors.surfaceSunken
-                      : theme.colors.surface,
-                  transform: [{ scale: pressed && !reduced ? 0.98 : 1 }],
-                },
-              ]}
+              style={[cell, header]}
             >
-              {players.map((player) => (
-                <View key={player.id} style={[local.cell, rowSize, column]}>
-                  {round.input.kind === 'foul' &&
-                    round.input.offenderId === player.id && (
-                      <Text
-                        style={[
-                          styles.caption,
-                          {
-                            backgroundColor: theme.colors.lossTint,
-                            color: theme.colors.scoreLoss,
-                            borderRadius: 999,
-                            paddingHorizontal: 5,
-                          },
-                        ]}
-                      >
-                        {t('foulMark')}
-                      </Text>
-                    )}
-                  {scores.some((score) => score.playerId === player.id) ? (
-                    <Score
-                      compact
-                      value={
-                        scores.find((score) => score.playerId === player.id)!
-                          .points
-                      }
-                    />
-                  ) : (
-                    <Text style={styles.caption}>–</Text>
-                  )}
-                </View>
-              ))}
+              <Text style={[headerText, numberStyle]}>{n(index + 1)}</Text>
             </Pressable>
-          </Animated.View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${t('Maal')}, ${t('Round {p0}', { p0: index + 1 })}`}
+              onPress={() => openRound(round.id)}
+              style={[cell, maalStyle]}
+            >
+              <Text
+                style={[
+                  styles.caption,
+                  numberStyle,
+                  { color: theme.colors.scoreGain },
+                ]}
+              >
+                {maal === null ? '–' : n(maal)}
+              </Text>
+            </Pressable>
+            {players.map((player, row) => {
+              const score = scores.find(
+                (entry) => entry.playerId === player.id,
+              );
+              const winner =
+                round.input.kind !== 'foul' &&
+                round.input.winnerId === player.id;
+              const foul =
+                round.input.kind === 'foul' &&
+                round.input.offenderId === player.id;
+              const color =
+                score && score.points < 0
+                  ? theme.colors.scoreLoss
+                  : theme.colors.text;
+              return (
+                <Pressable
+                  key={player.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${player.name}, ${t('Round {p0} details', { p0: index + 1 })}, ${score ? n(score.points) : '–'}${winner ? `, ${t('Won the round')}` : ''}${foul ? `, ${t('Fouled')}` : ''}`}
+                  onPress={() => openRound(round.id)}
+                  style={({ pressed }) => [
+                    cell,
+                    stripe(row),
+                    { opacity: pressed ? 0.6 : 1 },
+                  ]}
+                >
+                  <View
+                    style={[
+                      local.mark,
+                      winner && {
+                        borderWidth: 1,
+                        borderColor: theme.colors.scoreGain,
+                        borderRadius: 999,
+                      },
+                      foul && {
+                        borderWidth: 1,
+                        borderColor: theme.colors.scoreLoss,
+                        borderRadius: 4,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.caption,
+                        numberStyle,
+                        { color, fontVariant: ['tabular-nums'] },
+                      ]}
+                    >
+                      {score ? n(score.points) : '–'}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
         );
       })}
-      <View style={[local.row, rowSize, local.total, totalStyle]}>
-        {players.map((player) => (
-          <View key={player.id} style={[local.cell, rowSize, column]}>
-            <Score compact value={totals.get(player.id) ?? 0} />
-          </View>
-        ))}
-      </View>
     </View>
   );
   return (
-    <View
-      onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
-      style={[
-        local.table,
-        theme.shadows.card,
-        { backgroundColor: theme.colors.surface },
-      ]}
-    >
+    <View style={[styles.card, { padding: 8, gap: 10 }]}>
       <View
-        style={[
-          { width: roundWidth },
-          { backgroundColor: theme.colors.surfaceSunken },
-        ]}
+        onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+        style={local.table}
       >
-        <View style={[local.cell, rowSize, local.roundCell]}>
-          <Text numberOfLines={1} adjustsFontSizeToFit style={styles.caption}>
-            {t('Round')}
-          </Text>
-        </View>
-        {match.rounds.map((round, index) => (
-          <Pressable
-            key={round.id}
-            accessibilityRole="button"
-            accessibilityLabel={t('Round {p0} details', { p0: index + 1 })}
-            onPress={() => openRound(round.id)}
-            style={[
-              local.cell,
-              rowSize,
-              local.roundCell,
-              {
-                backgroundColor:
-                  index % 2 ? theme.colors.surfaceSunken : theme.colors.surface,
-              },
-            ]}
-          >
-            <Text style={styles.caption}>
-              {n(index + 1)}
-              {round.input.kind === 'foul' ? ` ${t('foulMark')}` : ''}
+        <View style={{ width: nameWidth }}>
+          <View style={[cell, header, local.name]}>
+            <Text style={headerText}>{t('Round')}</Text>
+          </View>
+          <View style={[cell, maalStyle, local.name]}>
+            <Text style={[styles.caption, { color: theme.colors.scoreGain }]}>
+              {t('Maal')}
             </Text>
-          </Pressable>
-        ))}
-        <View
-          style={[
-            local.cell,
-            rowSize,
-            local.roundCell,
-            local.total,
-            totalStyle,
-          ]}
-        >
-          <Text numberOfLines={1} adjustsFontSizeToFit style={styles.label}>
-            {t('Total')}
-          </Text>
+          </View>
+          {players.map((player, index) => (
+            <View key={player.id} style={[cell, stripe(index), local.name]}>
+              <Text
+                numberOfLines={1}
+                accessibilityLabel={`${player.name}${!player.active ? `, ${t('Left')}` : ''}`}
+                style={[
+                  styles.caption,
+                  {
+                    color: theme.colors.text,
+                    fontSize: theme.type.label,
+                    fontFamily: /[\u0900-\u097f]/.test(player.name)
+                      ? devanagariFonts.semibold
+                      : theme.fonts.bold,
+                  },
+                ]}
+              >
+                {player.name}
+              </Text>
+            </View>
+          ))}
+        </View>
+        {fits ? (
+          rounds
+        ) : (
+          <ScrollView
+            ref={roundsScroll}
+            horizontal
+            onLayout={showLatestRound}
+            onContentSizeChange={showLatestRound}
+            showsHorizontalScrollIndicator
+            persistentScrollbar
+            style={local.fill}
+          >
+            {rounds}
+          </ScrollView>
+        )}
+        <View style={{ width: totalWidth }}>
+          <View style={[cell, header]}>
+            <Text style={headerText}>{t('Total')}</Text>
+          </View>
+          <View style={[cell, maalStyle]} />
+          {players.map((player, index) => {
+            const total = totals.get(player.id) ?? 0;
+            return (
+              <View key={player.id} style={[cell, stripe(index)]}>
+                <Text
+                  style={[
+                    styles.caption,
+                    numberStyle,
+                    {
+                      fontFamily: theme.fonts.bold,
+                      color:
+                        total < 0 ? theme.colors.scoreLoss : theme.colors.text,
+                      fontVariant: ['tabular-nums'],
+                    },
+                  ]}
+                >
+                  {n(total)}
+                </Text>
+              </View>
+            );
+          })}
         </View>
       </View>
-      {fits ? (
-        columns
-      ) : (
-        <ScrollView
-          horizontal
-          persistentScrollbar
-          showsHorizontalScrollIndicator
-          style={local.fill}
-        >
-          {columns}
-        </ScrollView>
-      )}
-      {!fits && (
-        <LinearGradient
-          pointerEvents="none"
-          colors={[`${theme.colors.surface}00`, theme.colors.surface]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={local.fade}
-        />
-      )}
+      <View style={[local.row, { gap: 16, flexWrap: 'wrap' }]}>
+        <View style={local.legend}>
+          <View
+            style={[
+              local.symbol,
+              { borderRadius: 999, borderColor: theme.colors.scoreGain },
+            ]}
+          />
+          <Text style={styles.caption}>{t('Won the round')}</Text>
+        </View>
+        <View style={local.legend}>
+          <View
+            style={[
+              local.symbol,
+              { borderRadius: 3, borderColor: theme.colors.scoreLoss },
+            ]}
+          />
+          <Text style={styles.caption}>{t('Fouled')}</Text>
+        </View>
+      </View>
     </View>
   );
 }
+
 const local = StyleSheet.create({
-  table: {
-    flexDirection: 'row',
-    borderRadius: 18,
-    overflow: 'hidden',
-  },
-  fade: { position: 'absolute', top: 0, bottom: 0, right: 0, width: 20 },
+  table: { flexDirection: 'row', overflow: 'hidden', borderRadius: 8 },
+  row: { flexDirection: 'row' },
   fill: { flex: 1 },
-  row: { flexDirection: 'row', height: 48 },
   cell: {
-    height: 48,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: 2,
   },
-  roundCell: { paddingHorizontal: 0 },
-  total: { borderTopWidth: StyleSheet.hairlineWidth },
+  name: { alignItems: 'flex-start', paddingHorizontal: 6 },
+  mark: {
+    minWidth: 30,
+    minHeight: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 2,
+  },
+  legend: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  symbol: { width: 14, height: 14, borderWidth: 1 },
 });

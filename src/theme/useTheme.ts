@@ -13,7 +13,7 @@ export function useTheme(): AppTheme {
   const scheme =
     preferences.theme === 'system' ? systemScheme : preferences.theme;
   const theme = scheme === 'dark' ? darkTheme : lightTheme;
-  return preferences.language === 'ne' || preferences.numerals === 'devanagari'
+  return preferences.language === 'ne'
     ? theme === darkTheme
       ? nepaliDarkTheme
       : nepaliLightTheme
