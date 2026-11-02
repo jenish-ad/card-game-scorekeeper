@@ -1,14 +1,15 @@
 # Marriage Scorekeeper
 
+[![Checks](https://github.com/jenish-ad/marriage-scorekeeper/actions/workflows/checks.yml/badge.svg)](https://github.com/jenish-ad/marriage-scorekeeper/actions/workflows/checks.yml) [![Release](https://img.shields.io/github/v/release/jenish-ad/marriage-scorekeeper)](https://github.com/jenish-ad/marriage-scorekeeper/releases/latest) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 An offline Android and iPhone scorekeeper for the Nepali card game Marriage, made to keep round scores and settlements in one place.
 
 We play Marriage at home during Dashain and Tihar, and someone always ends up keeping score on paper and arguing over the maal math. I built this so the scoring, fouls and final settlement are done right on one phone, without anyone recounting at 1 AM.
 
-Built with AI coding assistants; game rules, design decisions, testing and review by the author.
+## Download
 
-## Android build
-
-[View the Android preview build on Expo](https://expo.dev/accounts/jenish-ad/projects/marriage-scorekeeper/builds/7163c6a5-34e7-4f82-b229-c4a03d11011d).
+Get the latest APK from [Releases](https://github.com/jenish-ad/marriage-scorekeeper/releases/latest).
+On Android, allow "Install unknown apps" when prompted. Updates install over the previous version and keep your matches.
 
 ## Screenshots
 

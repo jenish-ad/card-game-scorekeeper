@@ -4,13 +4,6 @@ All notable changes are documented here following [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
-### Changed
-
-- Simplify repository configuration and contribution workflow.
-- Combine scoreboard metadata and the money rate into one localized subtitle.
-- Place the foul action beside round details and in match actions.
-- Improve avatar initials and crown placement.
-
 ## [1.0.0] - 2026-11-02
 
 ### Added
@@ -23,3 +16,13 @@ All notable changes are documented here following [Keep a Changelog](https://kee
 - Nepali language, Devanagari numerals and offline Bikram Sambat dates.
 - Optional keep-awake during active matches.
 - Light and dark themes with accessible in-app confirmation dialogs.
+
+### Changed
+
+- Simplify repository configuration and contribution workflow.
+- Combine scoreboard metadata and the money rate into one localized subtitle.
+- Place the foul action beside round details and in match actions.
+- Improve avatar initials and crown placement.
+
+[Unreleased]: https://github.com/jenish-ad/marriage-scorekeeper/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/jenish-ad/marriage-scorekeeper/releases/tag/v1.0.0

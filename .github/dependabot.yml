@@ -2,6 +2,8 @@ version: 2
 updates:
   - package-ecosystem: npm
     directory: /
+    target-branch: develop
+    commit-message: { prefix: chore, include: scope }
     schedule:
       interval: weekly
     ignore:
@@ -11,10 +13,24 @@ updates:
       - dependency-name: react
       - dependency-name: react-native
       - dependency-name: react-native-*
+      - dependency-name: typescript
+        update-types:
+          ['version-update:semver-major', 'version-update:semver-minor']
+      - dependency-name: '@types/react'
+        update-types:
+          ['version-update:semver-major', 'version-update:semver-minor']
+      - dependency-name: eslint
+        update-types: ['version-update:semver-major']
+      - dependency-name: jest
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@types/jest'
+        update-types: ['version-update:semver-major']
     groups:
       development-dependencies:
         dependency-type: development
   - package-ecosystem: github-actions
     directory: /
+    target-branch: develop
+    commit-message: { prefix: chore, include: scope }
     schedule:
       interval: weekly
