@@ -10,7 +10,6 @@ import {
 } from 'react';
 import {
   AccessibilityInfo,
-  ActivityIndicator,
   findNodeHandle,
   Modal,
   Pressable,
@@ -23,6 +22,8 @@ import { t, translateError } from '../i18n';
 import { devanagariFonts } from '../theme';
 import { useTheme } from '../useTheme';
 import { useStyles } from './Screen';
+import { Button } from './Primitives';
+import { useReducedMotion } from './useReducedMotion';
 
 export type ConfirmOptions = {
   title: string;
@@ -89,10 +90,7 @@ export function ConfirmDialog({
   const running = useRef(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const labelStyle = (label: string) => [
-    styles.buttonText,
-    /[\u0900-\u097f]/.test(label) && { fontFamily: devanagariFonts.bold },
-  ];
+  const reduced = useReducedMotion();
   function cancel() {
     if (!running.current) onClose(false);
   }
@@ -115,7 +113,7 @@ export function ConfirmDialog({
     <Modal
       transparent
       visible
-      animationType="fade"
+      animationType={reduced ? 'none' : 'fade'}
       onRequestClose={cancel}
       onShow={() => {
         const target = findNodeHandle(titleRef.current);
@@ -132,7 +130,9 @@ export function ConfirmDialog({
           accessibilityViewIsModal
           onAccessibilityEscape={cancel}
           style={[
+            styles.card,
             local.card,
+            theme.shadows.raised,
             {
               backgroundColor: theme.colors.surface,
               padding: theme.spacing.xl,
@@ -166,51 +166,18 @@ export function ConfirmDialog({
             )}
           </ScrollView>
           <View style={[local.actions, { gap: theme.spacing.sm }]}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ disabled: busy }}
+            <Button
+              secondary
+              label={t('Cancel')}
               disabled={busy}
               onPress={cancel}
-              style={[
-                styles.button,
-                local.button,
-                {
-                  backgroundColor: theme.colors.surface,
-                  borderWidth: 1,
-                  borderColor: theme.colors.border,
-                  opacity: busy ? 0.4 : 1,
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  labelStyle(t('Cancel')),
-                  { color: theme.colors.primary },
-                ]}
-              >
-                {t('Cancel')}
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={confirmLabel}
-              accessibilityState={{ disabled: busy, busy }}
-              disabled={busy}
+            />
+            <Button
+              label={confirmLabel}
+              destructive={destructive}
+              loading={busy}
               onPress={() => void submit()}
-              style={[
-                styles.button,
-                local.button,
-                {
-                  backgroundColor: destructive
-                    ? theme.colors.danger
-                    : theme.colors.primary,
-                  opacity: busy ? 0.6 : 1,
-                },
-              ]}
-            >
-              {busy && <ActivityIndicator color={theme.colors.onPrimary} />}
-              <Text style={labelStyle(confirmLabel)}>{confirmLabel}</Text>
-            </Pressable>
+            />
           </View>
         </View>
       </View>
@@ -224,7 +191,7 @@ const local = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  card: { borderRadius: 12, maxWidth: 340, width: '85%', maxHeight: '85%' },
+  card: { borderRadius: 18, maxWidth: 340, width: '85%', maxHeight: '85%' },
   actions: { flexDirection: 'row', justifyContent: 'flex-end' },
   button: { flexShrink: 1, flexDirection: 'row', gap: 8 },
 });

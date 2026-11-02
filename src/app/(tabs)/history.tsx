@@ -1,21 +1,15 @@
+import { Card } from '../../ui/Card';
+import { SegmentedControl } from '../../ui/SegmentedControl';
 import { UnavailableMatchCard } from '../../ui/UnavailableMatchCard';
 import { t } from '../../i18n';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { useMatches } from '../../features/marriage/useMatches';
-import { useTheme } from '../../useTheme';
 import { MatchCard } from '../../ui/MatchCard';
 import { Button } from '../../ui/Primitives';
 import { Screen, useStyles } from '../../ui/Screen';
 export default function HistoryScreen() {
-  const theme = useTheme();
   const styles = useStyles();
   const router = useRouter();
   const { matches, unavailable, loading, error, reload } = useMatches();
@@ -27,43 +21,16 @@ export default function HistoryScreen() {
   return (
     <Screen topSafeArea>
       <Text style={styles.title}>{t('History')}</Text>
-      <View style={styles.row}>
-        {(['all', 'active', 'finished'] as const).map((label) => (
-          <Pressable
-            key={label}
-            accessibilityRole="radio"
-            accessibilityState={{ checked: filter === label }}
-            onPress={() => setFilter(label)}
-            style={[
-              local.filter,
-              {
-                backgroundColor:
-                  filter === label
-                    ? theme.colors.primary
-                    : theme.colors.surfaceAlt,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.label,
-                {
-                  color:
-                    filter === label
-                      ? theme.colors.onPrimary
-                      : theme.colors.textMuted,
-                },
-              ]}
-            >
-              {label === 'all'
-                ? t('All')
-                : label === 'active'
-                  ? t('Active')
-                  : t('Finished')}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      <SegmentedControl
+        label={t('History')}
+        value={filter}
+        onChange={setFilter}
+        options={[
+          { value: 'all', label: t('All') },
+          { value: 'active', label: t('Active') },
+          { value: 'finished', label: t('Finished') },
+        ]}
+      />
       {loading ? (
         <ActivityIndicator accessibilityLabel={t('Loading')} />
       ) : error ? (
@@ -74,7 +41,14 @@ export default function HistoryScreen() {
           <Button label={t('Try again')} onPress={reload} />
         </>
       ) : filtered.length ? (
-        filtered.map((match) => <MatchCard key={match.id} match={match} />)
+        <Card style={{ gap: 0 }}>
+          {filtered.map((match, index) => (
+            <View key={match.id}>
+              {index > 0 && <View style={styles.divider} />}
+              <MatchCard match={match} grouped />
+            </View>
+          ))}
+        </Card>
       ) : unavailable.length ? null : (
         <Text style={styles.body}>
           {filter === 'all'
@@ -94,12 +68,3 @@ export default function HistoryScreen() {
     </Screen>
   );
 }
-const local = StyleSheet.create({
-  filter: {
-    minHeight: 44,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

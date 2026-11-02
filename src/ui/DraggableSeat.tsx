@@ -1,9 +1,9 @@
-import { t, n } from '../i18n';
+import { t } from '../i18n';
 import { useMemo, useState, type PropsWithChildren } from 'react';
-import { Animated, PanResponder, Text, View } from 'react-native';
+import { Animated, PanResponder, View } from 'react-native';
 import { useTheme } from '../useTheme';
 import { Icon } from './Icon';
-import { useStyles } from './Screen';
+import { PlayerAvatar } from './PlayerAvatar';
 
 export function DraggableSeat({
   seat,
@@ -16,7 +16,6 @@ export function DraggableSeat({
   move: (offset: number) => void;
 }>) {
   const theme = useTheme();
-  const styles = useStyles();
   const [offset] = useState(() => new Animated.Value(0));
   const [height, setHeight] = useState(64);
   const [dragging, setDragging] = useState(false);
@@ -45,14 +44,13 @@ export function DraggableSeat({
         setHeight(nativeEvent.layout.height + theme.spacing.sm);
       }}
       style={[
-        styles.row,
+        { flexDirection: 'row', alignItems: 'center', gap: 8 },
         {
           marginBottom: theme.spacing.sm,
           backgroundColor: dragging
-            ? theme.colors.primaryTint
+            ? theme.colors.goldTint
             : theme.colors.surface,
-          borderWidth: 1,
-          borderColor: theme.colors.border,
+          ...theme.shadows.card,
           borderRadius: theme.radius.button,
           paddingHorizontal: theme.spacing.sm,
           transform: [{ translateY: offset }],
@@ -84,23 +82,9 @@ export function DraggableSeat({
           alignItems: 'center',
         }}
       >
-        <Icon name="reorder-two" size={18} color={theme.colors.textMuted} />
-        <Text
-          style={[
-            styles.label,
-            {
-              fontSize: 12,
-              color: theme.colors.primary,
-              backgroundColor: theme.colors.primaryTint,
-              borderRadius: theme.radius.chip,
-              paddingHorizontal: theme.spacing.xs,
-              fontVariant: ['tabular-nums'],
-            },
-          ]}
-        >
-          {n(seat)}
-        </Text>
+        <Icon name="reorder-two" size={18} color={theme.colors.mutedText} />
       </View>
+      <PlayerAvatar name={name} seat={seat - 1} size={36} />
       {children}
     </Animated.View>
   );

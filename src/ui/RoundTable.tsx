@@ -1,3 +1,6 @@
+import Animated, { LinearTransition } from 'react-native-reanimated';
+import { devanagariFonts } from '../theme';
+import { useReducedMotion } from './useReducedMotion';
 import { t, n } from '../i18n';
 import { LinearGradient } from 'expo-linear-gradient';
 import { roundTableLayout } from './roundTableLayout';
@@ -30,6 +33,7 @@ export function RoundTable({
     ),
   );
   const theme = useTheme();
+  const reduced = useReducedMotion();
   const styles = useStyles();
   const { fontScale } = useWindowDimensions();
   const rowHeight = Math.ceil(48 * Math.max(1, fontScale));
@@ -43,8 +47,8 @@ export function RoundTable({
   const column: ViewStyle = fits ? { flex: 1 } : { width: minimumPlayerWidth };
   const totals = matchTotals(match);
   const totalStyle = {
-    backgroundColor: theme.colors.surfaceAlt,
-    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surfaceSunken,
+    borderColor: theme.colors.hairline,
   };
   const columns = (
     <View style={fits ? local.fill : undefined}>
@@ -54,8 +58,14 @@ export function RoundTable({
             <Text
               numberOfLines={1}
               ellipsizeMode="tail"
-              accessibilityLabel={player.name}
-              style={styles.label}
+              accessibilityLabel={`${player.name}${!player.active ? `, ${t('Left')}` : ''}`}
+              style={[
+                styles.label,
+                { textAlign: 'center' },
+                /[\u0900-\u097f]/.test(player.name) && {
+                  fontFamily: devanagariFonts.semibold,
+                },
+              ]}
             >
               {player.name}
             </Text>
@@ -69,38 +79,61 @@ export function RoundTable({
           match.settings,
         );
         return (
-          <Pressable
+          <Animated.View
             key={round.id}
-            accessibilityRole="button"
-            accessibilityLabel={t('Round {p0} details', { p0: index + 1 })}
-            onPress={() => openRound(round.id)}
-            style={[
-              local.row,
-              rowSize,
-              local.border,
-              { borderColor: theme.colors.border },
-            ]}
+            layout={reduced ? undefined : LinearTransition.duration(260)}
           >
-            {players.map((player) => (
-              <View key={player.id} style={[local.cell, rowSize, column]}>
-                {round.input.kind === 'foul' &&
-                  round.input.offenderId === player.id && (
-                    <Text style={styles.caption}>{t('foulMark')}</Text>
+            <Pressable
+              key={round.id}
+              accessibilityRole="button"
+              accessibilityLabel={t('Round {p0} details', { p0: index + 1 })}
+              onPress={() => openRound(round.id)}
+              style={({ pressed }) => [
+                local.row,
+                rowSize,
+                {
+                  backgroundColor: pressed
+                    ? theme.colors.goldTint
+                    : index % 2
+                      ? theme.colors.surfaceSunken
+                      : theme.colors.surface,
+                  transform: [{ scale: pressed && !reduced ? 0.98 : 1 }],
+                },
+              ]}
+            >
+              {players.map((player) => (
+                <View key={player.id} style={[local.cell, rowSize, column]}>
+                  {round.input.kind === 'foul' &&
+                    round.input.offenderId === player.id && (
+                      <Text
+                        style={[
+                          styles.caption,
+                          {
+                            backgroundColor: theme.colors.lossTint,
+                            color: theme.colors.scoreLoss,
+                            borderRadius: 999,
+                            paddingHorizontal: 5,
+                          },
+                        ]}
+                      >
+                        {t('foulMark')}
+                      </Text>
+                    )}
+                  {scores.some((score) => score.playerId === player.id) ? (
+                    <Score
+                      compact
+                      value={
+                        scores.find((score) => score.playerId === player.id)!
+                          .points
+                      }
+                    />
+                  ) : (
+                    <Text style={styles.caption}>–</Text>
                   )}
-                {scores.some((score) => score.playerId === player.id) ? (
-                  <Score
-                    compact
-                    value={
-                      scores.find((score) => score.playerId === player.id)!
-                        .points
-                    }
-                  />
-                ) : (
-                  <Text style={styles.caption}>–</Text>
-                )}
-              </View>
-            ))}
-          </Pressable>
+                </View>
+              ))}
+            </Pressable>
+          </Animated.View>
         );
       })}
       <View style={[local.row, rowSize, local.total, totalStyle]}>
@@ -115,12 +148,16 @@ export function RoundTable({
   return (
     <View
       onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
-      style={[local.table, { borderColor: theme.colors.border }]}
+      style={[
+        local.table,
+        theme.shadows.card,
+        { backgroundColor: theme.colors.surface },
+      ]}
     >
       <View
         style={[
           { width: roundWidth },
-          { backgroundColor: theme.colors.surfaceAlt },
+          { backgroundColor: theme.colors.surfaceSunken },
         ]}
       >
         <View style={[local.cell, rowSize, local.roundCell]}>
@@ -138,11 +175,13 @@ export function RoundTable({
               local.cell,
               rowSize,
               local.roundCell,
-              local.border,
-              { borderColor: theme.colors.border },
+              {
+                backgroundColor:
+                  index % 2 ? theme.colors.surfaceSunken : theme.colors.surface,
+              },
             ]}
           >
-            <Text style={styles.label}>
+            <Text style={styles.caption}>
               {n(index + 1)}
               {round.input.kind === 'foul' ? ` ${t('foulMark')}` : ''}
             </Text>
@@ -189,8 +228,7 @@ export function RoundTable({
 const local = StyleSheet.create({
   table: {
     flexDirection: 'row',
-    borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 18,
     overflow: 'hidden',
   },
   fade: { position: 'absolute', top: 0, bottom: 0, right: 0, width: 20 },
@@ -203,6 +241,5 @@ const local = StyleSheet.create({
     paddingHorizontal: 4,
   },
   roundCell: { paddingHorizontal: 0 },
-  border: { borderTopWidth: 1 },
-  total: { borderTopWidth: 2 },
+  total: { borderTopWidth: StyleSheet.hairlineWidth },
 });

@@ -17,7 +17,7 @@ export function Icon({
     <Ionicons
       name={name}
       size={size}
-      color={color ?? theme.colors.primary}
+      color={color ?? theme.colors.ink}
       accessible={false}
     />
   );

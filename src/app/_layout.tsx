@@ -19,10 +19,14 @@ import {
   Manrope_400Regular,
   Manrope_500Medium,
   Manrope_700Bold,
+  Manrope_600SemiBold,
+  Manrope_800ExtraBold,
 } from '@expo-google-fonts/manrope';
 import { PreferencesProvider } from '../storage/PreferencesProvider';
 import { MatchStorageProvider } from '../storage/MatchStorageProvider';
 import { RoundDraftProvider } from '../features/marriage/RoundDraftProvider';
+import { Mukta_500Medium } from '@expo-google-fonts/mukta/500Medium';
+import { Mukta_800ExtraBold } from '@expo-google-fonts/mukta/800ExtraBold';
 import { Mukta_400Regular } from '@expo-google-fonts/mukta/400Regular';
 import { Mukta_600SemiBold } from '@expo-google-fonts/mukta/600SemiBold';
 import { Mukta_700Bold } from '@expo-google-fonts/mukta/700Bold';
@@ -48,7 +52,11 @@ function AppLayout() {
     Manrope_400Regular,
     Manrope_500Medium,
     Manrope_700Bold,
+    Manrope_600SemiBold,
+    Manrope_800ExtraBold,
     Mukta_400Regular,
+    Mukta_500Medium,
+    Mukta_800ExtraBold,
     Mukta_600SemiBold,
     Mukta_700Bold,
   });
@@ -64,7 +72,7 @@ function AppLayout() {
       <View style={[local.fill, { backgroundColor: theme.colors.bg }]}>
         <ActivityIndicator
           accessibilityLabel={t('Loading')}
-          color={theme.colors.primary}
+          color={theme.colors.ink}
         />
       </View>
     );
@@ -81,13 +89,13 @@ function AppLayout() {
         <RoundDraftProvider>
           <Stack
             screenOptions={{
-              headerTintColor: theme.colors.primary,
+              headerTintColor: theme.colors.ink,
               headerStyle: { backgroundColor: theme.colors.bg },
               headerShadowVisible: false,
               headerTitleAlign: Platform.OS === 'ios' ? 'center' : 'left',
               headerTitleStyle: {
-                fontFamily: theme.fonts.bold,
-                fontSize: 14,
+                fontFamily: theme.fonts.semibold,
+                fontSize: 17,
               },
               headerBackTitle: t('Back'),
               contentStyle: { backgroundColor: theme.colors.bg },

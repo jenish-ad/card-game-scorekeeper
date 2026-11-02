@@ -43,7 +43,7 @@ export function SavedRoundNotice({
       style={[
         styles.row,
         {
-          backgroundColor: theme.colors.primaryTint,
+          backgroundColor: theme.colors.goldTint,
           borderRadius: theme.radius.button,
           padding: theme.spacing.lg,
           opacity,

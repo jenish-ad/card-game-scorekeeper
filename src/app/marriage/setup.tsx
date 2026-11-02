@@ -1,9 +1,11 @@
+import { TextField as TextInput } from '../../ui/TextField';
+import { SegmentedControl } from '../../ui/SegmentedControl';
 import { latinDigits } from '../../i18n/numbers';
 import { parseSetupSettings } from '../../features/marriage/setupSettings';
 import { t, n, translateError } from '../../i18n';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { Icon } from '../../ui/Icon';
 import { feedback } from '../../ui/feedback';
 import { DraggableSeat } from '../../ui/DraggableSeat';
@@ -95,7 +97,7 @@ export default function MatchSetupScreen() {
         <TextInput
           accessibilityLabel={t('Match title')}
           placeholder={defaultMatchTitle()}
-          placeholderTextColor={theme.colors.textMuted}
+          placeholderTextColor={theme.colors.mutedText}
           style={styles.input}
           value={title}
           onChangeText={setTitle}
@@ -122,7 +124,7 @@ export default function MatchSetupScreen() {
                 accessibilityLabel={t('Player {p0} name', { p0: index + 1 })}
                 value={item.name}
                 placeholder={t('Player {p0}', { p0: index + 1 })}
-                placeholderTextColor={theme.colors.textMuted}
+                placeholderTextColor={theme.colors.mutedText}
                 autoCorrect={false}
                 maxLength={40}
                 style={[
@@ -153,7 +155,7 @@ export default function MatchSetupScreen() {
                   opacity: players.length === 2 ? 0.3 : 1,
                 }}
               >
-                <Icon name="close" size={18} color={theme.colors.textMuted} />
+                <Icon name="close" size={18} color={theme.colors.mutedText} />
               </Pressable>
             </DraggableSeat>
           );
@@ -178,11 +180,20 @@ export default function MatchSetupScreen() {
           )
           .join(' → ')}
       </Text>
-      <Button
-        secondary
-        label={rulesOpen ? t('Hide rules') : t('Rules')}
-        onPress={() => setRulesOpen(!rulesOpen)}
-      />
+      <View style={styles.card}>
+        <Button
+          ghost
+          label={rulesOpen ? t('Hide rules') : t('Rules')}
+          icon={rulesOpen ? 'chevron-up' : 'chevron-down'}
+          onPress={() => setRulesOpen(!rulesOpen)}
+        />
+        <Text style={styles.caption}>
+          {t('Seen')} {n(fees.seenFee)} {'\u00b7'} {t('Unseen')}{' '}
+          {n(fees.unseenFee)} {'\u00b7'} {t('Dublee')} +{n(fees.dubleeExtra)}{' '}
+          {'\u00b7'} {t('Foul penalty')} {n(fees.foulPenalty)}/
+          {foulMode === 'perPlayer' ? t('Per player') : t('Total')}
+        </Text>
+      </View>
       {rulesOpen && (
         <View style={styles.card}>
           {(
@@ -220,30 +231,25 @@ export default function MatchSetupScreen() {
               />
             </View>
           ))}
-          <View style={styles.row}>
-            <Button
-              secondary={foulMode !== 'perPlayer'}
-              label={t('Per player')}
-              onPress={() => setFoulMode('perPlayer')}
-            />
-            <Button
-              secondary={foulMode !== 'fixedTotal'}
-              label={t('Total')}
-              onPress={() => setFoulMode('fixedTotal')}
-            />
-          </View>
-          <Pressable
-            accessibilityRole="switch"
-            accessibilityLabel={t('Money rate')}
-            accessibilityState={{ checked: moneyEnabled }}
-            onPress={() => setMoneyEnabled(!moneyEnabled)}
-            style={styles.ruledRow}
-          >
-            <Text style={styles.label}>
-              {t('Money rate:')}
-              {moneyEnabled ? t('On') : t('Off')}
-            </Text>
-          </Pressable>
+          <SegmentedControl
+            label={t('Foul penalty')}
+            value={foulMode}
+            onChange={setFoulMode}
+            options={[
+              { value: 'perPlayer', label: t('Per player') },
+              { value: 'fixedTotal', label: t('Total') },
+            ]}
+          />
+          <Text style={styles.label}>{t('Money rate')}</Text>
+          <SegmentedControl
+            label={t('Money rate')}
+            value={moneyEnabled}
+            onChange={setMoneyEnabled}
+            options={[
+              { value: false, label: t('Off') },
+              { value: true, label: t('On') },
+            ]}
+          />
           {moneyEnabled && (
             <View style={styles.spread}>
               <Text style={styles.label}>{t('Rs per point')}</Text>

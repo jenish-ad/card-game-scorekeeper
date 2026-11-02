@@ -1,3 +1,12 @@
+import { Crown } from '../../ui/Crown';
+import Animated, {
+  FadeInDown,
+  LinearTransition,
+} from 'react-native-reanimated';
+import { SegmentedControl } from '../../ui/SegmentedControl';
+import { PlayerAvatar } from '../../ui/PlayerAvatar';
+import { useReducedMotion } from '../../ui/useReducedMotion';
+import { feedback } from '../../ui/feedback';
 import { latinDigits } from '../../i18n/numbers';
 import { t, translateError } from '../../i18n';
 import { MatchKeepAwake } from '../../ui/MatchKeepAwake';
@@ -36,6 +45,7 @@ export function RoundEditor({
   round?: SavedRound;
 }) {
   const theme = useTheme();
+  const reduced = useReducedMotion();
   const styles = useStyles();
   const router = useRouter();
   const database = useMatchDatabase();
@@ -71,7 +81,7 @@ export function RoundEditor({
   );
   const [dubleeWin, setDubleeWin] = useState(normalInitial?.dubleeWin ?? false);
   const [error, setError] = useState<string | null>(null);
-  const [focusedIndex, setFocusedIndex] = useState(0);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
   const [saving, setSaving] = useState(false);
   const fields = useRef<(ComponentRef<typeof TextInput> | null)[]>([]);
   const number = round
@@ -103,6 +113,7 @@ export function RoundEditor({
     setError(null);
     try {
       await saveRound(database, match.id, preview.input, round?.id);
+      void feedback(foul ? 'warning' : 'success');
       setDraft(null);
       router.dismissTo({
         pathname: '/marriage/match/[id]',
@@ -131,12 +142,28 @@ export function RoundEditor({
       footer={
         <View style={[styles.flexible, local.footer]}>
           {preview.ok ? (
-            <View style={local.results}>
+            <Animated.View
+              entering={reduced ? undefined : FadeInDown.duration(220)}
+              layout={reduced ? undefined : LinearTransition.duration(220)}
+              style={local.results}
+            >
               {participants.map((player) => (
-                <View key={player.id} style={local.result}>
-                  <Text numberOfLines={1} style={styles.caption}>
-                    {player.name}
-                  </Text>
+                <View
+                  key={player.id}
+                  accessibilityLabel={player.name}
+                  style={[
+                    local.result,
+                    {
+                      backgroundColor: theme.colors.surfaceSunken,
+                      borderRadius: theme.radius.chip,
+                    },
+                  ]}
+                >
+                  <PlayerAvatar
+                    name={player.name}
+                    seat={player.seat}
+                    size={24}
+                  />
                   <Score
                     compact
                     value={
@@ -147,7 +174,7 @@ export function RoundEditor({
                   />
                 </View>
               ))}
-            </View>
+            </Animated.View>
           ) : (
             <Text style={styles.caption}>{preview.message}</Text>
           )}
@@ -203,50 +230,82 @@ export function RoundEditor({
                       : t('in total'),
                 })}
           </Text>
-          {participants.map((player) => (
-            <Button
-              key={player.id}
-              secondary={offenderId !== player.id}
-              label={player.name}
-              onPress={() => setOffenderId(player.id)}
-            />
-          ))}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+            {participants.map((player) => (
+              <Pressable
+                key={player.id}
+                accessibilityRole="radio"
+                accessibilityLabel={player.name}
+                accessibilityState={{ checked: offenderId === player.id }}
+                onPress={() => {
+                  void feedback('selection');
+                  setOffenderId(player.id);
+                }}
+                style={{
+                  width: '30%',
+                  minHeight: 92,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  borderRadius: 18,
+                  backgroundColor:
+                    offenderId === player.id
+                      ? theme.colors.lossTint
+                      : theme.colors.surface,
+                }}
+              >
+                <View
+                  style={{
+                    borderRadius: 28,
+                    padding: 4,
+                    outlineWidth: offenderId === player.id ? 2 : 0,
+                    outlineColor: theme.colors.loss,
+                  }}
+                >
+                  <PlayerAvatar
+                    name={player.name}
+                    seat={player.seat}
+                    size={44}
+                  />
+                </View>
+                <Text style={styles.label}>{player.name}</Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
       ) : (
         <>
-          <View style={styles.spread}>
-            <Text style={styles.label}>{t('finishType')}</Text>
-            <View style={styles.row}>
-              {[false, true].map((dublee) => (
-                <Pressable
-                  key={String(dublee)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ checked: dubleeWin === dublee }}
-                  onPress={() => setDubleeWin(dublee)}
-                  style={[
-                    local.option,
-                    {
-                      backgroundColor:
-                        dubleeWin === dublee
-                          ? theme.colors.primaryTint
-                          : theme.colors.surface,
-                    },
-                  ]}
-                >
-                  <Text style={styles.label}>
-                    {dublee ? t('Dublee') : t('Normal')}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
+          <Text style={styles.label}>{t('finishType')}</Text>
+          <SegmentedControl
+            label={t('finishType')}
+            value={dubleeWin}
+            options={[
+              { value: false, label: t('Normal') },
+              { value: true, label: t('Dublee') },
+            ]}
+            onChange={setDubleeWin}
+          />
           <View style={local.columnHeadings}>
             <Text style={[styles.caption, styles.flexible]}>{t('Player')}</Text>
-            <Text style={[styles.caption, local.maalHeading]}>{t('Maal')}</Text>
-            <Text style={[styles.caption, local.seenHeading]}>
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={[styles.caption, local.maalHeading]}
+            >
+              {t('Maal')}
+            </Text>
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={[styles.caption, local.seenHeading]}
+            >
               {t('Status')}
             </Text>
-            <Text style={[styles.caption, local.winnerHeading]}>
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={[styles.caption, local.winnerHeading]}
+            >
               {t('Winner')}
             </Text>
           </View>
@@ -261,15 +320,24 @@ export function RoundEditor({
                   style={[
                     local.player,
                     {
-                      borderColor: theme.colors.border,
+                      borderBottomColor: theme.colors.hairline,
                       backgroundColor: selected
-                        ? theme.colors.primaryTint
-                        : theme.colors.surface,
+                        ? theme.colors.goldTint
+                        : 'transparent',
                     },
                   ]}
                 >
+                  <PlayerAvatar
+                    name={player.name}
+                    seat={player.seat}
+                    size={36}
+                  />
                   <Text
-                    style={[styles.label, styles.flexible]}
+                    style={[
+                      styles.label,
+                      styles.flexible,
+                      !entry.seen && { color: theme.colors.mutedText },
+                    ]}
                     numberOfLines={1}
                   >
                     {player.name}
@@ -284,6 +352,7 @@ export function RoundEditor({
                       Platform.OS === 'ios' ? 'maal-navigation' : undefined
                     }
                     onFocus={() => setFocusedIndex(index)}
+                    onBlur={() => setFocusedIndex(-1)}
                     selectTextOnFocus
                     editable={entry.seen}
                     returnKeyType={
@@ -314,7 +383,11 @@ export function RoundEditor({
                       {
                         color: theme.colors.text,
                         backgroundColor: theme.colors.bg,
-                        borderColor: theme.colors.border,
+                        borderColor:
+                          focusedIndex === index
+                            ? theme.colors.focus
+                            : theme.colors.hairline,
+                        borderWidth: focusedIndex === index ? 2 : 1,
                         opacity: entry.seen ? 1 : 0.5,
                       },
                     ]}
@@ -327,35 +400,40 @@ export function RoundEditor({
                       disabled: selected,
                     }}
                     disabled={selected}
-                    onPress={() =>
+                    onPress={() => {
+                      void feedback('selection');
                       setPlayers((current) =>
                         current.map((item) =>
                           item.playerId === player.id
                             ? setPlayerSeen(item, !item.seen)
                             : item,
                         ),
-                      )
-                    }
+                      );
+                    }}
                     style={[
                       local.seen,
                       {
-                        borderColor: theme.colors.border,
+                        borderColor: theme.colors.hairline,
                         backgroundColor: entry.seen
                           ? theme.colors.surface
-                          : theme.colors.surfaceAlt,
+                          : theme.colors.surfaceSunken,
                         opacity: selected ? 0.55 : 1,
                       },
                     ]}
                   >
-                    <Text style={styles.caption}>
-                      {entry.seen ? t('Seen') : t('Unseen')}
-                    </Text>
+                    <Icon
+                      name={entry.seen ? 'eye-outline' : 'eye-off-outline'}
+                      color={
+                        entry.seen ? theme.colors.ink : theme.colors.mutedText
+                      }
+                    />
                   </Pressable>
                   <Pressable
                     accessibilityRole="radio"
                     accessibilityLabel={t('{p0} winner', { p0: player.name })}
                     accessibilityState={{ checked: selected }}
                     onPress={() => {
+                      void feedback('selection');
                       setWinnerId(player.id);
                       setPlayers((current) =>
                         current.map((item) =>
@@ -367,10 +445,7 @@ export function RoundEditor({
                     }}
                     style={local.winner}
                   >
-                    <Icon
-                      name={selected ? 'radio-button-on' : 'radio-button-off'}
-                      size={20}
-                    />
+                    <Crown selected={selected} />
                   </Pressable>
                 </View>
               );
@@ -384,7 +459,7 @@ export function RoundEditor({
         onPress={details}
         style={local.details}
       >
-        <Text style={[styles.label, { color: theme.colors.primary }]}>
+        <Text style={[styles.label, { color: theme.colors.ink }]}>
           {t('Details')}
         </Text>
         <Icon name="chevron-forward" size={18} />
@@ -399,16 +474,16 @@ export function RoundEditor({
 }
 const local = StyleSheet.create({
   footer: { gap: 10 },
-  results: { flexDirection: 'row', gap: 6 },
-  result: { flex: 1, alignItems: 'center', gap: 4 },
+  results: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  result: { flexDirection: 'row', alignItems: 'center', gap: 4, padding: 6 },
   columnHeadings: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 9,
+    paddingHorizontal: 0,
   },
-  maalHeading: { width: 44, textAlign: 'center' },
-  seenHeading: { width: 60, textAlign: 'center' },
+  maalHeading: { width: 56, textAlign: 'center' },
+  seenHeading: { width: 44, textAlign: 'center' },
   winnerHeading: { width: 44, textAlign: 'center' },
   players: { gap: 6 },
   player: {
@@ -416,15 +491,15 @@ const local = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    borderWidth: 1,
     borderRadius: 12,
-    paddingHorizontal: 8,
+    paddingHorizontal: 0,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   maal: {
-    width: 44,
+    width: 56,
     minHeight: 44,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 4,
     textAlign: 'center',
     fontSize: 18,
@@ -437,9 +512,8 @@ const local = StyleSheet.create({
     borderRadius: 10,
   },
   seen: {
-    width: 60,
-    borderWidth: 1,
-    borderRadius: 8,
+    width: 44,
+    borderRadius: 999,
     minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',

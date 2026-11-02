@@ -1,7 +1,9 @@
+import { KQMark } from '../../ui/KQMark';
+import { Card } from '../../ui/Card';
 import { UnavailableMatchCard } from '../../ui/UnavailableMatchCard';
 import { t } from '../../i18n';
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, Text } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { useMatches } from '../../features/marriage/useMatches';
 import { MatchCard } from '../../ui/MatchCard';
 import { Button, SectionHeading } from '../../ui/Primitives';
@@ -14,7 +16,19 @@ export default function HomeScreen() {
   const recent = matches.filter((match) => match.finishedAt).slice(0, 3);
   return (
     <Screen topSafeArea>
-      <Text style={styles.title}>{t('Marriage')}</Text>
+      <View style={styles.spread}>
+        <View style={styles.row}>
+          <KQMark />
+          <Text style={styles.title}>{t('Marriage')}</Text>
+        </View>
+        <Button
+          ghost
+          iconOnly
+          label={t('Settings')}
+          icon="settings-outline"
+          onPress={() => router.push('/(tabs)/rules')}
+        />
+      </View>
       {loading ? (
         <ActivityIndicator accessibilityLabel={t('Loading')} />
       ) : error ? (
@@ -25,18 +39,32 @@ export default function HomeScreen() {
           <Button label={t('Try again')} onPress={reload} />
         </>
       ) : (
-        active.map((match) => (
-          <MatchCard key={match.id} match={match} expanded />
+        active.map((match, index) => (
+          <MatchCard key={match.id} match={match} expanded={index === 0} />
         ))
       )}
+      {!loading && !error && active.length === 0 && (
+        <Card style={{ alignItems: 'center', paddingVertical: 32 }}>
+          <KQMark size={120} />
+          <Text style={styles.body}>{t('No active matches yet.')}</Text>
+        </Card>
+      )}
       <Button
+        secondary={active.length > 0}
         label={t('New match')}
         onPress={() => router.push('/marriage/setup')}
       />
       {recent.length > 0 && <SectionHeading title={t('Recent')} />}
-      {recent.map((match) => (
-        <MatchCard key={match.id} match={match} />
-      ))}
+      {recent.length > 0 && (
+        <Card style={{ gap: 0 }}>
+          {recent.map((match, index) => (
+            <View key={match.id}>
+              {index > 0 && <View style={styles.divider} />}
+              <MatchCard match={match} grouped />
+            </View>
+          ))}
+        </Card>
+      )}
       {unavailable.map((entry) => (
         <UnavailableMatchCard key={entry.id} />
       ))}

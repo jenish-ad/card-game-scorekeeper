@@ -95,6 +95,8 @@ export function ScoreboardActions({
             accessible={false}
             accessibilityViewIsModal
             style={[
+              styles.card,
+              theme.shadows.raised,
               local.menu,
               {
                 backgroundColor: theme.colors.surface,
@@ -146,5 +148,5 @@ const local = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#00000066',
   },
-  menu: { width: '85%', maxWidth: 340, borderRadius: 12, gap: 12 },
+  menu: { width: '85%', maxWidth: 340, borderRadius: 18, gap: 12 },
 });

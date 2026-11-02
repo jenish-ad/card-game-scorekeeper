@@ -1,3 +1,5 @@
+import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { t } from '../../i18n';
 import { Tabs } from 'expo-router';
 import { useTheme } from '../../useTheme';
@@ -5,16 +7,20 @@ import { Icon } from '../../ui/Icon';
 
 export default function TabLayout() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.textMuted,
+        tabBarActiveTintColor: theme.colors.ink,
+        tabBarInactiveTintColor: theme.colors.mutedText,
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
-          borderTopColor: theme.colors.border,
+          borderTopColor: theme.colors.hairline,
+          height: 64 + insets.bottom,
+          paddingBottom: insets.bottom,
         },
+        tabBarIconStyle: { width: 48, height: 32 },
         tabBarLabelStyle: { fontFamily: theme.fonts.bold, fontSize: 11 },
         tabBarItemStyle: {
           minHeight: theme.touchTarget,
@@ -27,11 +33,22 @@ export default function TabLayout() {
         options={{
           title: t('Home'),
           tabBarIcon: ({ focused }) => (
-            <Icon
-              name={focused ? 'albums' : 'albums-outline'}
-              size={22}
-              color={focused ? theme.colors.primary : theme.colors.textMuted}
-            />
+            <View
+              style={{
+                borderRadius: 999,
+                width: 48,
+                height: 32,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: focused ? theme.colors.ink : 'transparent',
+              }}
+            >
+              <Icon
+                name={focused ? 'albums' : 'albums-outline'}
+                size={22}
+                color={focused ? theme.colors.onInk : theme.colors.mutedText}
+              />
+            </View>
           ),
         }}
       />
@@ -40,11 +57,22 @@ export default function TabLayout() {
         options={{
           title: t('History'),
           tabBarIcon: ({ focused }) => (
-            <Icon
-              name={focused ? 'time' : 'time-outline'}
-              size={22}
-              color={focused ? theme.colors.primary : theme.colors.textMuted}
-            />
+            <View
+              style={{
+                borderRadius: 999,
+                width: 48,
+                height: 32,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: focused ? theme.colors.ink : 'transparent',
+              }}
+            >
+              <Icon
+                name={focused ? 'time' : 'time-outline'}
+                size={22}
+                color={focused ? theme.colors.onInk : theme.colors.mutedText}
+              />
+            </View>
           ),
         }}
       />
@@ -53,11 +81,22 @@ export default function TabLayout() {
         options={{
           title: t('Rules'),
           tabBarIcon: ({ focused }) => (
-            <Icon
-              name={focused ? 'book' : 'book-outline'}
-              size={22}
-              color={focused ? theme.colors.primary : theme.colors.textMuted}
-            />
+            <View
+              style={{
+                borderRadius: 999,
+                width: 48,
+                height: 32,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: focused ? theme.colors.ink : 'transparent',
+              }}
+            >
+              <Icon
+                name={focused ? 'book' : 'book-outline'}
+                size={22}
+                color={focused ? theme.colors.onInk : theme.colors.mutedText}
+              />
+            </View>
           ),
         }}
       />

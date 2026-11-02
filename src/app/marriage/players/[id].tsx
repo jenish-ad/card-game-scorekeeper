@@ -1,8 +1,10 @@
+import { PlayerAvatar } from '../../../ui/PlayerAvatar';
+import { TextField as TextInput } from '../../../ui/TextField';
 import { useConfirm } from '../../../ui/ConfirmDialog';
 import { t, translateError } from '../../../i18n';
 import { useState } from 'react';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { Text, TextInput, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { addPlayer, setPlayerActive } from '../../../features/marriage/matches';
 import { useMatches } from '../../../features/marriage/useMatches';
 import { useMatchDatabase } from '../../../storage/MatchStorageProvider';
@@ -37,7 +39,13 @@ export default function PlayersScreen() {
         .slice()
         .sort((a, b) => Number(b.active) - Number(a.active) || a.seat - b.seat)
         .map((player) => (
-          <View key={player.id} style={styles.spread}>
+          <View key={player.id} style={styles.ruledRow}>
+            <PlayerAvatar
+              name={player.name}
+              seat={player.seat}
+              size={36}
+              left={!player.active}
+            />
             <View style={styles.flexible}>
               <Text style={styles.label}>{player.name}</Text>
               {!player.active && (

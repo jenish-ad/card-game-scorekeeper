@@ -1,3 +1,4 @@
+import { SegmentedControl } from '../../ui/SegmentedControl';
 import { Text, View } from 'react-native';
 import { t, translateError } from '../../i18n';
 import { formatNumber, latinDigits } from '../../i18n/numbers';
@@ -41,47 +42,44 @@ export default function RulesScreen() {
           onPress={() => void change('keepAwake', !preferences.keepAwake)}
         />
         <Text style={styles.label}>{t('Language')}</Text>
-        <View style={styles.row}>
-          <Button
-            secondary={preferences.language !== 'en'}
-            label={t('English')}
-            onPress={() => void change('language', 'en')}
-          />
-          <Button
-            secondary={preferences.language !== 'ne'}
-            label={t('Nepali')}
-            onPress={() => void change('language', 'ne')}
-          />
-        </View>
+        <SegmentedControl
+          label={t('Language')}
+          value={preferences.language}
+          onChange={(value) => void change('language', value)}
+          options={[
+            { value: 'en', label: t('English') },
+            { value: 'ne', label: t('Nepali') },
+          ]}
+        />
         <Text style={styles.label}>{t('Numerals')}</Text>
-        <View style={styles.row}>
-          <Button
-            secondary={preferences.numerals !== 'latin'}
-            label={formatNumber(latinDigits(t('latinChoice')), 'latin')}
-            onPress={() => void change('numerals', 'latin')}
-          />
-          <Button
-            secondary={preferences.numerals !== 'devanagari'}
-            label={formatNumber(
-              latinDigits(t('devanagariChoice')),
-              'devanagari',
-            )}
-            onPress={() => void change('numerals', 'devanagari')}
-          />
-        </View>
+        <SegmentedControl
+          label={t('Numerals')}
+          value={preferences.numerals}
+          onChange={(value) => void change('numerals', value)}
+          options={[
+            {
+              value: 'latin',
+              label: formatNumber(latinDigits(t('latinChoice')), 'latin'),
+            },
+            {
+              value: 'devanagari',
+              label: formatNumber(
+                latinDigits(t('devanagariChoice')),
+                'devanagari',
+              ),
+            },
+          ]}
+        />
         <Text style={styles.label}>{t('Dates')}</Text>
-        <View style={styles.row}>
-          <Button
-            secondary={preferences.calendar !== 'ad'}
-            label={t('AD')}
-            onPress={() => void change('calendar', 'ad')}
-          />
-          <Button
-            secondary={preferences.calendar !== 'bs'}
-            label={t('BS')}
-            onPress={() => void change('calendar', 'bs')}
-          />
-        </View>
+        <SegmentedControl
+          label={t('Dates')}
+          value={preferences.calendar}
+          onChange={(value) => void change('calendar', value)}
+          options={[
+            { value: 'ad', label: t('AD') },
+            { value: 'bs', label: t('BS') },
+          ]}
+        />
         {preferenceError !== null && (
           <View>
             <Text style={styles.error}>
@@ -96,11 +94,13 @@ export default function RulesScreen() {
         )}
       </View>
       <Text style={styles.subtitle}>{t('Scoring')}</Text>
-      {paragraphs.map((key) => (
-        <Text key={key} style={styles.body}>
-          {t(key)}
-        </Text>
-      ))}
+      <View style={styles.card}>
+        {paragraphs.map((key) => (
+          <Text key={key} style={styles.body}>
+            {t(key)}
+          </Text>
+        ))}
+      </View>
       <View style={styles.card}>
         <Text style={styles.subtitle}>{t('Example: 3 players')}</Text>
         <Text style={styles.body}>
