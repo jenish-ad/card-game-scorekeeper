@@ -23,16 +23,9 @@
       "package": "com.griffin.marriagescore",
       "versionCode": 1
     },
-    "plugins": [
-      "expo-router",
-      "expo-sqlite",
-      "expo-localization"
-    ],
+    "plugins": ["expo-router", "expo-sqlite", "expo-localization"],
     "scheme": "marriage-scorekeeper",
-    "platforms": [
-      "android",
-      "ios"
-    ],
+    "platforms": ["android", "ios"],
     "extra": {
       "router": {
         "asyncRoutes": {

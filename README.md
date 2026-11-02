@@ -6,6 +6,10 @@ We play Marriage at home during Dashain and Tihar, and someone always ends up ke
 
 Built with AI coding assistants; game rules, design decisions, testing and review by the author.
 
+## Android build
+
+[View the Android preview build on Expo](https://expo.dev/accounts/jenish-ad/projects/marriage-scorekeeper/builds/7163c6a5-34e7-4f82-b229-c4a03d11011d).
+
 ## Screenshots
 
 | Home                          | Round entry                                 | Scoreboard                                | Scoreboard (dark)                                   | Home (Nepali)                           |
