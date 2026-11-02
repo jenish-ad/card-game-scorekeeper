@@ -1,3 +1,4 @@
+import { t, n } from '../i18n';
 import { StyleSheet, Text, View } from 'react-native';
 import type { SavedMatch } from '../features/marriage/matches';
 import { matchStandings } from '../features/marriage/standings';
@@ -23,12 +24,17 @@ export function StandingsBoard({ match }: { match: SavedMatch }) {
               },
           ]}
         >
-          <Text style={[styles.caption, local.rank]}>{row.rank}</Text>
+          <Text style={[styles.caption, local.rank]}>{n(row.rank)}</Text>
           <Avatar name={row.player.name} />
           <View style={styles.flexible}>
             <Text style={styles.label}>{row.player.name}</Text>
+            {!row.player.active && (
+              <Text style={styles.caption}>{t('Left')}</Text>
+            )}
             {row.rank === 1 && leaders.length === 1 && gap > 0 && (
-              <Text style={styles.caption}>+{gap} vs 2nd</Text>
+              <Text style={styles.caption}>
+                +{n(gap)} {t('vs 2nd')}
+              </Text>
             )}
           </View>
           <View>

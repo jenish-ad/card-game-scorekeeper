@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import {
   createContext,
   useContext,
@@ -44,7 +45,7 @@ export function MatchStorageProvider({ children }: PropsWithChildren) {
       .catch(() => {
         if (!cancelled)
           setError(
-            'Could not open saved matches; check device storage and retry.',
+            t('Could not open saved matches; check device storage and retry.'),
           );
       });
     return () => {
@@ -59,7 +60,7 @@ export function MatchStorageProvider({ children }: PropsWithChildren) {
     );
   return (
     <Screen>
-      {!error && <ActivityIndicator accessibilityLabel="Loading" />}
+      {!error && <ActivityIndicator accessibilityLabel={t('Loading')} />}
       {error && (
         <>
           <Text accessibilityRole="alert" style={styles.error}>
@@ -73,7 +74,7 @@ export function MatchStorageProvider({ children }: PropsWithChildren) {
               setAttempt((value) => value + 1);
             }}
           >
-            <Text style={styles.buttonText}>Retry opening storage</Text>
+            <Text style={styles.buttonText}>{t('Retry opening storage')}</Text>
           </Pressable>
         </>
       )}
@@ -83,6 +84,6 @@ export function MatchStorageProvider({ children }: PropsWithChildren) {
 
 export function useMatchDatabase() {
   const database = useContext(StorageContext);
-  if (!database) throw new Error('Match storage is not ready.');
+  if (!database) throw new Error(t('Match storage is not ready.'));
   return database;
 }

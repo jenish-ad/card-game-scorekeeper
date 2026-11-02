@@ -1,6 +1,7 @@
+import { t, n } from '../i18n';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../useTheme';
-import type { AppTheme } from '../theme';
+import { devanagariFonts, type AppTheme } from '../theme';
 import { Icon, type IconName } from './Icon';
 import { useStyles } from './Screen';
 export function Button({
@@ -40,7 +41,14 @@ export function Button({
       ]}
     >
       {icon && <Icon name={icon} color={color} size={18} />}
-      <Text style={[styles.buttonText, local.buttonText, { color }]}>
+      <Text
+        style={[
+          styles.buttonText,
+          local.buttonText,
+          { color },
+          /[\u0900-\u097f]/.test(label) && { fontFamily: devanagariFonts.bold },
+        ]}
+      >
         {label}
       </Text>
     </Pressable>
@@ -69,14 +77,14 @@ export function Avatar({ name, size = 38 }: { name: string; size?: number }) {
   );
 }
 export function formatScore(value: number) {
-  return value > 0 ? `+${value}` : value < 0 ? `-${Math.abs(value)}` : '0';
+  return n(value > 0 ? `+${value}` : value);
 }
 export function scoreLabel(value: number) {
   return value > 0
-    ? `Gains ${value}`
+    ? t('Gains {p0}', { p0: value })
     : value < 0
-      ? `Pays ${Math.abs(value)}`
-      : 'No change';
+      ? t('Pays {p0}', { p0: Math.abs(value) })
+      : t('No change');
 }
 export function Score({
   value,

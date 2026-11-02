@@ -1,5 +1,18 @@
+import { usePreferences } from './storage/PreferencesContext';
 import { useColorScheme } from 'react-native';
-import { darkTheme, lightTheme, type AppTheme } from './theme';
+import {
+  darkTheme,
+  lightTheme,
+  nepaliLightTheme,
+  nepaliDarkTheme,
+  type AppTheme,
+} from './theme';
 export function useTheme(): AppTheme {
-  return useColorScheme() === 'dark' ? darkTheme : lightTheme;
+  const { preferences } = usePreferences();
+  const theme = useColorScheme() === 'dark' ? darkTheme : lightTheme;
+  return preferences.language === 'ne' || preferences.numerals === 'devanagari'
+    ? theme === darkTheme
+      ? nepaliDarkTheme
+      : nepaliLightTheme
+    : theme;
 }

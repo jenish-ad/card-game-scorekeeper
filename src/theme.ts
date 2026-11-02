@@ -43,4 +43,21 @@ const foundations = {
 } as const;
 export const lightTheme = { ...foundations, colors: lightColors };
 export const darkTheme = { ...foundations, colors: darkColors };
-export type AppTheme = typeof lightTheme;
+export type AppTheme = Omit<typeof lightTheme, 'fonts'> & {
+  fonts: { title: string; body: string; medium: string; bold: string };
+};
+export const devanagariFonts: AppTheme['fonts'] = {
+  title: 'Mukta_700Bold',
+  body: 'Mukta_400Regular',
+  medium: 'Mukta_600SemiBold',
+  bold: 'Mukta_700Bold',
+};
+
+export const nepaliLightTheme: AppTheme = {
+  ...lightTheme,
+  fonts: devanagariFonts,
+};
+export const nepaliDarkTheme: AppTheme = {
+  ...darkTheme,
+  fonts: devanagariFonts,
+};

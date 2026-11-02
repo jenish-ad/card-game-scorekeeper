@@ -19,6 +19,8 @@ Numbered migrations use `PRAGMA user_version` inside an exclusive transaction:
 - Version 1 creates matches, players, rounds and lookup indexes.
 - Version 2 adds match titles.
 - Version 3 adds per-match settings and maps the two unreleased rule IDs to `marriage-v1`, preserving stored round inputs.
+- Version 4 adds player active status and nullable join timestamps. Historical round participant lists remain unchanged.
+- Version 5 adds app preferences for language, numerals, calendar and keep-awake.
 
 Related writes are transactional. Unknown rule versions and newer database schemas are rejected without resetting data. Tests exercise the production SQL against Node SQLite, including migration rollback and disk-backed reopening; they do not test Expo's native bridge.
 
@@ -61,3 +63,13 @@ git archive --format=zip -o marriage-scorekeeper.zip HEAD
 ```
 
 The archive includes committed source, docs and documentation images. Git attributes exclude dependencies, generated native projects, Expo caches, build output, scratch screenshots, logs and other archives. Uncommitted changes are not included.
+
+## Roster, fouls and localization
+
+Only active players enter new rounds. An edited round retains its original participant set. Players with historical rounds remain in standings after leaving; unplayed players are deleted on removal. Names are unique across the whole roster, including departed players. At most five players can be active; at least two remain.
+
+Normal rounds without a `kind` key remain supported. Foul inputs store the penalty and mode at save time, and editing a saved foul retains its snapshot. Fixed-total remainders follow match seating order. Settings JSON from v3 fills the new foul defaults without changing normal scores.
+
+Preferences load before the navigator. Rules contains app settings; setup Rules contains match scoring settings. Inputs and database numbers remain Latin; maal accepts Devanagari keystrokes. UI formatting uses typed dictionaries and numeral helpers. Nepali typography uses Mukta 400/600/700. Sleep prevention mounts only for focused active match, entry and preview screens while enabled. Native module changes require rebuilding the development client.
+
+See [calendar verification](CALENDAR.md) and [translation review](TRANSLATIONS.md). Calendar dates outside the supported table fall back to AD. Native review is still required for the Nepali wording.

@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { Tabs } from 'expo-router';
 import { useTheme } from '../../useTheme';
 import { Icon } from '../../ui/Icon';
@@ -24,7 +25,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: t('Home'),
           tabBarIcon: ({ focused }) => (
             <Icon
               name={focused ? 'albums' : 'albums-outline'}
@@ -37,7 +38,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="history"
         options={{
-          title: 'History',
+          title: t('History'),
           tabBarIcon: ({ focused }) => (
             <Icon
               name={focused ? 'time' : 'time-outline'}
@@ -50,7 +51,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="rules"
         options={{
-          title: 'Rules',
+          title: t('Rules'),
           tabBarIcon: ({ focused }) => (
             <Icon
               name={focused ? 'book' : 'book-outline'}

@@ -1,3 +1,5 @@
+import { t, n } from '../../../i18n';
+import { MatchKeepAwake } from '../../../ui/MatchKeepAwake';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Share, Text } from 'react-native';
@@ -35,16 +37,16 @@ export default function ScoreboardScreen() {
   if (loading)
     return (
       <Screen>
-        <ActivityIndicator accessibilityLabel="Loading" />
+        <ActivityIndicator accessibilityLabel={t('Loading')} />
       </Screen>
     );
   if (!match || error)
     return (
       <Screen>
         <Text accessibilityRole="alert" style={styles.error}>
-          {error ?? 'Match not found.'}
+          {error ?? t('Match not found.')}
         </Text>
-        <Button label="Retry" onPress={reload} />
+        <Button label={t('Retry')} onPress={reload} />
       </Screen>
     );
   async function mutate(operation: () => Promise<void>) {
@@ -56,7 +58,7 @@ export default function ScoreboardScreen() {
       setDraft(null);
       reload();
     } catch {
-      setWriteError('Could not update the match; try again.');
+      setWriteError(t('Could not update the match; try again.'));
     } finally {
       setBusy(false);
     }
@@ -64,14 +66,14 @@ export default function ScoreboardScreen() {
   function changeStatus() {
     if (!match) return;
     Alert.alert(
-      match.finishedAt ? 'Reopen match?' : 'Finish match?',
+      match.finishedAt ? t('Reopen match?') : t('Finish match?'),
       match.finishedAt
-        ? 'Allow changes to rounds?'
-        : 'Move this match to history?',
+        ? t('Allow changes to rounds?')
+        : t('Move this match to history?'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('Cancel'), style: 'cancel' },
         {
-          text: match.finishedAt ? 'Reopen' : 'Finish',
+          text: match.finishedAt ? t('Reopen') : t('Finish'),
           onPress: () =>
             void mutate(() =>
               setMatchFinished(database, match.id, !match.finishedAt),
@@ -85,12 +87,14 @@ export default function ScoreboardScreen() {
     const last = match.rounds.at(-1);
     if (!last) return;
     Alert.alert(
-      'Undo last round?',
-      `Delete round ${match.rounds.length} and recalculate totals?`,
+      t('Undo last round?'),
+      t('Delete round {p0} and recalculate totals?', {
+        p0: match.rounds.length,
+      }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('Cancel'), style: 'cancel' },
         {
-          text: 'Undo',
+          text: t('Undo'),
           style: 'destructive',
           onPress: () =>
             void mutate(() => deleteRound(database, match.id, last.id)),
@@ -104,7 +108,7 @@ export default function ScoreboardScreen() {
         !match.finishedAt ? (
           <>
             <Button
-              label="Add round"
+              label={t('Add round')}
               disabled={busy}
               onPress={() => {
                 setDraft(null);
@@ -115,6 +119,7 @@ export default function ScoreboardScreen() {
         ) : undefined
       }
     >
+      <MatchKeepAwake active={!match.finishedAt} />
       <Stack.Screen
         options={{
           headerRight: () => (
@@ -124,11 +129,12 @@ export default function ScoreboardScreen() {
               busy={busy}
               share={() => {
                 void Share.share({ message: resultSummary(match) }).catch(() =>
-                  setWriteError('Could not share the result; try again.'),
+                  setWriteError(t('Could not share the result; try again.')),
                 );
               }}
               changeStatus={changeStatus}
               undo={undo}
+              players={() => router.push(`/marriage/players/${match.id}`)}
             />
           ),
         }}
@@ -142,11 +148,14 @@ export default function ScoreboardScreen() {
       )}
       <Text style={styles.title}>{match.title}</Text>
       <Text style={styles.caption}>
-        {match.players.length} players / {match.rounds.length} rounds /{' '}
-        {match.finishedAt ? 'Finished' : 'Active'}
+        {[
+          `${n(match.players.length)} ${t('players')}`,
+          t('roundCount', { count: match.rounds.length }),
+          match.finishedAt ? t('Finished') : t('Active'),
+        ].join(' / ')}
       </Text>
       <StandingsBoard match={match} />
-      <Text style={styles.label}>Rounds</Text>
+      <Text style={styles.label}>{t('Rounds')}</Text>
       {match.rounds.length ? (
         <RoundTable
           match={match}
@@ -158,12 +167,12 @@ export default function ScoreboardScreen() {
           }
         />
       ) : (
-        <Text style={styles.body}>Add a round to start scoring.</Text>
+        <Text style={styles.body}>{t('Add a round to start scoring.')}</Text>
       )}
       {match.settings.moneyRate !== null && (
         <Button
           secondary
-          label="Settle up"
+          label={t('Settle up')}
           onPress={() => router.push(`/marriage/settle/${match.id}`)}
         />
       )}

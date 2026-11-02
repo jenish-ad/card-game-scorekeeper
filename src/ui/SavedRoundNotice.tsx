@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo, Animated, Text } from 'react-native';
 import { useTheme } from '../useTheme';
@@ -51,7 +52,7 @@ export function SavedRoundNotice({
     >
       <Icon name="checkmark-circle" />
       <Text style={[styles.label, styles.flexible]}>
-        Round {round} saved. Scores updated.
+        {t('Round {p0}', { p0: Number(round) })} {t('saved. Scores updated.')}
       </Text>
     </Animated.View>
   );

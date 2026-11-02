@@ -1,3 +1,4 @@
+import { t, n } from '../../i18n';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Pressable, Text, TextInput, View } from 'react-native';
@@ -26,7 +27,11 @@ export default function MatchSetupScreen() {
     seenFee: '3',
     unseenFee: '10',
     dubleeExtra: '5',
+    foulPenalty: '10',
   });
+  const [foulMode, setFoulMode] = useState<'perPlayer' | 'fixedTotal'>(
+    'perPlayer',
+  );
   const [moneyEnabled, setMoneyEnabled] = useState(false);
   const [moneyRate, setMoneyRate] = useState('1');
   const [title, setTitle] = useState(defaultMatchTitle());
@@ -45,8 +50,12 @@ export default function MatchSetupScreen() {
       const names = validatePlayerNames(players.map((player) => player.name));
       if (!names.ok) throw new Error(names.message);
       if (!title.trim() || title.trim().length > 80)
-        throw new Error('Enter a match title of 1 to 80 characters.');
+        throw new Error(t('Enter a match title of 1 to 80 characters.'));
       const settings = parseSettings({
+        foulMode,
+        foulPenalty: /^\d+$/.test(fees.foulPenalty)
+          ? Number(fees.foulPenalty)
+          : NaN,
         seenFee: /^\d+$/.test(fees.seenFee) ? Number(fees.seenFee) : NaN,
         unseenFee: /^\d+$/.test(fees.unseenFee) ? Number(fees.unseenFee) : NaN,
         dubleeExtra: /^\d+$/.test(fees.dubleeExtra)
@@ -61,12 +70,12 @@ export default function MatchSetupScreen() {
         currentRuleVersion,
         settings,
       ).catch(() => {
-        throw new Error('Could not save match; try again.');
+        throw new Error(t('Could not save match; try again.'));
       });
       router.replace(`/marriage/match/${id}`);
     } catch (failure) {
       setError(
-        failure instanceof Error ? failure.message : 'Could not save match.',
+        failure instanceof Error ? failure.message : t('Could not save match.'),
       );
       setSaving(false);
     }
@@ -84,7 +93,7 @@ export default function MatchSetupScreen() {
     <Screen
       footer={
         <Button
-          label={saving ? 'Starting…' : 'Start match'}
+          label={saving ? t('Starting…') : t('Start match')}
           icon="arrow-forward"
           disabled={saving}
           onPress={() => void start()}
@@ -92,13 +101,13 @@ export default function MatchSetupScreen() {
       }
     >
       <View style={{ gap: theme.spacing.sm }}>
-        <Text style={styles.title}>New match</Text>
+        <Text style={styles.title}>{t('New match')}</Text>
       </View>
       <View style={{ gap: theme.spacing.sm }}>
-        <Text style={styles.label}>Match title</Text>
+        <Text style={styles.label}>{t('Match title')}</Text>
         <TextInput
-          accessibilityLabel="Match title"
-          placeholder="Match title"
+          accessibilityLabel={t('Match title')}
+          placeholder={t('Match title')}
           placeholderTextColor={theme.colors.textMuted}
           style={styles.input}
           value={title}
@@ -107,10 +116,12 @@ export default function MatchSetupScreen() {
         />
       </View>
       <View style={styles.spread}>
-        <Text style={styles.label}>Players & seating</Text>
-        <Text style={styles.body}>{players.length} of 5</Text>
+        <Text style={styles.label}>{t('Players & seating')}</Text>
+        <Text style={styles.body}>
+          {n(players.length)} {t('of 5')}
+        </Text>
       </View>
-      <Text style={styles.body}>Drag a handle to reorder players.</Text>
+      <Text style={styles.body}>{t('Drag a handle to reorder players.')}</Text>
       <View>
         {players.map((item, index) => {
           return (
@@ -121,9 +132,9 @@ export default function MatchSetupScreen() {
               move={(offset) => move(index, offset)}
             >
               <TextInput
-                accessibilityLabel={`Player ${index + 1} name`}
+                accessibilityLabel={t('Player {p0} name', { p0: index + 1 })}
                 value={item.name}
-                placeholder={`Player ${index + 1}`}
+                placeholder={t('Player {p0}', { p0: index + 1 })}
                 placeholderTextColor={theme.colors.textMuted}
                 autoCorrect={false}
                 maxLength={40}
@@ -141,7 +152,7 @@ export default function MatchSetupScreen() {
               />
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`Remove player ${index + 1}`}
+                accessibilityLabel={t('Remove player {p0}', { p0: index + 1 })}
                 accessibilityState={{ disabled: players.length === 2 }}
                 disabled={players.length === 2}
                 onPress={() =>
@@ -162,7 +173,7 @@ export default function MatchSetupScreen() {
         })}
       </View>
       <Button
-        label={`Add player · ${5 - players.length} seats left`}
+        label={t('Add player · {p0} seats left', { p0: 5 - players.length })}
         icon="add"
         secondary
         disabled={players.length >= 5}
@@ -172,34 +183,43 @@ export default function MatchSetupScreen() {
         }}
       />
       <Text style={styles.body}>
-        Play order:{' '}
+        {t('Play order:')}{' '}
         {players
-          .map((player, index) => player.name.trim() || `Player ${index + 1}`)
+          .map(
+            (player, index) =>
+              player.name.trim() || t('Player {p0}', { p0: index + 1 }),
+          )
           .join(' → ')}
       </Text>
       <Button
         secondary
-        label={rulesOpen ? 'Hide rules' : 'Rules'}
+        label={rulesOpen ? t('Hide rules') : t('Rules')}
         onPress={() => setRulesOpen(!rulesOpen)}
       />
       {rulesOpen && (
         <View style={styles.card}>
-          {(['seenFee', 'unseenFee', 'dubleeExtra'] as const).map((key) => (
+          {(
+            ['seenFee', 'unseenFee', 'dubleeExtra', 'foulPenalty'] as const
+          ).map((key) => (
             <View key={key} style={styles.spread}>
               <Text style={styles.label}>
                 {key === 'seenFee'
-                  ? 'Seen fee'
+                  ? t('Seen fee')
                   : key === 'unseenFee'
-                    ? 'Unseen fee'
-                    : 'Dublee extra'}
+                    ? t('Unseen fee')
+                    : key === 'foulPenalty'
+                      ? t('Foul penalty')
+                      : t('Dublee extra')}
               </Text>
               <TextInput
                 accessibilityLabel={
                   key === 'seenFee'
-                    ? 'Seen fee'
+                    ? t('Seen fee')
                     : key === 'unseenFee'
-                      ? 'Unseen fee'
-                      : 'Dublee extra'
+                      ? t('Unseen fee')
+                      : key === 'foulPenalty'
+                        ? t('Foul penalty')
+                        : t('Dublee extra')
                 }
                 keyboardType="number-pad"
                 selectTextOnFocus
@@ -212,22 +232,35 @@ export default function MatchSetupScreen() {
               />
             </View>
           ))}
+          <View style={styles.row}>
+            <Button
+              secondary={foulMode !== 'perPlayer'}
+              label={t('Per player')}
+              onPress={() => setFoulMode('perPlayer')}
+            />
+            <Button
+              secondary={foulMode !== 'fixedTotal'}
+              label={t('Total')}
+              onPress={() => setFoulMode('fixedTotal')}
+            />
+          </View>
           <Pressable
             accessibilityRole="switch"
-            accessibilityLabel="Money rate"
+            accessibilityLabel={t('Money rate')}
             accessibilityState={{ checked: moneyEnabled }}
             onPress={() => setMoneyEnabled(!moneyEnabled)}
             style={styles.ruledRow}
           >
             <Text style={styles.label}>
-              Money rate: {moneyEnabled ? 'On' : 'Off'}
+              {t('Money rate:')}
+              {moneyEnabled ? t('On') : t('Off')}
             </Text>
           </Pressable>
           {moneyEnabled && (
             <View style={styles.spread}>
-              <Text style={styles.label}>Rs per point</Text>
+              <Text style={styles.label}>{t('Rs per point')}</Text>
               <TextInput
-                accessibilityLabel="Rs per point"
+                accessibilityLabel={t('Rs per point')}
                 keyboardType="decimal-pad"
                 selectTextOnFocus
                 style={[styles.input, { width: 100 }]}

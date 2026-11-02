@@ -1,3 +1,5 @@
+import { readPreferences, writePreference } from '../src/storage/preferences';
+import { settleUp } from '../src/features/marriage/settlement';
 import assert from 'node:assert/strict';
 import { mkdtempSync, rmdirSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -8,6 +10,7 @@ import { defaultMatchTitle } from '../src/features/marriage/matchTitle';
 import {
   currentRuleVersion,
   defaultSettings,
+  scoreRound,
 } from '../src/features/marriage/scoring';
 import {
   migrateDatabase,
@@ -17,6 +20,8 @@ import {
 import {
   type SavedMatch,
   createMatch,
+  addPlayer,
+  setPlayerActive,
   deleteRound,
   getMatch,
   listMatches,
@@ -24,7 +29,7 @@ import {
   saveRound,
   setMatchFinished,
 } from '../src/features/marriage/matches';
-import type { MarriageRoundInput } from '../src/features/marriage/scoring';
+import type { NormalRoundInput } from '../src/features/marriage/scoring';
 
 function requireMatch(match: SavedMatch | null): SavedMatch {
   assert.ok(match, 'Expected the saved match to exist');
@@ -74,7 +79,7 @@ class TestDatabase implements MatchDatabase {
   }
 }
 
-function roundFor(players: { id: number }[]): MarriageRoundInput {
+function roundFor(players: { id: number }[]): NormalRoundInput {
   return {
     winnerId: players[0].id,
     dubleeWin: false,
@@ -109,7 +114,7 @@ test.each(['pagat-base-v1', 'pagat-base-v1-seen-maal'])(
         id,
       );
       await database.execAsync(
-        'ALTER TABLE matches DROP COLUMN title; ALTER TABLE matches DROP COLUMN settings_json; PRAGMA user_version = 1;',
+        'DROP TABLE app_preferences; ALTER TABLE players DROP COLUMN active; ALTER TABLE players DROP COLUMN joined_at; ALTER TABLE matches DROP COLUMN title; ALTER TABLE matches DROP COLUMN settings_json; PRAGMA user_version = 1;',
       );
       await migrateDatabase(database);
       const restored = await getMatch(database, id);
@@ -150,7 +155,10 @@ test('new matches persist titles, seat order, rule revision, and canonical unsee
     input.players[2].maal = 9;
     await saveRound(database, id, input);
     match = requireMatch(await getMatch(database, id));
-    expect(match.rounds[0].input.players[2].maal).toBe(9);
+    expect(
+      match.rounds[0].input.kind !== 'foul' &&
+        match.rounds[0].input.players[2].maal,
+    ).toBe(9);
     expect([...matchTotals(match).values()]).toEqual([21, -4, -17]);
     await saveRound(database, id, { ...input, dubleeWin: true });
     expect((await getMatch(database, id))?.rounds).toHaveLength(2);
@@ -174,7 +182,7 @@ test('migrations are repeatable, preserve records and reject newer schemas', asy
     const id = await createMatch(database, ['Sita', 'Ram']);
     await migrateDatabase(database);
     assert.equal((await getMatch(database, id))?.players[0].name, 'Sita');
-    await database.execAsync('PRAGMA user_version = 4');
+    await database.execAsync('PRAGMA user_version = 6');
     await assert.rejects(migrateDatabase(database), /newer app/);
     assert.equal(
       (
@@ -182,7 +190,7 @@ test('migrations are repeatable, preserve records and reject newer schemas', asy
           'PRAGMA user_version',
         )
       )?.user_version,
-      4,
+      6,
     );
   } finally {
     database.sqlite.close();
@@ -301,7 +309,7 @@ test('rounds reject foreign players and missing IDs without changing saved input
     const input = roundFor(first.players);
     await assert.rejects(
       saveRound(database, firstId, roundFor(second.players)),
-      /every player/,
+      /Every player/,
     );
     await saveRound(database, firstId, input);
     const saved = requireMatch(await getMatch(database, firstId));
@@ -359,6 +367,7 @@ test('settings are isolated per match and recompute saved rounds after reopening
   try {
     await migrateDatabase(database);
     const custom = {
+      ...defaultSettings,
       seenFee: 0,
       unseenFee: 2,
       dubleeExtra: 7,
@@ -392,6 +401,220 @@ test('settings are isolated per match and recompute saved rounds after reopening
       }),
     );
     expect(await listMatches(database)).toHaveLength(2);
+  } finally {
+    database.sqlite.close();
+  }
+});
+
+test('joining, leaving, rejoining and historical edits preserve round participants and totals', async () => {
+  const database = new TestDatabase();
+  try {
+    await migrateDatabase(database);
+    const id = await createMatch(database, ['A', 'B', 'C', 'D']);
+    let match = requireMatch(await getMatch(database, id));
+    const old = roundFor(match.players);
+    await saveRound(database, id, old);
+    await saveRound(database, id, old);
+    await addPlayer(database, id, 'E');
+    match = requireMatch(await getMatch(database, id));
+    await assert.rejects(addPlayer(database, id, 'F'), /2 to 5/);
+    await saveRound(database, id, roundFor(match.players));
+    await setPlayerActive(database, id, match.players[1].id, false);
+    await assert.rejects(saveRound(database, id, old), /active/);
+    await saveRound(database, id, old, match.rounds[0].id);
+    await setPlayerActive(database, id, match.players[1].id, true);
+    match = requireMatch(await getMatch(database, id));
+    expect(match.rounds.map((round) => round.input.players.length)).toEqual([
+      4, 4, 5,
+    ]);
+    expect(match.rounds[0].input).toEqual(old);
+    for (const round of match.rounds)
+      expect(
+        scoreRound(round.input).reduce((sum, score) => sum + score.points, 0),
+      ).toBe(0);
+    expect(
+      [...matchTotals(match).values()].reduce((sum, value) => sum + value, 0),
+    ).toBe(0);
+    for (const player of match.players.slice(2))
+      await setPlayerActive(database, id, player.id, false);
+    await assert.rejects(
+      setPlayerActive(database, id, match.players[0].id, false),
+      /2 to 5/,
+    );
+    await assert.rejects(addPlayer(database, id, ' a '), /different name/);
+    await setMatchFinished(database, id, true);
+    await assert.rejects(addPlayer(database, id, 'F'), /Reopen/);
+    await assert.rejects(
+      setPlayerActive(database, id, match.players[2].id, true),
+      /Reopen/,
+    );
+  } finally {
+    database.sqlite.close();
+  }
+});
+
+test('v3 migration preserves data and rolls back both new columns on failure', async () => {
+  const database = new TestDatabase();
+  try {
+    await migrateDatabase(database);
+    const id = await createMatch(database, ['A', 'B']);
+    const before = requireMatch(await getMatch(database, id));
+    await saveRound(database, id, roundFor(before.players));
+    const totals = [...matchTotals(requireMatch(await getMatch(database, id)))];
+    await database.execAsync(
+      'DROP TABLE app_preferences; ALTER TABLE players DROP COLUMN active; ALTER TABLE players DROP COLUMN joined_at; PRAGMA user_version = 3;',
+    );
+    const original = database.execAsync.bind(database);
+    database.execAsync = async (sql) => {
+      if (sql.includes('ADD COLUMN joined_at')) {
+        await original(
+          'ALTER TABLE players ADD COLUMN active INTEGER NOT NULL DEFAULT 1;',
+        );
+        throw new Error('injected migration failure');
+      }
+      await original(sql);
+    };
+    await assert.rejects(migrateDatabase(database), /injected/);
+    expect(
+      (
+        await database.getAllAsync<{ name: string }>(
+          'PRAGMA table_info(players)',
+        )
+      ).some((row) => row.name === 'active'),
+    ).toBe(false);
+    expect(await database.getFirstAsync('PRAGMA user_version')).toEqual({
+      user_version: 3,
+    });
+    database.execAsync = original;
+    await migrateDatabase(database);
+    expect([
+      ...matchTotals(requireMatch(await getMatch(database, id))),
+    ]).toEqual(totals);
+    expect(
+      (await getMatch(database, id))?.players.every((player) => player.active),
+    ).toBe(true);
+  } finally {
+    database.sqlite.close();
+  }
+});
+
+test('foul snapshot survives settings changes, joins, departures and undo', async () => {
+  const database = new TestDatabase();
+  try {
+    await migrateDatabase(database);
+    const id = await createMatch(database, ['A', 'B', 'C']);
+    let match = requireMatch(await getMatch(database, id));
+    const foul = {
+      kind: 'foul' as const,
+      offenderId: match.players[0].id,
+      players: match.players.map((player) => ({ playerId: player.id })),
+    };
+    await saveRound(database, id, foul);
+    await database.runAsync(
+      'UPDATE matches SET settings_json = ? WHERE id = ?',
+      JSON.stringify({ ...defaultSettings, foulPenalty: 99 }),
+      id,
+    );
+    await setPlayerActive(database, id, match.players[0].id, false);
+    await addPlayer(database, id, 'D');
+    match = requireMatch(await getMatch(database, id));
+    expect([...matchTotals(match).values()]).toEqual([-20, 10, 10, 0]);
+    await saveRound(database, id, foul, match.rounds[0].id);
+    expect([
+      ...matchTotals(requireMatch(await getMatch(database, id))).values(),
+    ]).toEqual([-20, 10, 10, 0]);
+    await saveRound(database, id, {
+      ...foul,
+      offenderId: match.players[1].id,
+      players: match.players
+        .filter((player) => player.active)
+        .map((player) => ({ playerId: player.id })),
+    });
+    match = requireMatch(await getMatch(database, id));
+    expect([...matchTotals(match).values()].reduce((a, b) => a + b, 0)).toBe(0);
+    await deleteRound(database, id, match.rounds[1].id);
+    expect([
+      ...matchTotals(requireMatch(await getMatch(database, id))).values(),
+    ]).toEqual([-20, 10, 10, 0]);
+  } finally {
+    database.sqlite.close();
+  }
+});
+
+test('preferences persist across closing and reopening the database', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'preferences-test-'));
+  const filename = join(directory, 'matches.db');
+  let database = new TestDatabase(filename);
+  try {
+    await migrateDatabase(database);
+    expect(await readPreferences(database, 'ne')).toEqual({
+      language: 'ne',
+      numerals: 'latin',
+      calendar: 'ad',
+      keepAwake: true,
+    });
+    await writePreference(database, 'language', 'ne');
+    await writePreference(database, 'numerals', 'devanagari');
+    await writePreference(database, 'calendar', 'bs');
+    await writePreference(database, 'keepAwake', false);
+    database.sqlite.close();
+    database = new TestDatabase(filename);
+    await migrateDatabase(database);
+    expect(await readPreferences(database, 'en')).toEqual({
+      language: 'ne',
+      numerals: 'devanagari',
+      calendar: 'bs',
+      keepAwake: false,
+    });
+  } finally {
+    database.sqlite.close();
+    unlinkSync(filename);
+    rmdirSync(directory);
+  }
+});
+
+test('removing an unplayed player deletes their row, seating gaps load and departed debts settle', async () => {
+  const database = new TestDatabase();
+  try {
+    await migrateDatabase(database);
+    const id = await createMatch(database, ['A', 'B', 'C', 'D']);
+    let match = requireMatch(await getMatch(database, id));
+    await setPlayerActive(database, id, match.players[1].id, false);
+    match = requireMatch(await getMatch(database, id));
+    expect(match.players.map((player) => player.seat)).toEqual([0, 2, 3]);
+    await saveRound(database, id, roundFor(match.players));
+    const departed = match.players[2].id;
+    await setPlayerActive(database, id, departed, false);
+    match = requireMatch(await getMatch(database, id));
+    const transfers = settleUp(
+      [...matchTotals(match)].map(([playerId, points]) => ({
+        playerId,
+        paisa: points * 100,
+      })),
+    );
+    expect(
+      transfers.some(
+        (transfer) => transfer.from === departed || transfer.to === departed,
+      ),
+    ).toBe(true);
+  } finally {
+    database.sqlite.close();
+  }
+});
+
+test('v5 preference migration failure rolls back without changing v4 records', async () => {
+  const database = new TestDatabase();
+  try {
+    await migrateDatabase(database);
+    const id = await createMatch(database, ['A', 'B']);
+    await database.execAsync('PRAGMA user_version = 4;');
+    await assert.rejects(migrateDatabase(database), /already exists/);
+    expect(await database.getFirstAsync('PRAGMA user_version')).toEqual({
+      user_version: 4,
+    });
+    expect(
+      (await getMatch(database, id))?.players.map((player) => player.name),
+    ).toEqual(['A', 'B']);
   } finally {
     database.sqlite.close();
   }

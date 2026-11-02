@@ -37,6 +37,8 @@ test('custom fees and zero fees apply independently and do not count unseen maal
     }).map((score) => score.points),
   ).toEqual([8, -1, -7]);
   expect(defaultSettings).toEqual({
+    foulMode: 'perPlayer',
+    foulPenalty: 10,
     seenFee: 3,
     unseenFee: 10,
     dubleeExtra: 5,
@@ -59,8 +61,8 @@ test('invalid fees, rates and unsafe arithmetic are rejected', () => {
     }),
   ).toThrow();
 });
-test('date-based title uses weekday, day and month', () => {
-  expect(defaultMatchTitle(new Date(2025, 10, 1, 12))).toBe('Sat, 1 Nov');
+test('date-based title uses the selected calendar', () => {
+  expect(defaultMatchTitle(new Date(2025, 10, 1, 12))).toBe('1 Nov 2025');
 });
 
 test('numeric Next skips disabled unseen players and ends at the last field', () => {

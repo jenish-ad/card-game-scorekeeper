@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { useState } from 'react';
 import {
   ActionSheetIOS,
@@ -19,6 +20,7 @@ export function ScoreboardActions({
   share,
   changeStatus,
   undo,
+  players,
 }: {
   finished: boolean;
   canUndo: boolean;
@@ -26,23 +28,30 @@ export function ScoreboardActions({
   share: () => void;
   changeStatus: () => void;
   undo: () => void;
+  players: () => void;
 }) {
   const theme = useTheme();
   const styles = useStyles();
   const [open, setOpen] = useState(false);
-  const statusLabel = finished ? 'Reopen match' : 'Finish match';
+  const statusLabel = finished ? t('Reopen match') : t('Finish match');
   function showMenu() {
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          options: [statusLabel, 'Undo last round', 'Cancel'],
-          cancelButtonIndex: 2,
+          options: [
+            statusLabel,
+            t('Undo last round'),
+            t('Players'),
+            t('Cancel'),
+          ],
+          cancelButtonIndex: 3,
           destructiveButtonIndex: canUndo ? 1 : undefined,
           disabledButtonIndices: canUndo ? [] : [1],
         },
         (index) => {
           if (index === 0) changeStatus();
           else if (index === 1 && canUndo) undo();
+          else if (index === 2) players();
         },
       );
     } else setOpen(true);
@@ -55,7 +64,7 @@ export function ScoreboardActions({
     <View style={local.actions}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Share result"
+        accessibilityLabel={t('Share result')}
         disabled={busy}
         onPress={share}
         style={local.icon}
@@ -64,7 +73,7 @@ export function ScoreboardActions({
       </Pressable>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Match actions"
+        accessibilityLabel={t('Match actions')}
         disabled={busy}
         onPress={showMenu}
         style={local.icon}
@@ -94,7 +103,7 @@ export function ScoreboardActions({
             ]}
             onPress={() => {}}
           >
-            <Text style={styles.subtitle}>Match actions</Text>
+            <Text style={styles.subtitle}>{t('Match actions')}</Text>
             <Button
               secondary
               label={statusLabel}
@@ -103,11 +112,20 @@ export function ScoreboardActions({
             <Button
               secondary
               destructive
-              label="Undo last round"
+              label={t('Undo last round')}
               disabled={!canUndo}
               onPress={() => choose(undo)}
             />
-            <Button secondary label="Cancel" onPress={() => setOpen(false)} />
+            <Button
+              secondary
+              label={t('Players')}
+              onPress={() => choose(players)}
+            />
+            <Button
+              secondary
+              label={t('Cancel')}
+              onPress={() => setOpen(false)}
+            />
           </Pressable>
         </Pressable>
       </Modal>

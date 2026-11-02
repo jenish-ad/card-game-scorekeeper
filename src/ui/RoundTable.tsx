@@ -1,3 +1,4 @@
+import { t, n } from '../i18n';
 import { LinearGradient } from 'expo-linear-gradient';
 import { roundTableLayout } from './roundTableLayout';
 import {
@@ -23,6 +24,11 @@ export function RoundTable({
   match: SavedMatch;
   openRound: (id: number) => void;
 }) {
+  const players = match.players.filter((player) =>
+    match.rounds.some((round) =>
+      round.input.players.some((entry) => entry.playerId === player.id),
+    ),
+  );
   const theme = useTheme();
   const styles = useStyles();
   const { fontScale } = useWindowDimensions();
@@ -31,7 +37,7 @@ export function RoundTable({
   const [width, setWidth] = useState(0);
   const { roundWidth, minimumPlayerWidth, fits } = roundTableLayout(
     width,
-    match.players.length,
+    players.length,
     fontScale,
   );
   const column: ViewStyle = fits ? { flex: 1 } : { width: minimumPlayerWidth };
@@ -43,7 +49,7 @@ export function RoundTable({
   const columns = (
     <View style={fits ? local.fill : undefined}>
       <View style={[local.row, rowSize]}>
-        {match.players.map((player) => (
+        {players.map((player) => (
           <View key={player.id} style={[local.cell, rowSize, column]}>
             <Text
               numberOfLines={1}
@@ -65,7 +71,7 @@ export function RoundTable({
           <Pressable
             key={round.id}
             accessibilityRole="button"
-            accessibilityLabel={`Round ${index + 1} details`}
+            accessibilityLabel={t('Round {p0} details', { p0: index + 1 })}
             onPress={() => openRound(round.id)}
             style={[
               local.row,
@@ -74,22 +80,30 @@ export function RoundTable({
               { borderColor: theme.colors.border },
             ]}
           >
-            {match.players.map((player) => (
+            {players.map((player) => (
               <View key={player.id} style={[local.cell, rowSize, column]}>
-                <Score
-                  compact
-                  value={
-                    scores.find((score) => score.playerId === player.id)
-                      ?.points ?? 0
-                  }
-                />
+                {round.input.kind === 'foul' &&
+                  round.input.offenderId === player.id && (
+                    <Text style={styles.caption}>{t('foulMark')}</Text>
+                  )}
+                {scores.some((score) => score.playerId === player.id) ? (
+                  <Score
+                    compact
+                    value={
+                      scores.find((score) => score.playerId === player.id)!
+                        .points
+                    }
+                  />
+                ) : (
+                  <Text style={styles.caption}>–</Text>
+                )}
               </View>
             ))}
           </Pressable>
         );
       })}
       <View style={[local.row, rowSize, local.total, totalStyle]}>
-        {match.players.map((player) => (
+        {players.map((player) => (
           <View key={player.id} style={[local.cell, rowSize, column]}>
             <Score compact value={totals.get(player.id) ?? 0} />
           </View>
@@ -110,14 +124,14 @@ export function RoundTable({
       >
         <View style={[local.cell, rowSize, local.roundCell]}>
           <Text numberOfLines={1} adjustsFontSizeToFit style={styles.caption}>
-            Round
+            {t('Round')}
           </Text>
         </View>
         {match.rounds.map((round, index) => (
           <Pressable
             key={round.id}
             accessibilityRole="button"
-            accessibilityLabel={`Round ${index + 1} details`}
+            accessibilityLabel={t('Round {p0} details', { p0: index + 1 })}
             onPress={() => openRound(round.id)}
             style={[
               local.cell,
@@ -127,7 +141,10 @@ export function RoundTable({
               { borderColor: theme.colors.border },
             ]}
           >
-            <Text style={styles.label}>{index + 1}</Text>
+            <Text style={styles.label}>
+              {n(index + 1)}
+              {round.input.kind === 'foul' ? ` ${t('foulMark')}` : ''}
+            </Text>
           </Pressable>
         ))}
         <View
@@ -140,7 +157,7 @@ export function RoundTable({
           ]}
         >
           <Text numberOfLines={1} adjustsFontSizeToFit style={styles.label}>
-            Total
+            {t('Total')}
           </Text>
         </View>
       </View>

@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import {
@@ -17,16 +18,16 @@ export default function HistoryScreen() {
   const styles = useStyles();
   const router = useRouter();
   const { matches, loading, error, reload } = useMatches();
-  const [filter, setFilter] = useState<'All' | 'Active' | 'Finished'>('All');
+  const [filter, setFilter] = useState<'all' | 'active' | 'finished'>('all');
   const filtered = matches.filter(
     (match) =>
-      filter === 'All' || Boolean(match.finishedAt) === (filter === 'Finished'),
+      filter === 'all' || Boolean(match.finishedAt) === (filter === 'finished'),
   );
   return (
     <Screen topSafeArea>
-      <Text style={styles.title}>History</Text>
+      <Text style={styles.title}>{t('History')}</Text>
       <View style={styles.row}>
-        {(['All', 'Active', 'Finished'] as const).map((label) => (
+        {(['all', 'active', 'finished'] as const).map((label) => (
           <Pressable
             key={label}
             accessibilityRole="radio"
@@ -53,29 +54,37 @@ export default function HistoryScreen() {
                 },
               ]}
             >
-              {label}
+              {label === 'all'
+                ? t('All')
+                : label === 'active'
+                  ? t('Active')
+                  : t('Finished')}
             </Text>
           </Pressable>
         ))}
       </View>
       {loading ? (
-        <ActivityIndicator accessibilityLabel="Loading" />
+        <ActivityIndicator accessibilityLabel={t('Loading')} />
       ) : error ? (
         <>
           <Text accessibilityRole="alert" style={styles.error}>
             {error}
           </Text>
-          <Button label="Try again" onPress={reload} />
+          <Button label={t('Try again')} onPress={reload} />
         </>
       ) : filtered.length ? (
         filtered.map((match) => <MatchCard key={match.id} match={match} />)
       ) : (
         <Text style={styles.body}>
-          No {filter === 'All' ? '' : filter.toLowerCase() + ' '}matches yet.
+          {filter === 'all'
+            ? t('No matches yet.')
+            : filter === 'active'
+              ? t('No active matches yet.')
+              : t('No finished matches yet.')}
         </Text>
       )}
       <Button
-        label="New match"
+        label={t('New match')}
         onPress={() => router.push('/marriage/setup')}
       />
     </Screen>

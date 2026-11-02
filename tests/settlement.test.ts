@@ -59,6 +59,7 @@ test('share summary contains title, date, tied ranks, signed totals and optional
     id: seat + 1,
     name,
     seat,
+    active: true,
   }));
   const match: SavedMatch = {
     id: 1,
@@ -85,7 +86,7 @@ test('share summary contains title, date, tied ranks, signed totals and optional
     ],
   };
   expect(resultSummary(match)).toContain('1. Sita: +21 (Rs 26.25)');
-  expect(resultSummary(match)).toContain('3. Hari: -17 (\u2212Rs 21.25)');
+  expect(resultSummary(match)).toContain('3. Hari: \u221217 (\u2212Rs 21.25)');
   expect(resultSummary(match)).toContain('1 Nov 2025');
   expect(
     resultSummary({ ...match, settings: { ...defaultSettings } }),

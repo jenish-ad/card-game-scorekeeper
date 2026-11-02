@@ -1,5 +1,24 @@
+import { latinDigits } from '../../i18n/numbers';
+import { t } from '../../i18n';
 import { scoreRound } from './scoring';
-import type { MarriageRoundInput, PlayerScore, MatchSettings } from './scoring';
+import type {
+  FoulRoundInput,
+  MarriageRoundInput,
+  PlayerScore,
+  MatchSettings,
+} from './scoring';
+
+export function foulPreview(input: FoulRoundInput) {
+  try {
+    return { ok: true as const, input, scores: scoreRound(input) };
+  } catch (error) {
+    return {
+      ok: false as const,
+      message:
+        error instanceof Error ? error.message : t('Check the round inputs.'),
+    };
+  }
+}
 
 export function roundPreview(
   entries: { playerId: number; maal: string; seen: boolean }[],
@@ -12,14 +31,15 @@ export function roundPreview(
   | { ok: false; message: string } {
   try {
     if (winnerId === null)
-      throw new Error('Choose the winner to see this round’s points.');
+      throw new Error(t('Choose the winner to see this round’s points.'));
     const input = {
       winnerId,
       dubleeWin,
-      players: entries.map((entry) => {
+      players: entries.map((original) => {
+        const entry = { ...original, maal: latinDigits(original.maal) };
         if (entry.seen && !/^\d+$/.test(entry.maal))
           throw new Error(
-            'Enter a whole-number maal total for every player, including 0.',
+            t('Enter a whole-number maal total for every player, including 0.'),
           );
         return { ...entry, maal: entry.seen ? Number(entry.maal) : 0 };
       }),
@@ -33,7 +53,9 @@ export function roundPreview(
     return {
       ok: false,
       message:
-        failure instanceof Error ? failure.message : 'Check the round inputs.',
+        failure instanceof Error
+          ? failure.message
+          : t('Check the round inputs.'),
     };
   }
 }

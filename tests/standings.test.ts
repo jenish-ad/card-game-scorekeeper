@@ -14,7 +14,7 @@ function table(winners: number[]): SavedMatch {
     'Hari',
     'Nirmala Chandrasekhar Shrestha',
     'Gita',
-  ].map((name, seat) => ({ id: seat + 1, name, seat }));
+  ].map((name, seat) => ({ id: seat + 1, name, seat, active: true }));
   return {
     id: 1,
     settings: { ...defaultSettings },

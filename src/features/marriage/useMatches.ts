@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { useMatchDatabase } from '../../storage/MatchStorageProvider';
@@ -29,7 +30,7 @@ export function useMatches(id?: number) {
         })
         .catch(() => {
           if (!cancelled) {
-            setError('Could not load matches; try again.');
+            setError(t('Could not load matches; try again.'));
             setLoading(false);
           }
         });

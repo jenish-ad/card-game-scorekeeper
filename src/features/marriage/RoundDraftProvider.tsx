@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import {
   createContext,
   useContext,
@@ -25,6 +26,6 @@ export function RoundDraftProvider({ children }: PropsWithChildren) {
 }
 export function useRoundDraft() {
   const context = useContext(DraftContext);
-  if (!context) throw new Error('Reopen this round to continue.');
+  if (!context) throw new Error(t('Reopen this round to continue.'));
   return context;
 }

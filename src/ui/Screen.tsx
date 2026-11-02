@@ -1,5 +1,6 @@
 import {
   useContext,
+  useMemo,
   useState,
   type PropsWithChildren,
   type ReactNode,
@@ -17,7 +18,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { lightTheme, darkTheme, type AppTheme } from '../theme';
+import { type AppTheme } from '../theme';
 import { useTheme } from '../useTheme';
 
 export function Screen({
@@ -212,8 +213,7 @@ function createStyles(theme: AppTheme) {
     },
   });
 }
-const lightStyles = createStyles(lightTheme);
-const darkStyles = createStyles(darkTheme);
 export function useStyles() {
-  return useTheme() === darkTheme ? darkStyles : lightStyles;
+  const theme = useTheme();
+  return useMemo(() => createStyles(theme), [theme]);
 }

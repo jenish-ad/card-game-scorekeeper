@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, Text } from 'react-native';
 import { useMatches } from '../../features/marriage/useMatches';
@@ -12,15 +13,15 @@ export default function HomeScreen() {
   const recent = matches.filter((match) => match.finishedAt).slice(0, 3);
   return (
     <Screen topSafeArea>
-      <Text style={styles.title}>Marriage</Text>
+      <Text style={styles.title}>{t('Marriage')}</Text>
       {loading ? (
-        <ActivityIndicator accessibilityLabel="Loading" />
+        <ActivityIndicator accessibilityLabel={t('Loading')} />
       ) : error ? (
         <>
           <Text accessibilityRole="alert" style={styles.error}>
             {error}
           </Text>
-          <Button label="Try again" onPress={reload} />
+          <Button label={t('Try again')} onPress={reload} />
         </>
       ) : (
         active.map((match) => (
@@ -28,10 +29,10 @@ export default function HomeScreen() {
         ))
       )}
       <Button
-        label="New match"
+        label={t('New match')}
         onPress={() => router.push('/marriage/setup')}
       />
-      {recent.length > 0 && <SectionHeading title="Recent" />}
+      {recent.length > 0 && <SectionHeading title={t('Recent')} />}
       {recent.map((match) => (
         <MatchCard key={match.id} match={match} />
       ))}

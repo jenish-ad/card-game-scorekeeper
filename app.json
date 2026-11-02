@@ -20,7 +20,7 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.griffin.marriagescore"
     },
-    "plugins": ["expo-router", "expo-sqlite"],
+    "plugins": ["expo-router", "expo-sqlite", "expo-localization"],
     "scheme": "marriage-scorekeeper",
     "platforms": ["android", "ios"]
   }

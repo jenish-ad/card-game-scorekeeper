@@ -28,7 +28,7 @@ The app uses entered maal totals; it does not inspect cards or determine meld el
 
 ## Tech stack
 
-Expo SDK 58, Expo Router, React Native 0.88, React 19.3, strict TypeScript, expo-sqlite, and locally bundled Manrope fonts.
+Expo SDK 58, Expo Router, React Native 0.88, React 19.3, strict TypeScript, expo-sqlite, and locally bundled Manrope/Mukta fonts. Supports changing rosters, foul rounds, optional screen wake locks, Nepali text, Devanagari digits and BS dates.
 
 ## Setup
 

@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { defaultMatchTitle } from './matchTitle';
 import type { MatchConnection, MatchDatabase } from '../../storage/database';
 import {
@@ -6,7 +7,6 @@ import {
   defaultSettings,
   parseSettings,
   type MatchSettings,
-  calculateMarriageRound,
   parseRoundInput,
   validateMarriagePlayerCount,
   type MarriageRoundInput,
@@ -17,6 +17,7 @@ export interface SavedPlayer {
   id: number;
   name: string;
   seat: number;
+  active: boolean;
 }
 export interface SavedRound {
   id: number;
@@ -36,17 +37,17 @@ export interface SavedMatch {
 
 function record(value: unknown): Record<string, unknown> {
   if (typeof value !== 'object' || value === null)
-    throw new Error('Saved match record is invalid.');
+    throw new Error(t('Saved match record is invalid.'));
   return value as Record<string, unknown>;
 }
 function positiveId(value: unknown): number {
   if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 1)
-    throw new Error('Saved match or player ID is invalid.');
+    throw new Error(t('Saved match or player ID is invalid.'));
   return value;
 }
 function timestamp(value: unknown): string {
   if (typeof value !== 'string' || !Number.isFinite(Date.parse(value)))
-    throw new Error('Saved match date is invalid.');
+    throw new Error(t('Saved match date is invalid.'));
   return value;
 }
 
@@ -58,9 +59,9 @@ export async function createMatch(
   settings: MatchSettings = defaultSettings,
 ): Promise<number> {
   if (!title.trim() || title.trim().length > 80)
-    throw new Error('Enter a match title of 1 to 80 characters.');
+    throw new Error(t('Enter a match title of 1 to 80 characters.'));
   if (ruleVersion !== currentRuleVersion)
-    throw new Error('Update the app to open this match.');
+    throw new Error(t('Update the app to open this match.'));
   const matchSettings = parseSettings(settings);
   const validation = validatePlayerNames(names);
   if (!validation.ok) throw new Error(validation.message);
@@ -100,21 +101,32 @@ export async function getMatch(
   if (!storedMatch) return null;
   const match = record(storedMatch);
   if (match.game !== 'marriage' || match.rule_version !== currentRuleVersion)
-    throw new Error('Update the app to open this match.');
+    throw new Error(t('Update the app to open this match.'));
   const settings = parseSettings(JSON.parse(String(match.settings_json)));
   const playerRows = await database.getAllAsync<unknown>(
     'SELECT * FROM players WHERE match_id = ? ORDER BY seat',
     id,
   );
-  const players = playerRows.map((row, seat) => {
+  const players = playerRows.map((row) => {
     const player = record(row);
-    if (typeof player.name !== 'string' || player.seat !== seat)
-      throw new Error('Saved player names or seating order are invalid.');
-    return { id: positiveId(player.id), name: player.name, seat };
+    if (
+      typeof player.name !== 'string' ||
+      !Number.isSafeInteger(player.seat) ||
+      Number(player.seat) < 0 ||
+      ![0, 1].includes(Number(player.active))
+    )
+      throw new Error(t('Saved player names or seating order are invalid.'));
+    return {
+      id: positiveId(player.id),
+      name: player.name,
+      seat: Number(player.seat),
+      active: player.active === 1,
+    };
   });
-  validateMarriagePlayerCount(players.length);
+  validateMarriagePlayerCount(players.filter((player) => player.active).length);
   const validation = validatePlayerNames(players.map((player) => player.name));
-  if (!validation.ok) throw new Error(`Saved match: ${validation.message}`);
+  if (!validation.ok)
+    throw new Error(t('Saved match: {p0}', { p0: validation.message }));
   const roundRows = await database.getAllAsync<unknown>(
     'SELECT * FROM rounds WHERE match_id = ? ORDER BY id',
     id,
@@ -125,10 +137,10 @@ export async function getMatch(
       round.rule_version !== match.rule_version ||
       typeof round.inputs_json !== 'string'
     )
-      throw new Error('Update the app to open this match.');
+      throw new Error(t('Update the app to open this match.'));
     const input = parseRoundInput(JSON.parse(round.inputs_json));
     scoreRound(input, String(match.rule_version), settings);
-    validateRoundPlayers(players, input);
+    validateRoundPlayers(players, input, undefined, true);
     return {
       id: positiveId(round.id),
       createdAt: timestamp(round.created_at),
@@ -167,28 +179,105 @@ export async function listMatches(
   return matches;
 }
 
-function validateRoundPlayers(
+export function validateRoundPlayers(
   players: SavedPlayer[],
   input: MarriageRoundInput,
+  original?: MarriageRoundInput,
+  historical = false,
 ) {
-  calculateMarriageRound(input);
+  validateMarriagePlayerCount(input.players.length);
   if (
-    input.players.length !== players.length ||
     input.players.some(
-      (player) => !players.some((saved) => saved.id === player.playerId),
+      (entry) => !players.some((player) => player.id === entry.playerId),
+    )
+  )
+    throw new Error(t('Every player in the round must belong to this match.'));
+  if (original) {
+    const ids = new Set(original.players.map((entry) => entry.playerId));
+    if (
+      ids.size !== input.players.length ||
+      input.players.some((entry) => !ids.has(entry.playerId))
+    )
+      throw new Error(
+        t('Keep the original participants when editing a round.'),
+      );
+  } else if (
+    !historical &&
+    input.players.some(
+      (entry) =>
+        !players.find((player) => player.id === entry.playerId)?.active,
     )
   ) {
-    throw new Error(
-      'The round must include every player in this match exactly once.',
-    );
+    throw new Error(t('New rounds may only include active players.'));
   }
+}
+
+export async function addPlayer(
+  database: MatchDatabase,
+  matchId: number,
+  name: string,
+) {
+  await database.withExclusiveTransactionAsync(async (transaction) => {
+    const match = await requireActiveMatch(transaction, matchId);
+    validateMarriagePlayerCount(
+      match.players.filter((player) => player.active).length + 1,
+    );
+    const validation = validatePlayerNames([
+      ...match.players.map((player) => player.name),
+      name,
+    ]);
+    if (!validation.ok) throw new Error(validation.message);
+    const seat = Math.max(...match.players.map((player) => player.seat)) + 1;
+    await transaction.runAsync(
+      'INSERT INTO players (match_id, name, seat, active, joined_at) VALUES (?, ?, ?, 1, ?)',
+      matchId,
+      name.trim(),
+      seat,
+      new Date().toISOString(),
+    );
+  });
+}
+
+export async function setPlayerActive(
+  database: MatchDatabase,
+  matchId: number,
+  playerId: number,
+  active: boolean,
+) {
+  await database.withExclusiveTransactionAsync(async (transaction) => {
+    const match = await requireActiveMatch(transaction, matchId);
+    const player = match.players.find((entry) => entry.id === playerId);
+    if (!player)
+      throw new Error(t('This player does not belong to the match.'));
+    if (player.active === active) return;
+    validateMarriagePlayerCount(
+      match.players.filter((entry) => entry.active).length + (active ? 1 : -1),
+    );
+    const played = match.rounds.some((round) =>
+      round.input.players.some((entry) => entry.playerId === playerId),
+    );
+    if (!active && !played) {
+      await transaction.runAsync(
+        'DELETE FROM players WHERE match_id = ? AND id = ?',
+        matchId,
+        playerId,
+      );
+    } else {
+      await transaction.runAsync(
+        'UPDATE players SET active = ? WHERE match_id = ? AND id = ?',
+        active ? 1 : 0,
+        matchId,
+        playerId,
+      );
+    }
+  });
 }
 
 async function requireActiveMatch(database: MatchConnection, matchId: number) {
   const match = await getMatch(database, matchId);
-  if (!match) throw new Error('This match no longer exists.');
+  if (!match) throw new Error(t('This match no longer exists.'));
   if (match.finishedAt)
-    throw new Error('Reopen the match before changing its rounds.');
+    throw new Error(t('Reopen the match before changing its rounds.'));
   return match;
 }
 
@@ -199,11 +288,41 @@ export async function saveRound(
   roundId?: number,
 ) {
   // Capture canonical values before awaiting so UI edits cannot change an in-flight save.
-  const canonicalInput = parseRoundInput(input);
+  const captured = JSON.parse(JSON.stringify(input)) as MarriageRoundInput;
   await database.withExclusiveTransactionAsync(async (transaction) => {
     const match = await requireActiveMatch(transaction, matchId);
+    const originalFoul =
+      roundId === undefined
+        ? undefined
+        : match.rounds.find((round) => round.id === roundId)?.input;
+    const canonicalInput = parseRoundInput(
+      captured.kind === 'foul'
+        ? {
+            ...captured,
+            players: [...captured.players].sort(
+              (a, b) =>
+                (match.players.find((p) => p.id === a.playerId)?.seat ?? 0) -
+                (match.players.find((p) => p.id === b.playerId)?.seat ?? 0),
+            ),
+            penalty:
+              originalFoul?.kind === 'foul'
+                ? originalFoul.penalty
+                : match.settings.foulPenalty,
+            mode:
+              originalFoul?.kind === 'foul'
+                ? originalFoul.mode
+                : match.settings.foulMode,
+          }
+        : captured,
+    );
     scoreRound(canonicalInput, match.ruleVersion, match.settings);
-    validateRoundPlayers(match.players, canonicalInput);
+    const original =
+      roundId === undefined
+        ? undefined
+        : match.rounds.find((round) => round.id === roundId);
+    if (roundId !== undefined && !original)
+      throw new Error(t('This round no longer exists. Reload the match.'));
+    validateRoundPlayers(match.players, canonicalInput, original?.input);
     const nextRounds =
       roundId === undefined
         ? [...match.rounds, { input: canonicalInput }]
@@ -220,7 +339,7 @@ export async function saveRound(
         matchId,
       );
       if (result.changes !== 1)
-        throw new Error('This round no longer exists. Reload the match.');
+        throw new Error(t('This round no longer exists. Reload the match.'));
     } else {
       await transaction.runAsync(
         'INSERT INTO rounds (match_id, rule_version, inputs_json, created_at) VALUES (?, ?, ?, ?)',
@@ -246,7 +365,7 @@ export async function deleteRound(
       matchId,
     );
     if (result.changes !== 1)
-      throw new Error('This round no longer exists. Reload the match.');
+      throw new Error(t('This round no longer exists. Reload the match.'));
   });
 }
 
@@ -257,7 +376,7 @@ export async function setMatchFinished(
 ) {
   await database.withExclusiveTransactionAsync(async (transaction) => {
     const match = await getMatch(transaction, matchId);
-    if (!match) throw new Error('This match no longer exists.');
+    if (!match) throw new Error(t('This match no longer exists.'));
     await transaction.runAsync(
       'UPDATE matches SET finished_at = ? WHERE id = ?',
       finished ? new Date().toISOString() : null,
@@ -281,7 +400,7 @@ export function matchTotals(match: {
     )) {
       const total = (totals.get(score.playerId) ?? 0) + score.points;
       if (!Number.isSafeInteger(total))
-        throw new Error('Match totals are too large to calculate safely.');
+        throw new Error(t('Match totals are too large to calculate safely.'));
       totals.set(score.playerId, total);
     }
   }
@@ -293,6 +412,6 @@ export function matchTotals(match: {
       (total) => !Number.isSafeInteger(total * Math.round(rate * 100)),
     )
   )
-    throw new Error('The Rs amount is too large; use a lower rate.');
+    throw new Error(t('The Rs amount is too large; use a lower rate.'));
   return totals;
 }

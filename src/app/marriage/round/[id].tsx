@@ -1,3 +1,4 @@
+import { t } from '../../../i18n';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, Text } from 'react-native';
 import { useMatches } from '../../../features/marriage/useMatches';
@@ -16,23 +17,23 @@ export default function AddRoundScreen() {
   if (loading)
     return (
       <Screen>
-        <ActivityIndicator accessibilityLabel="Loading" />
+        <ActivityIndicator accessibilityLabel={t('Loading')} />
       </Screen>
     );
   if (!match || error)
     return (
       <Screen>
-        <Text style={styles.error}>{error ?? 'Match not found.'}</Text>
-        <Button label="Retry" onPress={reload} />
+        <Text style={styles.error}>{error ?? t('Match not found.')}</Text>
+        <Button label={t('Retry')} onPress={reload} />
       </Screen>
     );
   if (match.finishedAt)
     return (
       <Screen>
         <Text style={styles.body}>
-          Reopen the match before changing its rounds.
+          {t('Reopen the match before changing its rounds.')}
         </Text>
-        <Button label="Back to Scoreboard" onPress={() => router.back()} />
+        <Button label={t('Back to Scoreboard')} onPress={() => router.back()} />
       </Screen>
     );
   const round = roundId
@@ -41,12 +42,14 @@ export default function AddRoundScreen() {
   if (roundId && !round)
     return (
       <Screen>
-        <Text style={styles.error}>Round not found.</Text>
+        <Text style={styles.error}>{t('Round not found.')}</Text>
       </Screen>
     );
   return (
     <>
-      <Stack.Screen options={{ title: round ? 'Edit round' : 'Add round' }} />
+      <Stack.Screen
+        options={{ title: round ? t('Edit round') : t('Add round') }}
+      />
       <RoundEditor
         key={`${match.id}-${roundId ?? 'new'}`}
         match={match}

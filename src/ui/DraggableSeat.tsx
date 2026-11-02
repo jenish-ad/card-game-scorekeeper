@@ -1,3 +1,4 @@
+import { t, n } from '../i18n';
 import { useMemo, useState, type PropsWithChildren } from 'react';
 import { Animated, PanResponder, Text, View } from 'react-native';
 import { useTheme } from '../useTheme';
@@ -63,10 +64,13 @@ export function DraggableSeat({
         {...responder.panHandlers}
         accessible
         accessibilityRole="adjustable"
-        accessibilityLabel={`Seat ${seat}, ${name || 'unnamed player'}. Drag to reorder.`}
+        accessibilityLabel={t('Seat {p0}, {p1}. Drag to reorder.', {
+          p0: seat,
+          p1: name || t('unnamed player'),
+        })}
         accessibilityActions={[
-          { name: 'increment', label: 'Move down' },
-          { name: 'decrement', label: 'Move up' },
+          { name: 'increment', label: t('Move down') },
+          { name: 'decrement', label: t('Move up') },
         ]}
         onAccessibilityAction={({ nativeEvent }) =>
           move(nativeEvent.actionName === 'increment' ? 1 : -1)
@@ -94,7 +98,7 @@ export function DraggableSeat({
             },
           ]}
         >
-          {seat}
+          {n(seat)}
         </Text>
       </View>
       {children}

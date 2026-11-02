@@ -1,3 +1,5 @@
+import { formatDate } from '../i18n/dates';
+import { t, n } from '../i18n';
 import { useRouter } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import type { SavedMatch } from '../features/marriage/matches';
@@ -19,21 +21,27 @@ export function MatchCard({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${expanded ? 'Resume' : 'Open'} ${match.title}`}
+      accessibilityLabel={`${expanded ? t('Resume') : t('Open')} ${match.title}`}
       onPress={() => router.push(`/marriage/match/${match.id}`)}
       style={styles.card}
     >
       <Text style={styles.subtitle}>{match.title}</Text>
       <Text style={styles.caption}>
+        {formatDate(new Date(match.createdAt))}
+      </Text>
+      <Text style={styles.caption}>
         {match.players.map((player) => player.name).join(', ')}
       </Text>
       <Text style={styles.caption}>
-        {match.players.length} players {'\u00b7'} {match.rounds.length} rounds
+        {[
+          `${n(match.players.length)} ${t('players')}`,
+          t('roundCount', { count: match.rounds.length }),
+        ].join(' · ')}
       </Text>
       {leader && (
         <View style={styles.spread}>
           <Text style={[styles.label, styles.flexible]}>
-            {leaders.length > 1 ? 'Tied' : 'Leader'} {'\u00b7'}{' '}
+            {leaders.length > 1 ? t('Tied') : t('Leader')} {'\u00b7'}{' '}
             {leaders.map((row) => row.player.name).join(', ')}
           </Text>
           <Score compact value={leader.total} />
@@ -41,7 +49,7 @@ export function MatchCard({
       )}
       {expanded && (
         <View style={styles.spread}>
-          <Text style={styles.label}>Resume</Text>
+          <Text style={styles.label}>{t('Resume')}</Text>
           <Icon name="chevron-forward" />
         </View>
       )}

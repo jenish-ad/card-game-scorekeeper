@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 export interface MatchConnection {
   execAsync(sql: string): Promise<void>;
   runAsync(
@@ -28,9 +29,11 @@ export async function migrateDatabase(database: MatchDatabase) {
     const row = await transaction.getFirstAsync<{ user_version: number }>(
       'PRAGMA user_version',
     );
-    if (!row || !Number.isInteger(row.user_version) || row.user_version > 3) {
+    if (!row || !Number.isInteger(row.user_version) || row.user_version > 5) {
       throw new Error(
-        'This database needs a newer app version. No saved matches were changed.',
+        t(
+          'This database needs a newer app version. No saved matches were changed.',
+        ),
       );
     }
     if (row.user_version === 0) {
@@ -74,6 +77,18 @@ export async function migrateDatabase(database: MatchDatabase) {
         UPDATE rounds SET rule_version = 'marriage-v1' WHERE rule_version IN ('pagat-base-v1', 'pagat-base-v1-seen-maal');
         PRAGMA user_version = 3;
       `);
+    }
+    if (row.user_version < 4) {
+      await transaction.execAsync(`
+        ALTER TABLE players ADD COLUMN active INTEGER NOT NULL DEFAULT 1;
+        ALTER TABLE players ADD COLUMN joined_at TEXT;
+        PRAGMA user_version = 4;
+      `);
+    }
+    if (row.user_version < 5) {
+      await transaction.execAsync(
+        'CREATE TABLE app_preferences (key TEXT PRIMARY KEY, value TEXT NOT NULL); PRAGMA user_version = 5;',
+      );
     }
   });
 }

@@ -1,3 +1,5 @@
+import { t, n } from '../../../i18n';
+import { MatchKeepAwake } from '../../../ui/MatchKeepAwake';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Text, View } from 'react-native';
@@ -24,7 +26,7 @@ export default function RoundDetailsScreen() {
   if (loading)
     return (
       <Screen>
-        <ActivityIndicator accessibilityLabel="Loading" />
+        <ActivityIndicator accessibilityLabel={t('Loading')} />
       </Screen>
     );
   const saved = match?.rounds.find(
@@ -37,48 +39,55 @@ export default function RoundDetailsScreen() {
     return (
       <Screen>
         <Text style={styles.error}>
-          {error ?? 'Round unavailable; return to the scoreboard.'}
+          {error ?? t('Round unavailable; return to the scoreboard.')}
         </Text>
-        <Button label="Retry" onPress={reload} />
+        <Button label={t('Retry')} onPress={reload} />
       </Screen>
     );
   const scores = scoreRound(input, match.ruleVersion, match.settings);
-  const totalMaal = input.players.reduce(
-    (sum, entry) => sum + (entry.seen ? entry.maal : 0),
-    0,
-  );
+  const totalMaal =
+    input.kind === 'foul'
+      ? 0
+      : input.players.reduce(
+          (sum, entry) => sum + (entry.seen ? entry.maal : 0),
+          0,
+        );
   function confirmDelete() {
     if (!match || !saved || busy) return;
-    Alert.alert('Delete round?', 'Delete this round and recalculate totals?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          setBusy(true);
-          void deleteRound(database, match.id, saved.id)
-            .then(() => {
-              setDraft(null);
-              router.dismissTo(`/marriage/match/${match.id}`);
-            })
-            .catch(() => {
-              setBusy(false);
-              setWriteError('Could not delete the round; try again.');
-            });
+    Alert.alert(
+      t('Delete round?'),
+      t('Delete this round and recalculate totals?'),
+      [
+        { text: t('Cancel'), style: 'cancel' },
+        {
+          text: t('Delete'),
+          style: 'destructive',
+          onPress: () => {
+            setBusy(true);
+            void deleteRound(database, match.id, saved.id)
+              .then(() => {
+                setDraft(null);
+                router.dismissTo(`/marriage/match/${match.id}`);
+              })
+              .catch(() => {
+                setBusy(false);
+                setWriteError(t('Could not delete the round; try again.'));
+              });
+          },
         },
-      },
-    ]);
+      ],
+    );
   }
   return (
     <Screen
       footer={
         unsaved ? (
-          <Button label="Back to round" onPress={() => router.back()} />
+          <Button label={t('Back to round')} onPress={() => router.back()} />
         ) : !match.finishedAt && saved ? (
           <>
             <Button
               secondary
-              label="Edit round"
+              label={t('Edit round')}
               disabled={busy}
               onPress={() => {
                 setDraft(null);
@@ -91,7 +100,7 @@ export default function RoundDetailsScreen() {
             <Button
               secondary
               destructive
-              label="Delete round"
+              label={t('Delete round')}
               disabled={busy}
               onPress={confirmDelete}
             />
@@ -99,22 +108,50 @@ export default function RoundDetailsScreen() {
         ) : undefined
       }
     >
-      <Stack.Screen options={{ title: 'Round details' }} />
+      <MatchKeepAwake active={!match.finishedAt} />
+      <Stack.Screen options={{ title: t('Round details') }} />
       <Text style={styles.title}>
         {unsaved
-          ? 'Round preview'
-          : `Round ${match.rounds.findIndex((round) => round.id === saved?.id) + 1}`}
+          ? t('Round preview')
+          : t('Round {p0}', {
+              p0: match.rounds.findIndex((round) => round.id === saved?.id) + 1,
+            })}
       </Text>
       <Text style={styles.body}>
-        {input.dubleeWin ? 'Dublee' : 'Normal'} finish / Total Seen maal:{' '}
-        {totalMaal}
+        {input.kind === 'foul'
+          ? t('{p0} fouled: pays {p1} {p2}', {
+              p0: match.players.find((p) => p.id === input.offenderId)?.name,
+              p1: input.penalty,
+              p2:
+                input.mode === 'perPlayer'
+                  ? t('to each player')
+                  : t('in total'),
+            })
+          : t('{p0} finish / Total Seen maal: {p1}', {
+              p0: input.dubleeWin ? t('Dublee') : t('Normal'),
+              p1: totalMaal,
+            })}
       </Text>
       {match.players.map((player) => {
-        const entry = input.players.find((item) => item.playerId === player.id);
+        const entry =
+          input.kind === 'foul'
+            ? undefined
+            : input.players.find((item) => item.playerId === player.id);
         const points = scores.find(
           (score) => score.playerId === player.id,
         )?.points;
-        if (!entry || points === undefined) return null;
+        if (points === undefined) return null;
+        if (input.kind === 'foul')
+          return (
+            <View key={player.id} style={styles.spread}>
+              <Text style={styles.label}>
+                {player.name}
+                {player.id === input.offenderId ? t(' (Foul)') : ''}
+              </Text>
+              <Score value={points} />
+            </View>
+          );
+        if (!entry) return null;
         const winner = player.id === input.winnerId;
         const counted = entry.seen ? entry.maal : 0;
         const fee =
@@ -127,24 +164,28 @@ export default function RoundDetailsScreen() {
               <View style={styles.flexible}>
                 <Text style={styles.label}>
                   {player.name}
-                  {winner ? ' (Winner)' : ''}
+                  {winner ? t(' (Winner)') : ''}
                 </Text>
                 <Text style={styles.caption}>
-                  {counted} maal / {entry.seen ? 'Seen' : 'Unseen'}
+                  {n(counted)} {t('maal /')}{' '}
+                  {entry.seen ? t('Seen') : t('Unseen')}
                 </Text>
               </View>
               <Score value={points} />
             </View>
             <Text style={styles.caption}>
               {winner
-                ? `Opposite of the other players' combined points: ${formatScore(points)}`
-                : `${match.players.length} x ${counted} - ${totalMaal} - ${fee} = ${formatScore(points)}`}
+                ? t("Opposite of the other players' combined points: {p0}", {
+                    p0: formatScore(points),
+                  })
+                : `${input.players.length} x ${n(counted)} - ${totalMaal} - ${fee} = ${formatScore(points)}`}
             </Text>
           </View>
         );
       })}
       <Text style={styles.label}>
-        Round total: {scores.reduce((sum, score) => sum + score.points, 0)}
+        {t('Round total:')}{' '}
+        {n(scores.reduce((sum, score) => sum + score.points, 0))}
       </Text>
       {writeError && (
         <Text accessibilityRole="alert" style={styles.error}>

@@ -1,15 +1,17 @@
+import { formatDate } from '../../i18n/dates';
+import { t, n } from '../../i18n';
 import { matchStandings } from './standings';
 import type { SavedMatch } from './matches';
 
 export function moneyAmount(points: number, rate: number): number {
   const amount = points * Math.round(rate * 100);
   if (!Number.isSafeInteger(amount))
-    throw new Error('The Rs amount is too large; use a lower rate.');
+    throw new Error(t('The Rs amount is too large; use a lower rate.'));
   return amount;
 }
 export function formatMoney(paisa: number): string {
   const amount = Math.abs(paisa) / 100;
-  return `${paisa < 0 ? '\u2212' : ''}Rs ${Number.isInteger(amount) ? amount : amount.toFixed(2)}`;
+  return `${paisa < 0 ? '\u2212' : ''}${t('Rs')} ${n(Number.isInteger(amount) ? amount : amount.toFixed(2))}`;
 }
 export interface Transfer {
   from: number;
@@ -25,7 +27,7 @@ export function settleUp(
     balances.some((entry) => !Number.isSafeInteger(entry.paisa)) ||
     balances.reduce((sum, entry) => sum + entry.paisa, 0) !== 0
   )
-    throw new Error('Balances must total 0.');
+    throw new Error(t('Balances must total 0.'));
   const debtors = balances
     .filter((entry) => entry.paisa < 0)
     .map((entry) => ({ id: entry.playerId, remaining: -entry.paisa }));
@@ -53,15 +55,11 @@ export function resultSummary(match: SavedMatch): string {
   const rate = match.settings.moneyRate;
   return [
     match.title,
-    new Date(match.createdAt).toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    }),
-    match.finishedAt ? 'Final standings' : 'Current standings',
+    formatDate(new Date(match.createdAt)),
+    match.finishedAt ? t('Final standings') : t('Current standings'),
     ...rows.map(
       (row) =>
-        `${row.rank}. ${row.player.name}: ${row.total > 0 ? '+' : ''}${row.total}${rate === null ? '' : ` (${formatMoney(moneyAmount(row.total, rate))})`}`,
+        `${n(row.rank)}. ${row.player.name}: ${row.total > 0 ? '+' : ''}${n(row.total)}${rate === null ? '' : ` (${formatMoney(moneyAmount(row.total, rate))})`}`,
     ),
   ].join('\n');
 }
